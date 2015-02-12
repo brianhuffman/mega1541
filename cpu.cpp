@@ -35,37 +35,37 @@ inline static void clock_advance (int ticks) {
 /***********************************/
 
 /* immediate mode */
-inline int addr_imm() {
+inline word addr_imm() {
   return reg_pc++;
 }
 
 /* zero page */
-inline int addr_zpg() {
+inline word addr_zpg() {
   return mem_read(reg_pc++);
 }
 
 /* absolute */
-inline int addr_abs() {
-  int address = mem_read_16(reg_pc);
-  reg_pc+=2;
+inline word addr_abs() {
+  word address = mem_read_16(reg_pc);
+  reg_pc += 2;
   return address;
 }
 
 /* zero page, x */
-inline int addr_zpx() {
-  int address = mem_read(reg_pc++) + reg_x;
+inline word addr_zpx() {
+  word address = mem_read(reg_pc++) + reg_x;
   return (address &= 0xff);
 }
 
 /* zero page, y */
-inline int addr_zpy() {
-  int address = mem_read(reg_pc++) + reg_y;
+inline word addr_zpy() {
+  word address = mem_read(reg_pc++) + reg_y;
   return (address &= 0xff);
 }
 
 /* absolute, x */
-inline int addr_abx() {
-  int address = mem_read(reg_pc++) + reg_x;
+inline word addr_abx() {
+  word address = mem_read(reg_pc++) + reg_x;
 
   /* test for page boundary crossing */
   if (address > 0xff) clock_advance(1);
@@ -74,8 +74,8 @@ inline int addr_abx() {
 }
 
 /* absolute, y */
-inline int addr_aby() {
-  int address = mem_read(reg_pc++) + reg_y;
+inline word addr_aby() {
+  word address = mem_read(reg_pc++) + reg_y;
 
   /* test for page boundary crossing */
   if (address > 0xff) clock_advance(1);
@@ -84,15 +84,15 @@ inline int addr_aby() {
 }
 
 /* indexed indirect */
-inline int addr_inx() {
-  int index = mem_read(reg_pc++) + reg_x;
+inline word addr_inx() {
+  word index = mem_read(reg_pc++) + reg_x;
   index &= 0xff;
   return mem_read_16(index);
 }
 
 /* indirect indexed */
-inline int addr_iny() {
-  int index, address;
+inline word addr_iny() {
+  word index, address;
 
   index = mem_read(reg_pc++);
   address = mem_read(index) + reg_y;
@@ -104,8 +104,8 @@ inline int addr_iny() {
 }
 
 /* absolute indirect */
-inline int addr_ind() {
-  int index = mem_read_16(reg_pc);
+inline word addr_ind() {
+  word index = mem_read_16(reg_pc);
   reg_pc += 2;
   return mem_read_16(index);
 }
@@ -429,9 +429,9 @@ inline static void cpu6502_BRK() {
 /***************** READ-MODIFY-WRITE INSTRUCTIONS ****************/
 
 inline static void cpu6502_ASL(word address) {
-  int data = mem_read(address);
+  byte data = mem_read(address);
   flag_c = (data >> 7);
-  mem_write(address, flag_n = flag_z = (data << 1) & 0xff);
+  mem_write(address, flag_n = flag_z = (data << 1));
 }
 inline static void cpu6502_ASL_a(void) {
   flag_c = (reg_a >> 7);
@@ -439,19 +439,19 @@ inline static void cpu6502_ASL_a(void) {
 }
 
 inline static void cpu6502_ROL(word address) {
-  int data = mem_read(address);
-  int result = ((data << 1) | flag_c) & 0xff;
+  byte data = mem_read(address);
+  byte result = ((data << 1) | flag_c);
   flag_c = (data >> 7);
   mem_write(address, flag_n = flag_z = result);
 }
 inline static void cpu6502_ROL_a(void) {
-  int result = ((reg_a << 1) | flag_c) & 0xff;
+  byte result = ((reg_a << 1) | flag_c);
   flag_c = (reg_a >> 7);
   reg_a = flag_n = flag_z = result;
 }
 
 inline static void cpu6502_LSR(word address) {
-  int data = mem_read(address);
+  byte data = mem_read(address);
   flag_c = (data & 0x01);
   mem_write(address, flag_n = flag_z = data >> 1);
 }
@@ -461,13 +461,13 @@ inline static void cpu6502_LSR_a(void) {
 }
 
 inline static void cpu6502_ROR(word address) {
-  int data = mem_read(address);
-  int result = (data >> 1) | (flag_c << 7);
+  byte data = mem_read(address);
+  byte result = (data >> 1) | (flag_c << 7);
   flag_c = (data & 0x01);
   mem_write(address, flag_n = flag_z = result);
 }
 inline static void cpu6502_ROR_a(void) {
-  int result = (reg_a >> 1) | (flag_c << 7);
+  byte result = (reg_a >> 1) | (flag_c << 7);
   flag_c = (reg_a & 0x01);
   reg_a = flag_n = flag_z = result;
 }
@@ -521,7 +521,7 @@ inline static void cpu6502_BIT(word address) {
   flag_z = reg_a & data;
 }
 inline static void cpu6502_JAM(void) {
-  int opcode = mem_read(--reg_pc);
+  byte opcode = mem_read(--reg_pc);
   fprintf(stderr, "Instruction %02x at $%04x crashed the CPU!\n",
     opcode, reg_pc);
 }
@@ -561,7 +561,7 @@ inline static void cpu6502_SAX(word address) {
   mem_write(address, reg_a & reg_x);
 }
 inline static void cpu6502_SBX(word address) {
-  int data = mem_read(address);
+  byte data = mem_read(address);
   flag_c = ((reg_a & reg_x) >= data);
   reg_x = flag_n = flag_z = ((reg_a & reg_x) - data) & 0xff;
 }
