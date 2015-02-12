@@ -762,6 +762,7 @@ void cpu_main (int cycles)
     case 0x7d:  cpu6502_ADC(addr_abx());  clock_advance(4);  break;
     case 0x7e:  cpu6502_ROR(addr_abx());  clock_advance(7);  break;
     case 0x7f:  cpu6502_RRA(addr_abx());  clock_advance(7);  break;
+    case 0x80:  cpu6502_NOP(addr_imm());  clock_advance(2);  break;
     case 0x81:  cpu6502_STA(addr_inx());  clock_advance(6);  break;
     case 0x82:  cpu6502_NOP(addr_imm());  clock_advance(2);  break;
     case 0x83:  cpu6502_SAX(addr_inx());  clock_advance(6);  break;
