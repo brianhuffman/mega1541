@@ -8,7 +8,7 @@ byte ram[RAM_SIZE];
 
 /* clear all ram */
 void mem_reset() {
-  for (word i = 0; i < 0x0800; i++) ram[i] = 0;
+  for (word i = 0; i < RAM_SIZE; i++) ram[i] = 0;
 }
 
 /******************* MEMORY READ *************************/
