@@ -1,0 +1,900 @@
+/* cpu.cpp */
+
+#include "cpu.h"
+#include "memory.h"
+
+/* define processor status flags: NV1BDIZC */
+#define C_FLAG 0x01
+#define Z_FLAG 0x02
+#define I_FLAG 0x04
+#define D_FLAG 0x08
+#define B_FLAG 0x10
+/* bit 5 is always 1 */
+#define V_FLAG 0x40
+#define N_FLAG 0x80
+
+/* declare processor registers */
+static word reg_pc;
+static byte reg_a, reg_x, reg_y, reg_s, reg_p;
+static byte flag_n, flag_z, flag_c;
+
+unsigned char *stack;
+
+/***************************/
+/**** Utility functions ****/
+/***************************/
+
+static int time_left;
+
+inline static void clock_advance (int ticks) {
+  time_left -= ticks;
+}
+
+/***********************************/
+/**** Addressing mode functions ****/
+/***********************************/
+
+/* immediate mode */
+inline int addr_imm() {
+  return reg_pc++;
+}
+
+/* zero page */
+inline int addr_zpg() {
+  return mem_read(reg_pc++);
+}
+
+/* absolute */
+inline int addr_abs() {
+  int address = mem_read_16(reg_pc);
+  reg_pc+=2;
+  return address;
+}
+
+/* zero page, x */
+inline int addr_zpx() {
+  int address = mem_read(reg_pc++) + reg_x;
+  return (address &= 0xff);
+}
+
+/* zero page, y */
+inline int addr_zpy() {
+  int address = mem_read(reg_pc++) + reg_y;
+  return (address &= 0xff);
+}
+
+/* absolute, x */
+inline int addr_abx() {
+  int address = mem_read(reg_pc++) + reg_x;
+
+  /* test for page boundary crossing */
+  if (address > 0xff) clock_advance(1);
+
+  return address + (mem_read(reg_pc++) << 8);
+}
+
+/* absolute, y */
+inline int addr_aby() {
+  int address = mem_read(reg_pc++) + reg_y;
+
+  /* test for page boundary crossing */
+  if (address > 0xff) clock_advance(1);
+
+  return address + (mem_read(reg_pc++) << 8);
+}
+
+/* indexed indirect */
+inline int addr_inx() {
+  int index = mem_read(reg_pc++) + reg_x;
+  index &= 0xff;
+  return mem_read_16(index);
+}
+
+/* indirect indexed */
+inline int addr_iny() {
+  int index, address;
+
+  index = mem_read(reg_pc++);
+  address = mem_read(index) + reg_y;
+
+  /* test for page boundary crossing */
+  if (address > 0xff) clock_advance(1);
+
+  return address + (mem_read(index + 1) << 8);
+}
+
+/* absolute indirect */
+inline int addr_ind() {
+  int index = mem_read_16(reg_pc);
+  reg_pc += 2;
+  return mem_read_16(index);
+}
+
+
+/**********************************/
+/**** General Opcode Functions ****/
+/***********************************/
+
+/* list of documented instructions:
+   ADC, AND, ASL, BCC, BCS, BEQ, BIT, BMI, BNE, BPL, BRK, BVC, BVS, CLC,
+   CLD, CLI, CLV, CMP, CPX, CPY, DEC, DEX, DEY, EOR, INC, INX, INY, JMP,
+   JSR, LDA, LDX, LDY, LSR, NOP, ORA, PHA, PHP, PLA, PLP, ROL, ROR, RTI,
+   RTS, SBC, SEC, SED, SEI, STA, STX, STY, TAX, TAY, TSX, TXA, TXS, TYA
+*/
+
+inline static byte test_z() { return (flag_z == 0x00); }
+inline static byte test_n() { return (flag_n & 0x80); }
+
+inline static void update_p() {
+  /* clear N, B, Z, and C flags */
+  reg_p &= ~(N_FLAG|B_FLAG|Z_FLAG|C_FLAG);
+
+  /* set 1 flag */
+  reg_p |= 0x20;
+
+  /* update negative, zero, and carry flags */
+  if (test_n()) reg_p |= N_FLAG;
+  else if (test_z()) reg_p |= Z_FLAG;
+  if (flag_c) reg_p |= C_FLAG;
+}
+
+inline static void opcode_compare(byte reg, byte data) {
+  flag_c = (reg >= data);
+  flag_n = flag_z = reg - data;
+}
+
+inline static byte opcode_add(byte data) {
+  word total;
+  byte result;
+
+  if (reg_p & D_FLAG) {
+
+    total = word(reg_a) + word(data) + word(flag_c);
+
+    /* set zero flag before BCD fixup */
+    flag_z = lowByte(total);
+
+    /* add lower nybble */
+    byte temp = (reg_a & 0xf) + (data & 0xf) + flag_c;
+
+    /* do BCD fixup for lower nybble */
+    if (temp >= 0x0a) {
+      total += 0x06;
+      /* but don't carry more than 1 from lower nybble */
+      if (temp >= 0x1a) { total -= 0x10; }
+    }
+
+    /* update negative flag */
+    flag_n = result = lowByte(total);
+
+    /* set overflow if a7 != r7, AND d7 != r7 */
+    reg_p &= ~V_FLAG;
+    if ( ((reg_a ^ result) & (data ^ result)) & 0x80 ) {
+      reg_p |= V_FLAG;
+    }
+
+    /* do BCD fixup for upper nybble */
+    if (total >= 0xa0) { total += 0x60; }
+
+    /* set carry flag */
+    flag_c = highByte(total) > 0;
+    result = lowByte(total);
+  }
+
+  /* non-decimal mode */
+  else {
+    total = word(reg_a) + word(data) + word(flag_c);
+
+    flag_c = highByte(total);
+    flag_n = flag_z = result = lowByte(total);
+
+    /* set overflow if a7 != r7, AND d7 != r7 */
+    reg_p &= ~V_FLAG;
+    if ( ((reg_a ^ result) & (data ^ result)) & 0x80 ) {
+      reg_p |= V_FLAG;
+    }
+  }
+  return result;
+}
+
+
+inline static byte opcode_sub(byte data) {
+  byte result;
+  word total;
+
+  if (reg_p & D_FLAG) {
+
+    /* add lower nybble */
+    result = 0xff + (reg_a & 0xf) - (data & 0xf) + flag_c;
+
+    /* do BCD fixup for lower nybble */
+    if (result < 0x100) result -= 0x06;
+    if (result < 0xf0) result += 0x10;
+
+    /* add upper nybble */
+    result += (reg_a & 0xf0) - (data & 0xf0);
+
+    /* update negative and zero flags */
+    flag_n = flag_z = result;
+
+    /* clear affected flags */
+    reg_p &= ~(C_FLAG | V_FLAG);
+
+    /* set overflow if a7 != r7, AND a7 != d7*/
+    if ( ((reg_a ^ result) & (reg_a ^ data)) & 0x80 )
+      reg_p |= V_FLAG;
+
+    /* set carry flag */
+    flag_c = (result & 0x100) ? 1 : 0;
+
+    /* do BCD fixup for upper nybble */
+    if (!(result & 0x100)) result -= 0x60;
+
+    result &= 0xff;
+  }
+
+  /* non-decimal mode */
+  else {
+    total = word(reg_a) + word(~data) + flag_c;
+
+    flag_c = highByte(total);
+    result = lowByte(total);
+
+    /* set overflow if a7 != r7, AND a7 != d7 */
+    reg_p &= ~V_FLAG;
+    if ( ((reg_a ^ result) & (reg_a ^ data)) & 0x80 ) {
+      reg_p |= V_FLAG;
+    }
+
+    flag_n = flag_z = result;
+  }
+  return result;
+}
+
+
+/******************** ARITHMETIC INSTRUCTIONS ********************/
+
+inline static void cpu6502_ORA(word address) {
+  reg_a = flag_n = flag_z = reg_a | mem_read(address);
+}
+inline static void cpu6502_AND(word address) {
+  reg_a = flag_n = flag_z = reg_a & mem_read(address);
+}
+inline static void cpu6502_EOR(word address) {
+  reg_a = flag_n = flag_z = reg_a ^ mem_read(address);
+}
+inline static void cpu6502_ADC(word address) {
+  reg_a = opcode_add( mem_read(address) );
+}
+inline static void cpu6502_CMP(word address) {
+  opcode_compare(reg_a, mem_read(address));
+}
+inline static void cpu6502_SBC(word address) {
+  reg_a = opcode_sub( mem_read(address) );
+}
+
+/**************** LOAD/STORE/TRANSFER INSTRUCTIONS ***************/
+
+inline static void cpu6502_LDA(word address) {
+  reg_a = flag_n = flag_z = mem_read(address);
+}
+inline static void cpu6502_LDX(word address) {
+  reg_x = flag_n = flag_z = mem_read(address);
+}
+inline static void cpu6502_LDY(word address) {
+  reg_y = flag_n = flag_z = mem_read(address);
+}
+inline static void cpu6502_STA(word address) {
+  mem_write(address, reg_a);
+}
+inline static void cpu6502_STX(word address) {
+  mem_write(address, reg_x);
+}
+inline static void cpu6502_STY(word address) {
+  mem_write(address, reg_y);
+}
+inline static void cpu6502_TAX(void) {
+  reg_x = flag_n = flag_z = reg_a;
+}
+inline static void cpu6502_TAY(void) {
+  reg_y = flag_n = flag_z = reg_a;
+}
+inline static void cpu6502_TSX(void) {
+  reg_x = flag_n = flag_z = reg_s;
+}
+inline static void cpu6502_TXA(void) {
+  reg_a = flag_n = flag_z = reg_x;
+}
+inline static void cpu6502_TXS(void) {
+  reg_s = reg_x;
+}
+inline static void cpu6502_TYA(void) {
+  reg_a = flag_n = flag_z = reg_y;
+}
+
+
+/********************** BRANCH INSTRUCTIONS **********************/
+
+inline static void cpu6502_branch(byte condition, word address) {
+  if (condition) {
+    char offset = char(mem_read(address));
+    word new_pc = reg_pc + offset;
+    /* add extra cycle if branching to another page */
+    if (highByte(reg_pc) != highByte(new_pc)) clock_advance(2);
+    else clock_advance(1);
+    reg_pc = new_pc;
+  }
+}
+
+inline static void cpu6502_BPL(word address) {
+  cpu6502_branch( !test_n(), address);
+}
+inline static void cpu6502_BMI(word address) {
+  cpu6502_branch( test_n(), address);
+}
+inline static void cpu6502_BVC(word address) {
+  cpu6502_branch( !(reg_p & V_FLAG), address);
+}
+inline static void cpu6502_BVS(word address) {
+  cpu6502_branch( reg_p & V_FLAG, address);
+}
+inline static void cpu6502_BCC(word address) {
+  cpu6502_branch(!flag_c, address);
+}
+inline static void cpu6502_BCS(word address) {
+  cpu6502_branch(flag_c, address);
+}
+inline static void cpu6502_BNE(word address) {
+  cpu6502_branch( !test_z(), address);
+}
+inline static void cpu6502_BEQ(word address) {
+  cpu6502_branch(test_z(), address);
+}
+
+/*********************** FLAG INSTRUCTIONS ***********************/
+
+inline static void cpu6502_CLC(void) {
+  flag_c = 0;
+}
+inline static void cpu6502_SEC(void) {
+  flag_c = 1;
+}
+inline static void cpu6502_CLI(void) {
+  reg_p &= ~I_FLAG;
+}
+inline static void cpu6502_SEI(void) {
+  reg_p |= I_FLAG;
+}
+inline static void cpu6502_CLV(void) {
+  reg_p &= ~V_FLAG;
+}
+inline static void cpu6502_CLD(void) {
+  reg_p &= ~D_FLAG;
+}
+inline static void cpu6502_SED(void) {
+  reg_p |= D_FLAG;
+}
+
+/*********************** STACK INSTRUCTIONS **********************/
+
+inline static void cpu6502_PHP(void) {
+  update_p();
+  stack_write(reg_s--, reg_p);
+}
+inline static void cpu6502_PLP(void) {
+  reg_p = stack_read(++reg_s);
+  flag_n = reg_p;
+  flag_z = (reg_p & Z_FLAG) ? 0 : 1;
+  flag_c = (reg_p & C_FLAG);
+}
+inline static void cpu6502_PHA(void) {
+  stack_write(reg_s--, reg_a);
+}
+inline static void cpu6502_PLA(void) {
+  reg_a = flag_n = flag_z = stack_read(++reg_s);
+}
+
+inline static void cpu6502_JSR(word address) {
+  /* pre-decrement program counter */
+  reg_pc--;
+  /* push current reg_pc on stack, MSB first */
+  stack_write(reg_s--, reg_pc >> 8);
+  stack_write(reg_s--, reg_pc & 0xff);
+  reg_pc = address;
+}
+inline static void cpu6502_RTS(void) {
+  /* pull reg_pc from stack, LSB first */
+  reg_s++;
+  reg_pc = stack_read_16(reg_s);
+  reg_s++;
+  /* re-increment program counter */
+  reg_pc++;
+}
+inline static void cpu6502_RTI(void) {
+  /* pull P and PC from stack */
+  cpu6502_PLP();
+  cpu6502_RTS();
+}
+inline static void cpu6502_BRK() {
+  /* jump to IRQ vector */
+  cpu6502_JSR( mem_read_16(0xfffe) );
+  /* push P onto stack, with B flag set */
+  update_p();
+  stack_write(reg_s--, reg_p | B_FLAG);
+  /* disable further interrupts */
+  cpu6502_SEI();
+}
+
+
+/***************** READ-MODIFY-WRITE INSTRUCTIONS ****************/
+
+inline static void cpu6502_ASL(word address) {
+  int data = mem_read(address);
+  flag_c = (data >> 7);
+  mem_write(address, flag_n = flag_z = (data << 1) & 0xff);
+}
+inline static void cpu6502_ASL_a(void) {
+  flag_c = (reg_a >> 7);
+  reg_a = flag_n = flag_z = (reg_a << 1) & 0xff;
+}
+
+inline static void cpu6502_ROL(word address) {
+  int data = mem_read(address);
+  int result = ((data << 1) | flag_c) & 0xff;
+  flag_c = (data >> 7);
+  mem_write(address, flag_n = flag_z = result);
+}
+inline static void cpu6502_ROL_a(void) {
+  int result = ((reg_a << 1) | flag_c) & 0xff;
+  flag_c = (reg_a >> 7);
+  reg_a = flag_n = flag_z = result;
+}
+
+inline static void cpu6502_LSR(word address) {
+  int data = mem_read(address);
+  flag_c = (data & 0x01);
+  mem_write(address, flag_n = flag_z = data >> 1);
+}
+inline static void cpu6502_LSR_a(void) {
+  flag_c = (reg_a & 0x01);
+  reg_a = flag_n = flag_z = reg_a >> 1;
+}
+
+inline static void cpu6502_ROR(word address) {
+  int data = mem_read(address);
+  int result = (data >> 1) | (flag_c << 7);
+  flag_c = (data & 0x01);
+  mem_write(address, flag_n = flag_z = result);
+}
+inline static void cpu6502_ROR_a(void) {
+  int result = (reg_a >> 1) | (flag_c << 7);
+  flag_c = (reg_a & 0x01);
+  reg_a = flag_n = flag_z = result;
+}
+
+inline static void cpu6502_DEC(word address) {
+  mem_write(address, flag_n = flag_z = mem_read(address) - 1);
+}
+
+inline static void cpu6502_INC(word address) {
+  mem_write(address, flag_n = flag_z = mem_read(address) + 1);
+}
+
+
+/****************** INDEX REGISTER INSTRUCTIONS ******************/
+
+inline static void cpu6502_CPX(word address) {
+  opcode_compare(reg_x, mem_read(address));
+}
+inline static void cpu6502_CPY(word address) {
+  opcode_compare(reg_y, mem_read(address));
+}
+inline static void cpu6502_DEX(void) {
+  reg_x = flag_n = flag_z = reg_x - 1;
+}
+inline static void cpu6502_DEY(void) {
+  reg_y = flag_n = flag_z = reg_y - 1;
+}
+inline static void cpu6502_INX(void) {
+  reg_x = flag_n = flag_z = reg_x + 1;
+}
+inline static void cpu6502_INY(void) {
+  reg_y = flag_n = flag_z = reg_y + 1;
+}
+
+
+/******************* MISCELLANEOUS INSTRUCTIONS ******************/
+
+inline static void cpu6502_JMP(word address) {
+  reg_pc = address;
+}
+inline static void cpu6502_NOP(word address) {
+  /* no operation, do nothing */
+}
+inline static void cpu6502_BIT(word address) {
+  byte data = mem_read(address);
+  /* bit 6 goes to V flag */
+  reg_p &= ~V_FLAG;
+  reg_p |= data & V_FLAG;
+  /* bit 7 goes to N flag */
+  flag_n = data;
+  flag_z = reg_a & data;
+}
+inline static void cpu6502_JAM(void) {
+  int opcode = mem_read(--reg_pc);
+  fprintf(stderr, "Instruction %02x at $%04x crashed the CPU!\n",
+    opcode, reg_pc);
+}
+
+/******************** UNDOCUMENTED INSTRUCTIONS ******************/
+
+inline static void cpu6502_ANC(word address) {
+  cpu6502_AND(address);
+  flag_c = (reg_a & 0x80) ? 0 : 1;
+}
+inline static void cpu6502_ASR(word address) {
+  cpu6502_AND(address);
+  cpu6502_LSR_a();
+}
+inline static void cpu6502_DCP(word address) {
+  cpu6502_DEC(address);
+  cpu6502_CMP(address);
+}
+inline static void cpu6502_ISB(word address) {
+  cpu6502_INC(address);
+  cpu6502_SBC(address);
+}
+inline static void cpu6502_LAX(word address) {
+  reg_a = reg_x = flag_n = flag_z = mem_read(address);
+  cpu6502_LDA(address);
+  cpu6502_LDX(address);
+}
+inline static void cpu6502_RLA(word address) {
+  cpu6502_ROL(address);
+  cpu6502_AND(address);
+}
+inline static void cpu6502_RRA(word address) {
+  cpu6502_ROR(address);
+  cpu6502_ADC(address);
+}
+inline static void cpu6502_SAX(word address) {
+  mem_write(address, reg_a & reg_x);
+}
+inline static void cpu6502_SBX(word address) {
+  int data = mem_read(address);
+  flag_c = ((reg_a & reg_x) >= data);
+  reg_x = flag_n = flag_z = ((reg_a & reg_x) - data) & 0xff;
+}
+inline static void cpu6502_SHA(word address) {
+  mem_write(address, reg_a & reg_x & ((address >> 8) + 1));
+}
+inline static void cpu6502_SHX(word address) {
+  mem_write(address, reg_x & ((address >> 8) + 1));
+}
+inline static void cpu6502_SHY(word address) {
+  mem_write(address, reg_y & ((address >> 8) + 1));
+}
+inline static void cpu6502_SLO(word address) {
+  cpu6502_ASL(address);
+  cpu6502_ORA(address);
+}
+inline static void cpu6502_SRE(word address) {
+  cpu6502_LSR(address);
+  cpu6502_EOR(address);
+}
+
+/************************/
+/**** Main functions ****/
+/************************/
+
+void cpu_reset() {
+  /* reset clock */
+  //time_left = 0;
+  /* initialize program counter to RESET vector */
+  reg_pc = mem_read_16(0xfffc);
+}
+
+void cpu_irq() {
+  /* check to see if interrupts are enabled */
+  if ( (reg_p & I_FLAG) == 0 ) {
+
+    /* if so, then jump to IRQ vector */
+    cpu6502_JSR( mem_read_16(0xfffe) );
+    /* push processor status */
+    cpu6502_PHP();
+    /* disable further interrupts */
+    cpu6502_SEI();
+    /* IRQ takes 7(?) cycles */
+    clock_advance(7);
+
+  }
+}
+
+void cpu_nmi() {
+  /* jump to NMI vector */
+  cpu6502_JSR( mem_read_16(0xfffa) );
+  /* push processor status, with B flag clear */
+  update_p();
+  stack_write(reg_s--, reg_p & ~B_FLAG);
+  //cpu6502_PHP();
+}
+
+
+
+/************************ start of main loop ************************/
+
+void cpu_main (int cycles)
+{
+  time_left += cycles;
+
+  while (time_left > 0) {
+
+    /* dispatch next instruction */
+    byte opcode = mem_read(reg_pc++);
+    switch (opcode) {
+
+    case 0x00:  cpu6502_BRK();            clock_advance(7);  break;
+    case 0x01:  cpu6502_ORA(addr_inx());  clock_advance(6);  break;
+    case 0x02:  cpu6502_JAM();                               break;
+    case 0x03:  cpu6502_SLO(addr_inx());  clock_advance(8);  break;
+    case 0x04:  cpu6502_NOP(addr_zpg());  clock_advance(3);  break;
+    case 0x05:  cpu6502_ORA(addr_zpg());  clock_advance(3);  break;
+    case 0x06:  cpu6502_ASL(addr_zpg());  clock_advance(5);  break;
+    case 0x07:  cpu6502_SLO(addr_zpg());  clock_advance(5);  break;
+    case 0x08:  cpu6502_PHP();            clock_advance(3);  break;
+    case 0x09:  cpu6502_ORA(addr_imm());  clock_advance(2);  break;
+    case 0x0a:  cpu6502_ASL_a();          clock_advance(2);  break;
+    case 0x0b:  cpu6502_ANC(addr_imm());  clock_advance(2);  break;
+    case 0x0c:  cpu6502_NOP(addr_abs());  clock_advance(4);  break;
+    case 0x0d:  cpu6502_ORA(addr_abs());  clock_advance(4);  break;
+    case 0x0e:  cpu6502_ASL(addr_abs());  clock_advance(6);  break;
+    case 0x0f:  cpu6502_SLO(addr_abs());  clock_advance(6);  break;
+    case 0x10:  cpu6502_BPL(addr_imm());  clock_advance(2);  break;
+    case 0x11:  cpu6502_ORA(addr_iny());  clock_advance(5);  break;
+    case 0x12:  cpu6502_JAM();                               break;
+    case 0x13:  cpu6502_JAM();   /* SLO (ind),y */           break;
+    case 0x14:  cpu6502_JAM();   /* NOP (zpx)   */           break;
+    case 0x15:  cpu6502_ORA(addr_zpx());  clock_advance(4);  break;
+    case 0x16:  cpu6502_ASL(addr_zpx());  clock_advance(6);  break;
+    case 0x17:  cpu6502_JAM();   /* SLO (zpx)   */           break;
+    case 0x18:  cpu6502_CLC();            clock_advance(2);  break;
+    case 0x19:  cpu6502_ORA(addr_aby());  clock_advance(4);  break;
+    case 0x1a:  cpu6502_JAM();   /* NOP         */           break;
+    case 0x1b:  cpu6502_JAM();   /* SLO (aby)   */           break;
+    case 0x1c:  cpu6502_NOP(addr_abx());  clock_advance(4);  break;
+    case 0x1d:  cpu6502_ORA(addr_abx());  clock_advance(4);  break;
+    case 0x1e:  cpu6502_ASL(addr_abx());  clock_advance(7);  break;
+    case 0x1f:  cpu6502_JAM();   /* SLO (abx)   */           break;
+    case 0x20:  cpu6502_JSR(addr_abs());  clock_advance(6);  break;
+    case 0x21:  cpu6502_AND(addr_inx());  clock_advance(6);  break;
+    case 0x22:  cpu6502_JAM();                               break;
+    case 0x23:  cpu6502_RLA(addr_inx());  clock_advance(8);  break;
+    case 0x24:  cpu6502_BIT(addr_zpg());  clock_advance(3);  break;
+    case 0x25:  cpu6502_AND(addr_zpg());  clock_advance(3);  break;
+    case 0x26:  cpu6502_ROL(addr_zpg());  clock_advance(5);  break;
+    case 0x27:  cpu6502_RLA(addr_zpg());  clock_advance(5);  break;
+    case 0x28:  cpu6502_PLP();            clock_advance(4);  break;
+    case 0x29:  cpu6502_AND(addr_imm());  clock_advance(2);  break;
+    case 0x2a:  cpu6502_ROL_a();          clock_advance(2);  break;
+    case 0x2b:  cpu6502_JAM();   /* ANC (imm)    */          break;
+    case 0x2c:  cpu6502_BIT(addr_abs());  clock_advance(4);  break;
+    case 0x2d:  cpu6502_AND(addr_abs());  clock_advance(4);  break;
+    case 0x2e:  cpu6502_ROL(addr_abs());  clock_advance(6);  break;
+    case 0x2f:  cpu6502_RLA(addr_abs());  clock_advance(6);  break;
+    case 0x30:  cpu6502_BMI(addr_imm());  clock_advance(2);  break;
+    case 0x31:  cpu6502_AND(addr_iny());  clock_advance(5);  break;
+    case 0x32:  cpu6502_JAM();                               break;
+    case 0x33:  cpu6502_JAM();                               break;
+    case 0x34:  cpu6502_JAM();                               break;
+    case 0x35:  cpu6502_AND(addr_zpx());  clock_advance(4);  break;
+    case 0x36:  cpu6502_ROL(addr_zpx());  clock_advance(6);  break;
+    case 0x37:  cpu6502_JAM();                               break;
+    case 0x38:  cpu6502_SEC();            clock_advance(2);  break;
+    case 0x39:  cpu6502_AND(addr_aby());  clock_advance(4);  break;
+    case 0x3a:  cpu6502_JAM();                               break;
+    case 0x3b:  cpu6502_RLA(addr_aby());  clock_advance(7);  break;
+    case 0x3c:  cpu6502_NOP(addr_abx());  clock_advance(4);  break;
+    case 0x3d:  cpu6502_AND(addr_abx());  clock_advance(4);  break;
+    case 0x3e:  cpu6502_ROL(addr_abx());  clock_advance(7);  break;
+    case 0x3f:  cpu6502_RLA(addr_abx());  clock_advance(7);  break;
+    case 0x40:  cpu6502_RTI();            clock_advance(6);  break;
+    case 0x41:  cpu6502_EOR(addr_inx());  clock_advance(6);  break;
+    case 0x42:  cpu6502_JAM();                               break;
+    case 0x43:  cpu6502_JAM();                               break;
+    case 0x44:  cpu6502_NOP(addr_zpg());  clock_advance(3);  break;
+    case 0x45:  cpu6502_EOR(addr_zpg());  clock_advance(3);  break;
+    case 0x46:  cpu6502_LSR(addr_zpg());  clock_advance(5);  break;
+    case 0x47:  cpu6502_SRE(addr_zpg());  clock_advance(5);  break;
+    case 0x48:  cpu6502_PHA();            clock_advance(3);  break;
+    case 0x49:  cpu6502_EOR(addr_imm());  clock_advance(2);  break;
+    case 0x4a:  cpu6502_LSR_a();          clock_advance(2);  break;
+    case 0x4b:  cpu6502_ASR(addr_imm());  clock_advance(2);  break;
+    case 0x4c:  cpu6502_JMP(addr_abs());  clock_advance(3);  break;
+    case 0x4d:  cpu6502_EOR(addr_abs());  clock_advance(4);  break;
+    case 0x4e:  cpu6502_LSR(addr_abs());  clock_advance(6);  break;
+    case 0x4f:  cpu6502_JAM();                               break;
+    case 0x50:  cpu6502_BVC(addr_imm());  clock_advance(2);  break;
+    case 0x51:  cpu6502_EOR(addr_iny());  clock_advance(5);  break;
+    case 0x52:  cpu6502_JAM();                               break;
+    case 0x53:  cpu6502_JAM();                               break;
+    case 0x54:  cpu6502_NOP(addr_zpx());  clock_advance(4);  break;
+    case 0x55:  cpu6502_EOR(addr_zpx());  clock_advance(4);  break;
+    case 0x56:  cpu6502_LSR(addr_zpx());  clock_advance(6);  break;
+    case 0x57:  cpu6502_JAM();                               break;
+    case 0x58:  cpu6502_CLI();            clock_advance(2);  break;
+    case 0x59:  cpu6502_EOR(addr_aby());  clock_advance(4);  break;
+    case 0x5a:  cpu6502_JAM();                               break;
+    case 0x5b:  cpu6502_JAM();                               break;
+    case 0x5c:  cpu6502_JAM();                               break;
+    case 0x5d:  cpu6502_EOR(addr_abx());  clock_advance(4);  break;
+    case 0x5e:  cpu6502_LSR(addr_abx());  clock_advance(7);  break;
+    case 0x5f:  cpu6502_JAM();                               break;
+    case 0x60:  cpu6502_RTS();            clock_advance(6);  break;
+    case 0x61:  cpu6502_ADC(addr_inx());  clock_advance(6);  break;
+    case 0x62:  cpu6502_JAM();                               break;
+    case 0x63:  cpu6502_RRA(addr_inx());  clock_advance(8);  break;
+    case 0x64:  cpu6502_NOP(addr_zpg());  clock_advance(3);  break;
+    case 0x65:  cpu6502_ADC(addr_zpg());  clock_advance(3);  break;
+    case 0x66:  cpu6502_ROR(addr_zpg());  clock_advance(5);  break;
+    case 0x67:  cpu6502_RRA(addr_zpg());  clock_advance(5);  break;
+    case 0x68:  cpu6502_PLA();            clock_advance(4);  break;
+    case 0x69:  cpu6502_ADC(addr_imm());  clock_advance(2);  break;
+    case 0x6a:  cpu6502_ROR_a();          clock_advance(2);  break;
+    case 0x6b:  cpu6502_JAM();                               break;
+    case 0x6c:  cpu6502_JMP(addr_ind());  clock_advance(5);  break;
+    case 0x6d:  cpu6502_ADC(addr_abs());  clock_advance(4);  break;
+    case 0x6e:  cpu6502_ROR(addr_abs());  clock_advance(6);  break;
+    case 0x6f:  cpu6502_JAM();                               break;
+    case 0x70:  cpu6502_BVS(addr_imm());  clock_advance(2);  break;
+    case 0x71:  cpu6502_ADC(addr_iny());  clock_advance(5);  break;
+    case 0x72:  cpu6502_JAM();                               break;
+    case 0x73:  cpu6502_RRA(addr_iny());  clock_advance(8);  break;
+    case 0x74:  cpu6502_NOP(addr_zpx());  clock_advance(4);  break;
+    case 0x75:  cpu6502_ADC(addr_zpx());  clock_advance(4);  break;
+    case 0x76:  cpu6502_ROR(addr_zpx());  clock_advance(6);  break;
+    case 0x77:  cpu6502_JAM();                               break;
+    case 0x78:  cpu6502_SEI();            clock_advance(2);  break;
+    case 0x79:  cpu6502_ADC(addr_aby());  clock_advance(4);  break;
+    case 0x7a:  cpu6502_JAM();                               break;
+    case 0x7b:  cpu6502_JAM();                               break;
+    case 0x7c:  cpu6502_JAM();                               break;
+    case 0x7d:  cpu6502_ADC(addr_abx());  clock_advance(4);  break;
+    case 0x7e:  cpu6502_ROR(addr_abx());  clock_advance(7);  break;
+    case 0x7f:  cpu6502_RRA(addr_abx());  clock_advance(7);  break;
+    case 0x81:  cpu6502_STA(addr_inx());  clock_advance(6);  break;
+    case 0x82:  cpu6502_NOP(addr_imm());  clock_advance(2);  break;
+    case 0x83:  cpu6502_SAX(addr_inx());  clock_advance(6);  break;
+    case 0x84:  cpu6502_STY(addr_zpg());  clock_advance(3);  break;
+    case 0x85:  cpu6502_STA(addr_zpg());  clock_advance(3);  break;
+    case 0x86:  cpu6502_STX(addr_zpg());  clock_advance(3);  break;
+    case 0x87:  cpu6502_SAX(addr_zpg());  clock_advance(3);  break;
+    case 0x88:  cpu6502_DEY();            clock_advance(2);  break;
+    case 0x89:  cpu6502_NOP(addr_imm());  clock_advance(2);  break;
+    case 0x8a:  cpu6502_TXA();            clock_advance(2);  break;
+    case 0x8b:  cpu6502_JAM();                               break;
+    case 0x8c:  cpu6502_STY(addr_abs());  clock_advance(4);  break;
+    case 0x8d:  cpu6502_STA(addr_abs());  clock_advance(4);  break;
+    case 0x8e:  cpu6502_STX(addr_abs());  clock_advance(4);  break;
+    case 0x8f:  cpu6502_SAX(addr_abs());  clock_advance(4);  break;
+    case 0x90:  cpu6502_BCC(addr_imm());  clock_advance(2);  break;
+    case 0x91:  cpu6502_STA(addr_iny());  clock_advance(5);  break;
+    case 0x92:  cpu6502_JAM();                               break;
+    case 0x93:  cpu6502_JAM();                               break;
+    case 0x94:  cpu6502_STY(addr_zpx());  clock_advance(4);  break;
+    case 0x95:  cpu6502_STA(addr_zpx());  clock_advance(4);  break;
+    case 0x96:  cpu6502_STX(addr_zpy());  clock_advance(4);  break;
+    case 0x97:  cpu6502_SAX(addr_zpy());  clock_advance(4);  break;
+    case 0x98:  cpu6502_TYA();            clock_advance(2);  break;
+    case 0x99:  cpu6502_STA(addr_aby());  clock_advance(4);  break;
+    case 0x9a:  cpu6502_TXS();            clock_advance(2);  break;
+    case 0x9b:  cpu6502_JAM();                               break;
+    case 0x9c:  cpu6502_SHY(addr_abx());  clock_advance(5);  break;
+    case 0x9d:  cpu6502_STA(addr_abx());  clock_advance(4);  break;
+    case 0x9e:  cpu6502_SHX(addr_aby());  clock_advance(5);  break;
+    case 0x9f:  cpu6502_SHA(addr_aby());  clock_advance(5);  break;
+    case 0xa0:  cpu6502_LDY(addr_imm());  clock_advance(2);  break;
+    case 0xa1:  cpu6502_LDA(addr_inx());  clock_advance(6);  break;
+    case 0xa2:  cpu6502_LDX(addr_imm());  clock_advance(2);  break;
+    case 0xa3:  cpu6502_JAM();                               break;
+    case 0xa4:  cpu6502_LDY(addr_zpg());  clock_advance(3);  break;
+    case 0xa5:  cpu6502_LDA(addr_zpg());  clock_advance(3);  break;
+    case 0xa6:  cpu6502_LDX(addr_zpg());  clock_advance(3);  break;
+    case 0xa7:  cpu6502_LAX(addr_zpg());  clock_advance(3);  break;
+    case 0xa8:  cpu6502_TAY();            clock_advance(2);  break;
+    case 0xa9:  cpu6502_LDA(addr_imm());  clock_advance(2);  break;
+    case 0xaa:  cpu6502_TAX();            clock_advance(2);  break;
+    case 0xab:  cpu6502_JAM();                               break;
+    case 0xac:  cpu6502_LDY(addr_abs());  clock_advance(4);  break;
+    case 0xad:  cpu6502_LDA(addr_abs());  clock_advance(4);  break;
+    case 0xae:  cpu6502_LDX(addr_abs());  clock_advance(4);  break;
+    case 0xaf:  cpu6502_JAM();                               break;
+    case 0xb0:  cpu6502_BCS(addr_imm());  clock_advance(2);  break;
+    case 0xb1:  cpu6502_LDA(addr_iny());  clock_advance(5);  break;
+    case 0xb2:  cpu6502_JAM();                               break;
+    case 0xb3:  cpu6502_LAX(addr_iny());  clock_advance(5);  break;
+    case 0xb4:  cpu6502_LDY(addr_zpx());  clock_advance(4);  break;
+    case 0xb5:  cpu6502_LDA(addr_zpx());  clock_advance(4);  break;
+    case 0xb6:  cpu6502_LDX(addr_zpy());  clock_advance(4);  break;
+    case 0xb7:  cpu6502_JAM();                               break;
+    case 0xb8:  cpu6502_CLV();            clock_advance(2);  break;
+    case 0xb9:  cpu6502_LDA(addr_aby());  clock_advance(4);  break;
+    case 0xba:  cpu6502_TSX();            clock_advance(2);  break;
+    case 0xbb:  cpu6502_JAM();                               break;
+    case 0xbc:  cpu6502_LDY(addr_abx());  clock_advance(4);  break;
+    case 0xbd:  cpu6502_LDA(addr_abx());  clock_advance(4);  break;
+    case 0xbe:  cpu6502_LDX(addr_aby());  clock_advance(4);  break;
+    case 0xbf:  cpu6502_LAX(addr_aby());  clock_advance(4);  break;
+    case 0xc0:  cpu6502_CPY(addr_imm());  clock_advance(2);  break;
+    case 0xc1:  cpu6502_CMP(addr_inx());  clock_advance(6);  break;
+    case 0xc2:  cpu6502_NOP(addr_imm());  clock_advance(2);  break;
+    case 0xc3:  cpu6502_DCP(addr_inx());  clock_advance(8);  break;
+    case 0xc4:  cpu6502_CPY(addr_zpg());  clock_advance(3);  break;
+    case 0xc5:  cpu6502_CMP(addr_zpg());  clock_advance(3);  break;
+    case 0xc6:  cpu6502_DEC(addr_zpg());  clock_advance(5);  break;
+    case 0xc7:  cpu6502_DCP(addr_zpg());  clock_advance(5);  break;
+    case 0xc8:  cpu6502_INY();            clock_advance(2);  break;
+    case 0xc9:  cpu6502_CMP(addr_imm());  clock_advance(2);  break;
+    case 0xca:  cpu6502_DEX();            clock_advance(2);  break;
+    case 0xcb:  cpu6502_SBX(addr_imm());  clock_advance(2);  break;
+    case 0xcc:  cpu6502_CPY(addr_abs());  clock_advance(4);  break;
+    case 0xcd:  cpu6502_CMP(addr_abs());  clock_advance(4);  break;
+    case 0xce:  cpu6502_DEC(addr_abs());  clock_advance(6);  break;
+    case 0xcf:  cpu6502_JAM();                               break;
+    case 0xd0:  cpu6502_BNE(addr_imm());  clock_advance(2);  break;
+    case 0xd1:  cpu6502_CMP(addr_iny());  clock_advance(5);  break;
+    case 0xd2:  cpu6502_JAM();                               break;
+    case 0xd3:  cpu6502_JAM();                               break;
+    case 0xd4:  cpu6502_JAM();                               break;
+    case 0xd5:  cpu6502_CMP(addr_zpx());  clock_advance(4);  break;
+    case 0xd6:  cpu6502_DEC(addr_zpx());  clock_advance(6);  break;
+    case 0xd7:  cpu6502_JAM();                               break;
+    case 0xd8:  cpu6502_CLD();            clock_advance(2);  break;
+    case 0xd9:  cpu6502_CMP(addr_aby());  clock_advance(4);  break;
+    case 0xda:  cpu6502_JAM();                               break;
+    case 0xdb:  cpu6502_JAM();                               break;
+    case 0xdc:  cpu6502_JAM();                               break;
+    case 0xdd:  cpu6502_CMP(addr_abx());  clock_advance(4);  break;
+    case 0xde:  cpu6502_DEC(addr_abx());  clock_advance(7);  break;
+    case 0xdf:  cpu6502_JAM();                               break;
+    case 0xe0:  cpu6502_CPX(addr_imm());  clock_advance(2);  break;
+    case 0xe1:  cpu6502_SBC(addr_inx());  clock_advance(6);  break;
+    case 0xe2:  cpu6502_NOP(addr_imm());  clock_advance(2);  break;
+    case 0xe3:  cpu6502_JAM();                               break;
+    case 0xe4:  cpu6502_CPX(addr_zpg());  clock_advance(3);  break;
+    case 0xe5:  cpu6502_SBC(addr_zpg());  clock_advance(3);  break;
+    case 0xe6:  cpu6502_INC(addr_zpg());  clock_advance(5);  break;
+    case 0xe7:  cpu6502_ISB(addr_zpg());  clock_advance(5);  break;
+    case 0xe8:  cpu6502_INX();            clock_advance(2);  break;
+    case 0xe9:  cpu6502_SBC(addr_imm());  clock_advance(2);  break;
+    case 0xea:  /* NOP no operation */    clock_advance(2);  break;
+    case 0xeb:  cpu6502_SBC(addr_imm());  clock_advance(2);  break;
+    case 0xec:  cpu6502_CPX(addr_abs());  clock_advance(4);  break;
+    case 0xed:  cpu6502_SBC(addr_abs());  clock_advance(4);  break;
+    case 0xee:  cpu6502_INC(addr_abs());  clock_advance(6);  break;
+    case 0xef:  cpu6502_JAM();                               break;
+    case 0xf0:  cpu6502_BEQ(addr_imm());  clock_advance(2);  break;
+    case 0xf1:  cpu6502_SBC(addr_iny());  clock_advance(5);  break;
+    case 0xf2:  cpu6502_JAM();                               break;
+    case 0xf3:  cpu6502_JAM();                               break;
+    case 0xf4:  cpu6502_JAM();                               break;
+    case 0xf5:  cpu6502_SBC(addr_zpx());  clock_advance(4);  break;
+    case 0xf6:  cpu6502_INC(addr_zpx());  clock_advance(6);  break;
+    case 0xf7:  cpu6502_JAM();                               break;
+    case 0xf8:  cpu6502_SED();            clock_advance(2);  break;
+    case 0xf9:  cpu6502_SBC(addr_aby());  clock_advance(4);  break;
+    case 0xfa:  cpu6502_JAM();                               break;
+    case 0xfb:  cpu6502_ISB(addr_aby());  clock_advance(7);  break;
+    case 0xfc:  cpu6502_NOP(addr_abx());  clock_advance(4);  break;
+    case 0xfd:  cpu6502_SBC(addr_abx());  clock_advance(4);  break;
+    case 0xfe:  cpu6502_INC(addr_abx());  clock_advance(7);  break;
+    case 0xff:  cpu6502_ISB(addr_abx());  clock_advance(7);  break;
+    }
+  } /* keep looping until clock runs out */
+}
+
+/* list of documented instructions:
+   ADC, AND, ASL, BCC, BCS, BEQ, BIT, BMI, BNE, BPL, BRK, BVC, BVS, CLC,
+   CLD, CLI, CLV, CMP, CPX, CPY, DEC, DEX, DEY, EOR, INC, INX, INY, JMP,
+   JSR, LDA, LDX, LDY, LSR, NOP, ORA, PHA, PHP, PLA, PLP, ROL, ROR, RTI,
+   RTS, SBC, SEC, SED, SEI, STA, STX, STY, TAX, TAY, TSX, TXA, TXS, TYA
+*/
