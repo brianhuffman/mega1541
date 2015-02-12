@@ -522,8 +522,9 @@ inline static void cpu6502_BIT(word address) {
 }
 inline static void cpu6502_JAM(void) {
   byte opcode = mem_read(--reg_pc);
-  fprintf(stderr, "Instruction %02x at $%04x crashed the CPU!\n",
-    opcode, reg_pc);
+  digitalWrite(13, HIGH);
+  /*fprintf(stderr, "Instruction %02x at $%04x crashed the CPU!\n",
+    opcode, reg_pc);*/
 }
 
 /******************** UNDOCUMENTED INSTRUCTIONS ******************/
