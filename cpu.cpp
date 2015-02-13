@@ -134,7 +134,7 @@ inline static void update_p() {
 
   /* update negative, zero, and carry flags */
   if (test_n()) reg_p |= N_FLAG;
-  else if (test_z()) reg_p |= Z_FLAG;
+  if (test_z()) reg_p |= Z_FLAG;
   if (flag_c) reg_p |= C_FLAG;
 }
 
