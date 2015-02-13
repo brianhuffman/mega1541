@@ -24,7 +24,7 @@ byte *stack;
 /**** Utility functions ****/
 /***************************/
 
-static int time_left;
+static long time_left;
 
 inline static void clock_advance (int ticks) {
   time_left -= ticks;
@@ -620,7 +620,7 @@ void cpu_nmi() {
 
 /************************ start of main loop ************************/
 
-void cpu_main (int cycles)
+void cpu_main (long cycles)
 {
   time_left += cycles;
 

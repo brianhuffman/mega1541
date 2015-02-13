@@ -6,7 +6,7 @@
 
 #include <Arduino.h>
 
-void cpu_main (int cycles);
+void cpu_main (long cycles);
 
 void cpu_reset (void);
 void cpu_irq (void);
