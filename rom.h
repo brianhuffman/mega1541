@@ -6,7 +6,7 @@
 
 extern const byte dos1541[16384] PROGMEM;
 
-inline byte read_rom(word address) {
+inline static byte read_rom(word address) {
   return pgm_read_byte( &(dos1541[address & 0x3fff]) );
 }
 

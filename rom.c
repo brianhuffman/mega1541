@@ -1,5 +1,5 @@
-// 1541 dos rom image (16 kbytes)
-// Generated from file "dos1541" from VICE distribution
+/* 1541 dos rom image (16 kbytes) */
+/* Generated from file "dos1541" from VICE distribution */
 
 #include "rom.h"
 

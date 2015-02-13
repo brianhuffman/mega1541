@@ -1,4 +1,4 @@
-/* memory.cpp */
+/* memory.c */
 
 #include "memory.h"
 #include "rom.h"
@@ -8,7 +8,8 @@ byte ram[RAM_SIZE];
 
 /* clear all ram */
 void mem_reset() {
-  for (word i = 0; i < RAM_SIZE; i++) ram[i] = 0;
+  word i;
+  for (i = 0; i < RAM_SIZE; i++) ram[i] = 0;
 }
 
 /******************* MEMORY READ *************************/
@@ -34,13 +35,13 @@ byte mem_read(word address) {
 
 word mem_read_16(word address) {
   if (address < RAM_SIZE-1) {
-    return word(ram[address+1], ram[address]);
+    return mkWord(ram[address+1], ram[address]);
   }
   else if (address > 0xc000 && address < 0xffff) {
-    return word(read_rom(address + 1), read_rom(address));
+    return mkWord(read_rom(address + 1), read_rom(address));
   }
   else {
-    return word(mem_read(address + 1), mem_read(address));
+    return mkWord(mem_read(address + 1), mem_read(address));
   }
 }
 
@@ -58,4 +59,3 @@ void mem_write(word address, byte value) {
   */
   // otherwise nothing happens
 }
-

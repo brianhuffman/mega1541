@@ -41,7 +41,7 @@ inline word addr_imm() {
 
 /* zero page */
 inline word addr_zpg() {
-  return word(mem_read(reg_pc++));
+  return (word)(mem_read(reg_pc++));
 }
 
 /* absolute */
@@ -54,19 +54,19 @@ inline word addr_abs() {
 /* zero page, x */
 inline word addr_zpx() {
   byte address = mem_read(reg_pc++) + reg_x;
-  return word(address);
+  return (word)address;
 }
 
 /* zero page, y */
 inline word addr_zpy() {
   byte address = mem_read(reg_pc++) + reg_y;
-  return word(address);
+  return (word)address;
 }
 
 /* absolute, x */
 inline word addr_abx() {
   word base = mem_read_16(reg_pc);
-  word address = base + word(reg_x);
+  word address = base + (word)reg_x;
   reg_pc += 2;
   /* test for page boundary crossing */
   if (highByte(base) != highByte(address)) clock_advance(1);
@@ -76,7 +76,7 @@ inline word addr_abx() {
 /* absolute, y */
 inline word addr_aby() {
   word base = mem_read_16(reg_pc);
-  word address = base + word(reg_y);
+  word address = base + (word)reg_y;
   reg_pc += 2;
   /* test for page boundary crossing */
   if (highByte(base) != highByte(address)) clock_advance(1);
@@ -86,14 +86,14 @@ inline word addr_aby() {
 /* indexed indirect */
 inline word addr_inx() {
   byte index = mem_read(reg_pc++) + reg_x;
-  return mem_read_16(word(index));
+  return mem_read_16((word)index);
 }
 
 /* indirect indexed */
 inline word addr_iny() {
   byte index = mem_read(reg_pc++);
   word base = mem_read_zero_page_16(index);
-  word address = base + word(reg_y);
+  word address = base + (word)reg_y;
   /* test for page boundary crossing */
   if (highByte(base) != highByte(address)) clock_advance(1);
   return address;
@@ -145,7 +145,7 @@ inline static byte opcode_add(byte data) {
 
   if (reg_p & D_FLAG) {
 
-    total = word(reg_a) + word(data) + word(flag_c);
+    total = (word)reg_a + (word)data + (word)flag_c;
 
     /* set zero flag before BCD fixup */
     flag_z = lowByte(total);
@@ -179,7 +179,7 @@ inline static byte opcode_add(byte data) {
 
   /* non-decimal mode */
   else {
-    total = word(reg_a) + word(data) + word(flag_c);
+    total = (word)reg_a + (word)data + (word)flag_c;
 
     flag_c = highByte(total);
     flag_n = flag_z = result = lowByte(total);
@@ -231,7 +231,7 @@ inline static byte opcode_sub(byte data) {
 
   /* non-decimal mode */
   else {
-    total = word(reg_a) + word(~data) + flag_c;
+    total = (word)reg_a + (word)(~data) + (word)flag_c;
 
     flag_c = highByte(total);
     result = lowByte(total);
@@ -313,7 +313,7 @@ inline static void cpu6502_TYA(void) {
 
 inline static void cpu6502_branch(byte condition, word address) {
   if (condition) {
-    char offset = char(mem_read(address));
+    char offset = (char)(mem_read(address));
     word new_pc = reg_pc + offset;
     /* add extra cycle if branching to another page */
     if (highByte(reg_pc) != highByte(new_pc)) clock_advance(2);

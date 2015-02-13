@@ -1,8 +1,10 @@
 #include <avr/pgmspace.h>
 
+extern "C" {
 #include "rom.h"
 #include "memory.h"
 #include "cpu.h"
+}
 
 ////////////////////////////////////////////////////////////
 
@@ -23,6 +25,7 @@ void loop() {
   unsigned long time2 = micros();
   unsigned long delta = time2 - time1;
   Serial.println(delta);
-  delayMicroseconds(1000000 - delta);
+  //Serial.println(cpu_state_string());
+  delay(500);
 }
 
