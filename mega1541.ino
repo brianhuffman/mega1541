@@ -23,6 +23,6 @@ void loop() {
   unsigned long time2 = micros();
   unsigned long delta = time2 - time1;
   Serial.println(delta);
-  delayMicros(1000000 - delta);
+  delayMicroseconds(1000000 - delta);
 }
 
