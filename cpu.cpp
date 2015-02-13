@@ -18,7 +18,7 @@ static word reg_pc;
 static byte reg_a, reg_x, reg_y, reg_s, reg_p;
 static byte flag_n, flag_z, flag_c;
 
-unsigned char *stack;
+byte *stack;
 
 /***************************/
 /**** Utility functions ****/
@@ -41,7 +41,7 @@ inline word addr_imm() {
 
 /* zero page */
 inline word addr_zpg() {
-  return mem_read(reg_pc++);
+  return word(mem_read(reg_pc++));
 }
 
 /* absolute */
@@ -53,54 +53,50 @@ inline word addr_abs() {
 
 /* zero page, x */
 inline word addr_zpx() {
-  word address = mem_read(reg_pc++) + reg_x;
-  return (address &= 0xff);
+  byte address = mem_read(reg_pc++) + reg_x;
+  return word(address);
 }
 
 /* zero page, y */
 inline word addr_zpy() {
-  word address = mem_read(reg_pc++) + reg_y;
-  return (address &= 0xff);
+  byte address = mem_read(reg_pc++) + reg_y;
+  return word(address);
 }
 
 /* absolute, x */
 inline word addr_abx() {
-  word address = mem_read(reg_pc++) + reg_x;
-
+  word base = mem_read_16(reg_pc);
+  word address = base + word(reg_x);
+  reg_pc += 2;
   /* test for page boundary crossing */
-  if (address > 0xff) clock_advance(1);
-
-  return address + (mem_read(reg_pc++) << 8);
+  if (highByte(base) != highByte(address)) clock_advance(1);
+  return address;
 }
 
 /* absolute, y */
 inline word addr_aby() {
-  word address = mem_read(reg_pc++) + reg_y;
-
+  word base = mem_read_16(reg_pc);
+  word address = base + word(reg_y);
+  reg_pc += 2;
   /* test for page boundary crossing */
-  if (address > 0xff) clock_advance(1);
-
-  return address + (mem_read(reg_pc++) << 8);
+  if (highByte(base) != highByte(address)) clock_advance(1);
+  return address;
 }
 
 /* indexed indirect */
 inline word addr_inx() {
-  word index = mem_read(reg_pc++) + reg_x;
-  index &= 0xff;
-  return mem_read_16(index);
+  byte index = mem_read(reg_pc++) + reg_x;
+  return mem_read_16(word(index));
 }
 
 /* indirect indexed */
 inline word addr_iny() {
-  word index, address;
-
-  index = mem_read(reg_pc++);
-  address = mem_read(index) + reg_y;
-
+  byte index = mem_read(reg_pc++);
+  word base = mem_read_zero_page_16(index);
+  word address = base + word(reg_y);
   /* test for page boundary crossing */
-  if (address > 0xff) clock_advance(1);
-
-  return address + (mem_read(index + 1) << 8);
+  if (highByte(base) != highByte(address)) clock_advance(1);
+  return address;
 }
 
 /* absolute indirect */
@@ -398,8 +394,8 @@ inline static void cpu6502_JSR(word address) {
   /* pre-decrement program counter */
   reg_pc--;
   /* push current reg_pc on stack, MSB first */
-  stack_write(reg_s--, reg_pc >> 8);
-  stack_write(reg_s--, reg_pc & 0xff);
+  stack_write(reg_s--, highByte(reg_pc));
+  stack_write(reg_s--, lowByte(reg_pc));
   reg_pc = address;
 }
 inline static void cpu6502_RTS(void) {

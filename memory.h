@@ -19,6 +19,10 @@ inline byte mem_read_zero_page(byte address) {
   return ram[address];
 }
 
+inline word mem_read_zero_page_16(byte address) {
+  return word(ram[address + 1], ram[address]);
+}
+
 inline void mem_write_zero_page(byte address, byte value) {
   ram[address] = value;
 }
