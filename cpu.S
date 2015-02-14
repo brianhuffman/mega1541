@@ -916,10 +916,7 @@ addr_imm:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,rPC0	 ;  reg_pc.0, reg_pc
-	movw r18,r24	 ;  reg_pc.2, reg_pc.0
-	subi r18,-1	 ;  reg_pc.2,
-	sbci r19,-1	 ;  reg_pc.2,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.2
+	adiw rPC0,1	 ;  PC++
 	ret
 	.size	addr_imm, .-addr_imm
 	.section	.text.addr_zpg,"ax",@progbits
@@ -931,10 +928,7 @@ addr_zpg:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,rPC0	 ;  reg_pc.3, reg_pc
-	movw r18,r24	 ;  reg_pc.5, reg_pc.3
-	subi r18,-1	 ;  reg_pc.5,
-	sbci r19,-1	 ;  reg_pc.5,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.5
+	adiw rPC0,1	 ;  PC++
 	call mem_read	 ; 
 	ldi r25,0	 ; 
 	ret
@@ -949,10 +943,7 @@ addr_abs:
 .L__stack_usage = 0
 	movw r24,rPC0	 ; , reg_pc
 	call mem_read_16	 ; 
-	movw r18,rPC0	 ;  reg_pc.7, reg_pc
-	subi r18,-2	 ;  reg_pc.7,
-	sbci r19,-1	 ;  reg_pc.7,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.7
+	adiw rPC0,2	 ;  PC += 2
 	ret
 	.size	addr_abs, .-addr_abs
 	.section	.text.addr_zpx,"ax",@progbits
@@ -964,10 +955,7 @@ addr_zpx:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,rPC0	 ;  reg_pc.8, reg_pc
-	movw r18,r24	 ;  reg_pc.10, reg_pc.8
-	subi r18,-1	 ;  reg_pc.10,
-	sbci r19,-1	 ;  reg_pc.10,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.10
+	adiw rPC0,1	 ;  PC++
 	call mem_read	 ; 
 	add r24,rX
 	ldi r25,0	 ; 
@@ -982,10 +970,7 @@ addr_zpy:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,rPC0	 ;  reg_pc.12, reg_pc
-	movw r18,r24	 ;  reg_pc.14, reg_pc.12
-	subi r18,-1	 ;  reg_pc.14,
-	sbci r19,-1	 ;  reg_pc.14,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.14
+	adiw rPC0,1	 ;  PC++
 	call mem_read	 ; 
 	add r24,rY
 	ldi r25,0	 ; 
@@ -1007,10 +992,7 @@ addr_abx:
 	movw r16,r24	 ;  address, base
 	add r16,r18	 ;  address, reg_x
 	adc r17,__zero_reg__	 ;  address
-	movw r18,rPC0	 ;  reg_pc.18, reg_pc
-	subi r18,-2	 ;  reg_pc.18,
-	sbci r19,-1	 ;  reg_pc.18,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.18
+	adiw rPC0,2	 ;  PC += 2
 	cp r17,r25	 ;  tmp18, base
 	breq .L84	 ; ,
 	ldi r24,lo8(1)	 ; ,
@@ -1038,10 +1020,7 @@ addr_aby:
 	movw r16,r24	 ;  address, base
 	add r16,r18	 ;  address, reg_y
 	adc r17,__zero_reg__	 ;  address
-	movw r18,rPC0	 ;  reg_pc.23, reg_pc
-	subi r18,-2	 ;  reg_pc.23,
-	sbci r19,-1	 ;  reg_pc.23,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.23
+	adiw rPC0,2	 ;  PC += 2
 	cp r17,r25	 ;  tmp18, base
 	breq .L86	 ; ,
 	ldi r24,lo8(1)	 ; ,
@@ -1062,10 +1041,7 @@ addr_inx:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,rPC0	 ;  reg_pc.24, reg_pc
-	movw r18,r24	 ;  reg_pc.26, reg_pc.24
-	subi r18,-1	 ;  reg_pc.26,
-	sbci r19,-1	 ;  reg_pc.26,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.26
+	adiw rPC0,1	 ;  PC++
 	call mem_read	 ; 
 	add r24,rX	 ;  index,
 	ldi r25,0	 ; 
@@ -1082,10 +1058,7 @@ addr_iny:
 /* stack size = 2 */
 .L__stack_usage = 2
 	movw r24,rPC0	 ;  reg_pc.28, reg_pc
-	movw r18,r24	 ;  reg_pc.30, reg_pc.28
-	subi r18,-1	 ;  reg_pc.30,
-	sbci r19,-1	 ;  reg_pc.30,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.30
+	adiw rPC0,1	 ;  PC++
 	call mem_read	 ; 
 	mov r30,r24	 ;  tmp63, index
 	ldi r31,0	 ; 
@@ -1122,10 +1095,7 @@ addr_ind:
 .L__stack_usage = 0
 	movw r24,rPC0	 ; , reg_pc
 	call mem_read_16	 ; 
-	movw r18,rPC0	 ;  reg_pc.33, reg_pc
-	subi r18,-2	 ;  reg_pc.33,
-	sbci r19,-1	 ;  reg_pc.33,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.33
+	adiw rPC0,2	 ;  PC += 2
 	jmp mem_read_16	 ; 
 	.size	addr_ind, .-addr_ind
 	.section	.text.cpu_reset,"ax",@progbits
@@ -1246,10 +1216,7 @@ cpu_main:
 	brlt .+4	 ; 
 	jmp .L366	 ; 
 	movw r24,rPC0	 ;  reg_pc.64, reg_pc
-	movw r18,r24	 ;  reg_pc.66, reg_pc.64
-	subi r18,-1	 ;  reg_pc.66,
-	sbci r19,-1	 ;  reg_pc.66,
-	movw rPC0,r18	 ;  reg_pc, reg_pc.66
+	adiw rPC0,1	 ;  PC++
 	call mem_read	 ; 
 	ldi r25,0	 ;  opcode
 	movw r30,r24	 ;  tmp360,
