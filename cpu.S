@@ -1110,6 +1110,8 @@ cpu_reset:
 	ldi r25,lo8(-1)	 ; ,
 	call mem_read_16	 ; 
 	movw rPC0,r24	 ;  reg_pc,
+	sts reg_pc,rPC0
+	sts reg_pc+1,rPC1
 	ret
 	.size	cpu_reset, .-cpu_reset
 	.section	.text.cpu_irq,"ax",@progbits
