@@ -1,9 +1,25 @@
-	.file	"cpu.c"
+	.file	"cpu.S"
 __SP_H__ = 0x3e
 __SP_L__ = 0x3d
 __SREG__ = 0x3f
 __tmp_reg__ = 0
 __zero_reg__ = 1
+
+#define rPC_lo r2
+#define rPC_hi r3
+#define rA r4
+#define rX r5
+#define rY r6
+#define rS r7
+#define rP r8
+#define rN r9
+#define rZ r10
+#define rC r11
+#define rTIME0 r12
+#define rTIME1 r13
+#define rTIME2 r14
+#define rTIME3 r15
+
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
  ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -1249,13 +1265,27 @@ cpu_nmi:
 .global	cpu_main
 	.type	cpu_main, @function
 cpu_main:
+	push rPC_lo
+	push rPC_hi
+	push rA
+	push rX
+	push rY
+	push rS
+	push rP
+	push rN
+	push rZ
+	push rC
+	push rTIME0
+	push rTIME1
+	push rTIME2
+	push rTIME3
 	push r16	 ; 
 	push r17	 ; 
 	push r28	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 3 */
-.L__stack_usage = 3
+/* stack size = 17 */
+.L__stack_usage = 17
 	lds r16,time_left	 ;  time_left.63, time_left
 	lds r17,time_left+1	 ;  time_left.63, time_left
 	lds r18,time_left+2	 ;  time_left.63, time_left
@@ -3235,6 +3265,20 @@ cpu_main:
 	pop r28	 ; 
 	pop r17	 ; 
 	pop r16	 ; 
+	pop rTIME3
+	pop rTIME2
+	pop rTIME1
+	pop rTIME0
+	pop rC
+	pop rZ
+	pop rN
+	pop rP
+	pop rS
+	pop rY
+	pop rX
+	pop rA
+	pop rPC_hi
+	pop rPC_lo
 	ret
 	.size	cpu_main, .-cpu_main
 	.section	.bss.time_left,"aw",@nobits
