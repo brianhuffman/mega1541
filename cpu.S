@@ -1205,11 +1205,8 @@ cpu_main:
 	adc rTIME3,r25	 ;  time_left.63, cycles
 	ldi r16,lo8(1)	 ;  D.4025,
 .L96:
-	cp __zero_reg__,rTIME0	 ;  time_left
-	cpc __zero_reg__,rTIME1	 ;  time_left
-	cpc __zero_reg__,rTIME2	 ;  time_left
-	cpc __zero_reg__,rTIME3	 ;  time_left
-	brlt .+4	 ; 
+	tst rTIME3	 ;  time_left
+	brpl .+4	 ; 
 	jmp .L366	 ; 
 	movw r24,rPC0	 ;  reg_pc.64, reg_pc
 	adiw rPC0,1	 ;  PC++
