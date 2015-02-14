@@ -5,8 +5,8 @@ __SREG__ = 0x3f
 __tmp_reg__ = 0
 __zero_reg__ = 1
 
-#define rPC_lo r2
-#define rPC_hi r3
+#define rPC0 r2
+#define rPC1 r3
 #define rA r4
 #define rX r5
 #define rY r6
@@ -79,18 +79,18 @@ clock_advance:
 	sbrc r25,7	 ;  D.3675
 	com r26	 ;  D.3675
 	mov r27,r26	 ;  D.3675
-	lds r20,time_left	 ;  time_left.20, time_left
-	lds r21,time_left+1	 ;  time_left.20, time_left
-	lds r22,time_left+2	 ;  time_left.20, time_left
-	lds r23,time_left+3	 ;  time_left.20, time_left
+	mov r20,rTIME0	 ;  time_left.20, time_left
+	mov r21,rTIME1	 ;  time_left.20, time_left
+	mov r22,rTIME2	 ;  time_left.20, time_left
+	mov r23,rTIME3	 ;  time_left.20, time_left
 	sub r20,r24	 ;  time_left.20, D.3675
 	sbc r21,r25	 ;  time_left.20, D.3675
 	sbc r22,r26	 ;  time_left.20, D.3675
 	sbc r23,r27	 ;  time_left.20, D.3675
-	sts time_left,r20	 ;  time_left, time_left.20
-	sts time_left+1,r21	 ;  time_left, time_left.20
-	sts time_left+2,r22	 ;  time_left, time_left.20
-	sts time_left+3,r23	 ;  time_left, time_left.20
+	mov rTIME0,r20	 ;  time_left, time_left.20
+	mov rTIME1,r21	 ;  time_left, time_left.20
+	mov rTIME2,r22	 ;  time_left, time_left.20
+	mov rTIME3,r23	 ;  time_left, time_left.20
 	ret
 	.size	clock_advance, .-clock_advance
 	.section	.text.cpu6502_PLP,"ax",@progbits
@@ -100,23 +100,23 @@ cpu6502_PLP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r30,reg_s	 ;  reg_s.86, reg_s
+	mov r30,rS	 ;  reg_s.86, reg_s
 	subi r30,lo8(-(1))	 ;  reg_s.86,
-	sts reg_s,r30	 ;  reg_s, reg_s.86
+	mov rS,r30	 ;  reg_s, reg_s.86
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram+256))	 ;  tmp55,
 	sbci r31,hi8(-(ram+256))	 ;  tmp55,
 	ld r24,Z	 ;  D.3681, *_14
-	sts reg_p,r24	 ;  reg_p, D.3681
-	sts flag_n,r24	 ;  flag_n, D.3681
+	mov rP,r24	 ;  reg_p, D.3681
+	mov rN,r24	 ;  flag_n, D.3681
 	bst r24,1	 ;  D.3681,
 	clr r25	 ;  D.3678
 	bld r25,0	 ;  D.3678
 	ldi r18,lo8(1)	 ;  tmp58,
 	eor r25,r18	 ;  D.3678, tmp58
-	sts flag_z,r25	 ;  flag_z, D.3678
+	mov rZ,r25	 ;  flag_z, D.3678
 	andi r24,lo8(1)	 ;  flag_c.90,
-	sts flag_c,r24	 ;  flag_c, flag_c.90
+	mov rC,r24	 ;  flag_c, flag_c.90
 	ret
 	.size	cpu6502_PLP, .-cpu6502_PLP
 	.section	.text.cpu6502_JSR,"ax",@progbits
@@ -126,11 +126,11 @@ cpu6502_JSR:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r18,reg_pc	 ;  reg_pc.37, reg_pc
-	lds r19,reg_pc+1	 ;  reg_pc.37, reg_pc
+	mov r18,rPC0	 ;  reg_pc.37, reg_pc
+	mov r19,rPC1	 ;  reg_pc.37, reg_pc
 	subi r18,1	 ;  reg_pc.37,
 	sbc r19,__zero_reg__	 ;  reg_pc.37
-	lds r30,reg_s	 ;  reg_s.38, reg_s
+	mov r30,rS	 ;  reg_s.38, reg_s
 	mov r26,r30	 ;  tmp60, reg_s.38
 	ldi r27,0	 ; 
 	subi r26,lo8(-(ram+256))	 ;  tmp60,
@@ -138,14 +138,14 @@ cpu6502_JSR:
 	st X,r19	 ;  *_19, reg_pc.37
 	ldi r19,lo8(-2)	 ;  reg_s.42,
 	add r19,r30	 ;  reg_s.42, reg_s.38
-	sts reg_s,r19	 ;  reg_s, reg_s.42
+	mov rS,r19	 ;  reg_s, reg_s.42
 	subi r30,lo8(-(-1))	 ;  reg_s.40,
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram+256))	 ;  tmp66,
 	sbci r31,hi8(-(ram+256))	 ;  tmp66,
 	st Z,r18	 ;  *_22, reg_pc.37
-	sts reg_pc+1,r25	 ;  reg_pc, address
-	sts reg_pc,r24	 ;  reg_pc, address
+	mov rPC1,r25	 ;  reg_pc, address
+	mov rPC0,r24	 ;  reg_pc, address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
 	.section	.text.cpu6502_RTS,"ax",@progbits
@@ -155,7 +155,7 @@ cpu6502_RTS:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r30,reg_s	 ;  reg_s.136, reg_s
+	mov r30,rS	 ;  reg_s.136, reg_s
 	ldi r18,lo8(2)	 ;  D.3693,
 	add r18,r30	 ;  D.3693, reg_s.136
 	mov r26,r18	 ;  tmp60, D.3693
@@ -172,10 +172,10 @@ cpu6502_RTS:
 	sbci r31,hi8(-(ram+256))	 ;  tmp67,
 	ld r19,Z	 ;  *_20, *_20
 	or r24,r19	 ;  reg_pc.143, *_20
-	sts reg_s,r18	 ;  reg_s, D.3693
+	mov rS,r18	 ;  reg_s, D.3693
 	adiw r24,1	 ;  reg_pc.143,
-	sts reg_pc+1,r25	 ;  reg_pc, reg_pc.143
-	sts reg_pc,r24	 ;  reg_pc, reg_pc.143
+	mov rPC1,r25	 ;  reg_pc, reg_pc.143
+	mov rPC0,r24	 ;  reg_pc, reg_pc.143
 	ret
 	.size	cpu6502_RTS, .-cpu6502_RTS
 	.section	.text.cpu6502_LSR_a,"ax",@progbits
@@ -185,14 +185,14 @@ cpu6502_LSR_a:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_a	 ;  reg_a.120, reg_a
+	mov r24,rA	 ;  reg_a.120, reg_a
 	mov r25,r24	 ;  flag_c.121, reg_a.120
 	andi r25,lo8(1)	 ;  flag_c.121,
-	sts flag_c,r25	 ;  flag_c, flag_c.121
+	mov rC,r25	 ;  flag_c, flag_c.121
 	lsr r24	 ;  flag_z.122
-	sts flag_z,r24	 ;  flag_z, flag_z.122
-	sts flag_n,r24	 ;  flag_n, flag_z.122
-	sts reg_a,r24	 ;  reg_a, flag_z.122
+	mov rZ,r24	 ;  flag_z, flag_z.122
+	mov rN,r24	 ;  flag_n, flag_z.122
+	mov rA,r24	 ;  reg_a, flag_z.122
 	ret
 	.size	cpu6502_LSR_a, .-cpu6502_LSR_a
 	.section	.text.cpu6502_ORA,"ax",@progbits
@@ -203,12 +203,12 @@ cpu6502_ORA:
 /* frame size = 0 */
 /* stack size = 1 */
 .L__stack_usage = 1
-	lds r28,reg_a	 ;  reg_a.77, reg_a
+	mov r28,rA	 ;  reg_a.77, reg_a
 	call mem_read	 ; 
 	or r24,r28	 ;  flag_z.78, reg_a.77
-	sts flag_z,r24	 ;  flag_z, flag_z.78
-	sts flag_n,r24	 ;  flag_n, flag_z.78
-	sts reg_a,r24	 ;  reg_a, flag_z.78
+	mov rZ,r24	 ;  flag_z, flag_z.78
+	mov rN,r24	 ;  flag_n, flag_z.78
+	mov rA,r24	 ;  reg_a, flag_z.78
 /* epilogue start */
 	pop r28	 ; 
 	ret
@@ -223,14 +223,14 @@ cpu6502_BIT:
 	call mem_read	 ; 
 	mov r25,r24	 ;  D.3706, data
 	andi r25,lo8(64)	 ;  D.3706,
-	lds r18,reg_p	 ;  reg_p.101, reg_p
+	mov r18,rP	 ;  reg_p.101, reg_p
 	andi r18,lo8(-65)	 ;  reg_p.101,
 	or r25,r18	 ;  D.3706, reg_p.101
-	sts reg_p,r25	 ;  reg_p, D.3706
-	sts flag_n,r24	 ;  flag_n, data
-	lds r25,reg_a	 ;  flag_z.106, reg_a
+	mov rP,r25	 ;  reg_p, D.3706
+	mov rN,r24	 ;  flag_n, data
+	mov r25,rA	 ;  flag_z.106, reg_a
 	and r25,r24	 ;  flag_z.106, data
-	sts flag_z,r25	 ;  flag_z, flag_z.106
+	mov rZ,r25	 ;  flag_z, flag_z.106
 	ret
 	.size	cpu6502_BIT, .-cpu6502_BIT
 	.section	.text.cpu6502_AND,"ax",@progbits
@@ -241,12 +241,12 @@ cpu6502_AND:
 /* frame size = 0 */
 /* stack size = 1 */
 .L__stack_usage = 1
-	lds r28,reg_a	 ;  reg_a.107, reg_a
+	mov r28,rA	 ;  reg_a.107, reg_a
 	call mem_read	 ; 
 	and r24,r28	 ;  flag_z.108, reg_a.107
-	sts flag_z,r24	 ;  flag_z, flag_z.108
-	sts flag_n,r24	 ;  flag_n, flag_z.108
-	sts reg_a,r24	 ;  reg_a, flag_z.108
+	mov rZ,r24	 ;  flag_z, flag_z.108
+	mov rN,r24	 ;  flag_n, flag_z.108
+	mov rA,r24	 ;  reg_a, flag_z.108
 /* epilogue start */
 	pop r28	 ; 
 	ret
@@ -259,12 +259,12 @@ cpu6502_EOR:
 /* frame size = 0 */
 /* stack size = 1 */
 .L__stack_usage = 1
-	lds r28,reg_a	 ;  reg_a.128, reg_a
+	mov r28,rA	 ;  reg_a.128, reg_a
 	call mem_read	 ; 
 	eor r24,r28	 ;  flag_z.129, reg_a.128
-	sts flag_z,r24	 ;  flag_z, flag_z.129
-	sts flag_n,r24	 ;  flag_n, flag_z.129
-	sts reg_a,r24	 ;  reg_a, flag_z.129
+	mov rZ,r24	 ;  flag_z, flag_z.129
+	mov rN,r24	 ;  flag_n, flag_z.129
+	mov rA,r24	 ;  reg_a, flag_z.129
 /* epilogue start */
 	pop r28	 ; 
 	ret
@@ -277,9 +277,9 @@ cpu6502_ADC:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	lds r25,reg_p	 ;  reg_p.156, reg_p
-	lds r30,reg_a	 ;  reg_a.157, reg_a
-	lds r26,flag_c	 ;  flag_c, flag_c
+	mov r25,rP	 ;  reg_p.156, reg_p
+	mov r30,rA	 ;  reg_a.157, reg_a
+	mov r26,rC	 ;  flag_c, flag_c
 	mov r22,r24	 ;  D.3729, D.3728
 	ldi r23,0	 ;  D.3729
 	mov r31,r25	 ;  reg_p.160, reg_p.156
@@ -292,7 +292,7 @@ cpu6502_ADC:
 	adc r19,__zero_reg__	 ;  total
 	add r18,r22	 ;  total, D.3729
 	adc r19,r23	 ;  total, D.3729
-	sts flag_z,r18	 ;  flag_z, total
+	mov rZ,r18	 ;  flag_z, total
 	mov r25,r30	 ;  temp, reg_a.157
 	andi r25,lo8(15)	 ;  temp,
 	add r25,r26	 ;  temp, flag_c
@@ -310,14 +310,14 @@ cpu6502_ADC:
 	subi r18,10	 ;  total,
 	sbc r19,__zero_reg__	 ;  total
 .L12:
-	sts flag_n,r18	 ;  flag_n, total
+	mov rN,r18	 ;  flag_n, total
 	eor r24,r18	 ;  D.3728, total
 	eor r30,r18	 ;  D.3728, total
 	and r24,r30	 ;  D.3728, D.3728
 	sbrc r24,7	 ;  D.3728,
 	ori r31,lo8(64)	 ;  reg_p.161,
 .L20:
-	sts reg_p,r31	 ;  reg_p, reg_p.161
+	mov rP,r31	 ;  reg_p, reg_p.161
 	cpi r18,-96	 ;  total,
 	cpc r19,__zero_reg__	 ;  total
 	brlo .L16	 ; ,
@@ -329,7 +329,7 @@ cpu6502_ADC:
 	rjmp .L17	 ; 
 	ldi r24,0	 ;  D.3731
 .L17:
-	sts flag_c,r24	 ;  flag_c, D.3731
+	mov rC,r24	 ;  flag_c, D.3731
 	rjmp .L18	 ; 
 .L11:
 	mov r20,r30	 ;  total, reg_a.157
@@ -338,19 +338,19 @@ cpu6502_ADC:
 	adc r21,__zero_reg__	 ;  total
 	add r20,r22	 ;  total, D.3729
 	adc r21,r23	 ;  total, D.3729
-	sts flag_c,r21	 ;  flag_c, total
+	mov rC,r21	 ;  flag_c, total
 	mov r18,r20	 ;  result, total
-	sts flag_z,r20	 ;  flag_z, total
-	sts flag_n,r20	 ;  flag_n, total
+	mov rZ,r20	 ;  flag_z, total
+	mov rN,r20	 ;  flag_n, total
 	eor r24,r20	 ;  D.3728, total
 	eor r20,r30	 ;  D.3728, reg_a.157
 	and r24,r20	 ;  D.3728, D.3728
 	sbrc r24,7	 ;  D.3728,
 	ori r31,lo8(64)	 ;  reg_p.161,
 .L21:
-	sts reg_p,r31	 ;  reg_p, reg_p.161
+	mov rP,r31	 ;  reg_p, reg_p.161
 .L18:
-	sts reg_a,r18	 ;  reg_a, result
+	mov rA,r18	 ;  reg_a, result
 	ret
 	.size	cpu6502_ADC, .-cpu6502_ADC
 	.section	.text.cpu6502_LDY,"ax",@progbits
@@ -361,9 +361,9 @@ cpu6502_LDY:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	sts flag_z,r24	 ;  flag_z, flag_z.202
-	sts flag_n,r24	 ;  flag_n, flag_z.202
-	sts reg_y,r24	 ;  reg_y, flag_z.202
+	mov rZ,r24	 ;  flag_z, flag_z.202
+	mov rN,r24	 ;  flag_n, flag_z.202
+	mov rY,r24	 ;  reg_y, flag_z.202
 	ret
 	.size	cpu6502_LDY, .-cpu6502_LDY
 	.section	.text.cpu6502_LDA,"ax",@progbits
@@ -374,9 +374,9 @@ cpu6502_LDA:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	sts flag_z,r24	 ;  flag_z, flag_z.205
-	sts flag_n,r24	 ;  flag_n, flag_z.205
-	sts reg_a,r24	 ;  reg_a, flag_z.205
+	mov rZ,r24	 ;  flag_z, flag_z.205
+	mov rN,r24	 ;  flag_n, flag_z.205
+	mov rA,r24	 ;  reg_a, flag_z.205
 	ret
 	.size	cpu6502_LDA, .-cpu6502_LDA
 	.section	.text.cpu6502_LDX,"ax",@progbits
@@ -387,9 +387,9 @@ cpu6502_LDX:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	sts flag_z,r24	 ;  flag_z, flag_z.208
-	sts flag_n,r24	 ;  flag_n, flag_z.208
-	sts reg_x,r24	 ;  reg_x, flag_z.208
+	mov rZ,r24	 ;  flag_z, flag_z.208
+	mov rN,r24	 ;  flag_n, flag_z.208
+	mov rX,r24	 ;  reg_x, flag_z.208
 	ret
 	.size	cpu6502_LDX, .-cpu6502_LDX
 	.section	.text.cpu6502_LAX,"ax",@progbits
@@ -403,10 +403,10 @@ cpu6502_LAX:
 .L__stack_usage = 2
 	movw r28,r24	 ;  address, address
 	call mem_read	 ; 
-	sts flag_z,r24	 ;  flag_z, flag_z.211
-	sts flag_n,r24	 ;  flag_n, flag_z.211
-	sts reg_x,r24	 ;  reg_x, flag_z.211
-	sts reg_a,r24	 ;  reg_a, flag_z.211
+	mov rZ,r24	 ;  flag_z, flag_z.211
+	mov rN,r24	 ;  flag_n, flag_z.211
+	mov rX,r24	 ;  reg_x, flag_z.211
+	mov rA,r24	 ;  reg_a, flag_z.211
 	movw r24,r28	 ; , address
 	call cpu6502_LDA	 ; 
 	movw r24,r28	 ; , address
@@ -423,16 +423,16 @@ cpu6502_CPX:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	lds r25,reg_x	 ;  reg_x.243, reg_x
+	mov r25,rX	 ;  reg_x.243, reg_x
 	ldi r18,lo8(1)	 ;  D.3747,
 	cp r25,r24	 ;  reg_x.243, D.3746
 	brsh .L28	 ; ,
 	ldi r18,0	 ;  D.3747
 .L28:
-	sts flag_c,r18	 ;  flag_c, D.3747
+	mov rC,r18	 ;  flag_c, D.3747
 	sub r25,r24	 ;  reg_x.243, D.3746
-	sts flag_z,r25	 ;  flag_z, flag_z.231
-	sts flag_n,r25	 ;  flag_n, flag_z.231
+	mov rZ,r25	 ;  flag_z, flag_z.231
+	mov rN,r25	 ;  flag_n, flag_z.231
 	ret
 	.size	cpu6502_CPX, .-cpu6502_CPX
 	.section	.text.cpu6502_SBC,"ax",@progbits
@@ -443,9 +443,9 @@ cpu6502_SBC:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	lds r21,reg_p	 ;  reg_p.249, reg_p
-	lds r20,reg_a	 ;  reg_a.250, reg_a
-	lds r18,flag_c	 ;  flag_c, flag_c
+	mov r21,rP	 ;  reg_p.249, reg_p
+	mov r20,rA	 ;  reg_a.250, reg_a
+	mov r18,rC	 ;  flag_c, flag_c
 	sbrs r21,3	 ;  reg_p.249,
 	rjmp .L30	 ; 
 	mov r25,r20	 ;  D.3761, reg_a.250
@@ -467,8 +467,8 @@ cpu6502_SBC:
 	andi r19,lo8(-16)	 ;  D.3761,
 	sub r25,r19	 ;  result, D.3761
 	add r25,r18	 ;  result, result
-	sts flag_z,r25	 ;  flag_z, result
-	sts flag_n,r25	 ;  flag_n, result
+	mov rZ,r25	 ;  flag_z, result
+	mov rN,r25	 ;  flag_n, result
 	andi r21,lo8(-66)	 ;  reg_p.253,
 	mov r18,r25	 ;  D.3761, result
 	eor r18,r20	 ;  D.3761, reg_a.250
@@ -477,8 +477,8 @@ cpu6502_SBC:
 	sbrc r18,7	 ;  D.3761,
 	ori r21,lo8(64)	 ;  reg_p.254,
 .L37:
-	sts reg_p,r21	 ;  reg_p, reg_p.254
-	sts flag_c,__zero_reg__	 ;  flag_c,
+	mov rP,r21	 ;  reg_p, reg_p.254
+	mov rC,__zero_reg__	 ;  flag_c,
 	subi r25,lo8(-(-96))	 ;  result,
 	rjmp .L34	 ; 
 .L30:
@@ -489,7 +489,7 @@ cpu6502_SBC:
 	sbc r19,__zero_reg__	 ;  total
 	sub r18,r24	 ;  total, D.3761
 	sbc r19,__zero_reg__	 ;  total
-	sts flag_c,r19	 ;  flag_c, total
+	mov rC,r19	 ;  flag_c, total
 	mov r25,r18	 ;  result, total
 	mov r22,r21	 ;  reg_p.257, reg_p.249
 	andi r22,lo8(-65)	 ;  reg_p.257,
@@ -500,11 +500,11 @@ cpu6502_SBC:
 	sbrc r21,7	 ;  D.3761,
 	ori r22,lo8(64)	 ;  reg_p.254,
 .L38:
-	sts reg_p,r22	 ;  reg_p, reg_p.254
-	sts flag_z,r18	 ;  flag_z, total
-	sts flag_n,r18	 ;  flag_n, total
+	mov rP,r22	 ;  reg_p, reg_p.254
+	mov rZ,r18	 ;  flag_z, total
+	mov rN,r18	 ;  flag_n, total
 .L34:
-	sts reg_a,r25	 ;  reg_a, result
+	mov rA,r25	 ;  reg_a, result
 	ret
 	.size	cpu6502_SBC, .-cpu6502_SBC
 	.section	.text.cpu6502_ASL,"ax",@progbits
@@ -522,11 +522,11 @@ cpu6502_ASL:
 	rol r25	 ;  flag_c.81
 	clr r25	 ;  flag_c.81
 	rol r25	 ;  flag_c.81
-	sts flag_c,r25	 ;  flag_c, flag_c.81
+	mov rC,r25	 ;  flag_c, flag_c.81
 	mov r22,r24	 ;  flag_z.82, data
 	lsl r22	 ;  flag_z.82
-	sts flag_z,r22	 ;  flag_z, flag_z.82
-	sts flag_n,r22	 ;  flag_n, flag_z.82
+	mov rZ,r22	 ;  flag_z, flag_z.82
+	mov rN,r22	 ;  flag_n, flag_z.82
 	movw r24,r28	 ; , address
 /* epilogue start */
 	pop r29	 ; 
@@ -563,14 +563,14 @@ cpu6502_ROL:
 	call mem_read	 ; 
 	mov r22,r24	 ;  result, data
 	lsl r22	 ;  result
-	lds r25,flag_c	 ;  flag_c, flag_c
+	mov r25,rC	 ;  flag_c, flag_c
 	or r22,r25	 ;  result, flag_c
 	rol r24	 ;  flag_c.113
 	clr r24	 ;  flag_c.113
 	rol r24	 ;  flag_c.113
-	sts flag_c,r24	 ;  flag_c, flag_c.113
-	sts flag_z,r22	 ;  flag_z, result
-	sts flag_n,r22	 ;  flag_n, result
+	mov rC,r24	 ;  flag_c, flag_c.113
+	mov rZ,r22	 ;  flag_z, result
+	mov rN,r22	 ;  flag_n, result
 	movw r24,r28	 ; , address
 /* epilogue start */
 	pop r29	 ; 
@@ -607,11 +607,11 @@ cpu6502_LSR:
 	call mem_read	 ; 
 	mov r25,r24	 ;  flag_c.132, data
 	andi r25,lo8(1)	 ;  flag_c.132,
-	sts flag_c,r25	 ;  flag_c, flag_c.132
+	mov rC,r25	 ;  flag_c, flag_c.132
 	mov r22,r24	 ;  flag_z.133, data
 	lsr r22	 ;  flag_z.133
-	sts flag_z,r22	 ;  flag_z, flag_z.133
-	sts flag_n,r22	 ;  flag_n, flag_z.133
+	mov rZ,r22	 ;  flag_z, flag_z.133
+	mov rN,r22	 ;  flag_n, flag_z.133
 	movw r24,r28	 ; , address
 /* epilogue start */
 	pop r29	 ; 
@@ -648,16 +648,16 @@ cpu6502_ROR:
 	call mem_read	 ; 
 	mov r22,r24	 ;  result, data
 	lsr r22	 ;  result
-	lds r18,flag_c	 ;  flag_c, flag_c
+	mov r18,rC	 ;  flag_c, flag_c
 	ldi r25,lo8(-128)	 ; ,
 	mul r18,r25	 ;  flag_c,
 	movw r18,r0	 ;  D.3782
 	clr __zero_reg__
 	or r22,r18	 ;  result, D.3782
 	andi r24,lo8(1)	 ;  flag_c.166,
-	sts flag_c,r24	 ;  flag_c, flag_c.166
-	sts flag_z,r22	 ;  flag_z, result
-	sts flag_n,r22	 ;  flag_n, result
+	mov rC,r24	 ;  flag_c, flag_c.166
+	mov rZ,r22	 ;  flag_z, result
+	mov rN,r22	 ;  flag_n, result
 	movw r24,r28	 ; , address
 /* epilogue start */
 	pop r29	 ; 
@@ -688,8 +688,8 @@ cpu6502_SAX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r22,reg_x	 ;  D.3787, reg_x
-	lds r18,reg_a	 ;  reg_a, reg_a
+	mov r22,rX	 ;  D.3787, reg_x
+	mov r18,rA	 ;  reg_a, reg_a
 	and r22,r18	 ;  D.3787, reg_a
 	jmp mem_write	 ; 
 	.size	cpu6502_SAX, .-cpu6502_SAX
@@ -700,7 +700,7 @@ cpu6502_STA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r22,reg_a	 ; , reg_a
+	mov r22,rA	 ; , reg_a
 	jmp mem_write	 ; 
 	.size	cpu6502_STA, .-cpu6502_STA
 	.section	.text.cpu6502_SHA,"ax",@progbits
@@ -710,8 +710,8 @@ cpu6502_SHA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r22,reg_x	 ;  D.3792, reg_x
-	lds r18,reg_a	 ;  reg_a, reg_a
+	mov r22,rX	 ;  D.3792, reg_x
+	mov r18,rA	 ;  reg_a, reg_a
 	and r22,r18	 ;  D.3792, reg_a
 	ldi r18,lo8(1)	 ;  D.3792,
 	add r18,r25	 ;  D.3792, address
@@ -731,8 +731,8 @@ cpu6502_DEC:
 	call mem_read	 ; 
 	ldi r22,lo8(-1)	 ;  flag_z.236,
 	add r22,r24	 ;  flag_z.236,
-	sts flag_z,r22	 ;  flag_z, flag_z.236
-	sts flag_n,r22	 ;  flag_n, flag_z.236
+	mov rZ,r22	 ;  flag_z, flag_z.236
+	mov rN,r22	 ;  flag_n, flag_z.236
 	movw r24,r28	 ; , address
 /* epilogue start */
 	pop r29	 ; 
@@ -752,8 +752,8 @@ cpu6502_INC:
 	call mem_read	 ; 
 	ldi r22,lo8(1)	 ;  flag_z.258,
 	add r22,r24	 ;  flag_z.258,
-	sts flag_z,r22	 ;  flag_z, flag_z.258
-	sts flag_n,r22	 ;  flag_n, flag_z.258
+	mov rZ,r22	 ;  flag_z, flag_z.258
+	mov rN,r22	 ;  flag_n, flag_z.258
 	movw r24,r28	 ; , address
 /* epilogue start */
 	pop r29	 ; 
@@ -784,11 +784,11 @@ cpu6502_JAM:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ;  reg_pc.245, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.245, reg_pc
+	mov r24,rPC0	 ;  reg_pc.245, reg_pc
+	mov r25,rPC1	 ;  reg_pc.245, reg_pc
 	sbiw r24,1	 ;  reg_pc.245,
-	sts reg_pc+1,r25	 ;  reg_pc, reg_pc.245
-	sts reg_pc,r24	 ;  reg_pc, reg_pc.245
+	mov rPC1,r25	 ;  reg_pc, reg_pc.245
+	mov rPC0,r24	 ;  reg_pc, reg_pc.245
 	call mem_read	 ; 
 	ldi r22,lo8(1)	 ; ,
 	ldi r24,lo8(13)	 ; ,
@@ -801,30 +801,30 @@ update_p:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_p	 ;  reg_p.48, reg_p
+	mov r24,rP	 ;  reg_p.48, reg_p
 	andi r24,lo8(108)	 ;  reg_p.48,
 	mov r25,r24	 ;  reg_p.49, reg_p.48
 	ori r25,lo8(32)	 ;  reg_p.49,
-	sts reg_p,r25	 ;  reg_p, reg_p.49
-	lds r25,flag_n	 ;  flag_n, flag_n
+	mov rP,r25	 ;  reg_p, reg_p.49
+	mov r25,rN	 ;  flag_n, flag_n
 	sbrs r25,7	 ;  flag_n,
 	rjmp .L55	 ; 
 	ori r24,lo8(-96)	 ;  reg_p.50,
-	sts reg_p,r24	 ;  reg_p, reg_p.50
+	mov rP,r24	 ;  reg_p, reg_p.50
 .L55:
-	lds r24,flag_z	 ;  flag_z, flag_z
+	mov r24,rZ	 ;  flag_z, flag_z
 	cpse r24,__zero_reg__	 ;  flag_z,
 	rjmp .L56	 ; 
-	lds r24,reg_p	 ;  reg_p.51, reg_p
+	mov r24,rP	 ;  reg_p.51, reg_p
 	ori r24,lo8(2)	 ;  reg_p.51,
-	sts reg_p,r24	 ;  reg_p, reg_p.51
+	mov rP,r24	 ;  reg_p, reg_p.51
 .L56:
-	lds r24,flag_c	 ;  flag_c, flag_c
+	mov r24,rC	 ;  flag_c, flag_c
 	tst r24	 ;  flag_c
 	breq .L54	 ; ,
-	lds r24,reg_p	 ;  reg_p.53, reg_p
+	mov r24,rP	 ;  reg_p.53, reg_p
 	ori r24,lo8(1)	 ;  reg_p.53,
-	sts reg_p,r24	 ;  reg_p, reg_p.53
+	mov rP,r24	 ;  reg_p, reg_p.53
 .L54:
 	ret
 	.size	update_p, .-update_p
@@ -836,11 +836,11 @@ cpu6502_PHP:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call update_p	 ; 
-	lds r24,reg_p	 ;  reg_p.43, reg_p
-	lds r30,reg_s	 ;  reg_s.44, reg_s
+	mov r24,rP	 ;  reg_p.43, reg_p
+	mov r30,rS	 ;  reg_s.44, reg_s
 	ldi r25,lo8(-1)	 ;  reg_s.46,
 	add r25,r30	 ;  reg_s.46, reg_s.44
-	sts reg_s,r25	 ;  reg_s, reg_s.46
+	mov rS,r25	 ;  reg_s, reg_s.46
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram+256))	 ;  tmp51,
 	sbci r31,hi8(-(ram+256))	 ;  tmp51,
@@ -860,8 +860,8 @@ cpu6502_branch:
 	breq .L65	 ; ,
 	movw r24,r22	 ; , address
 	call mem_read	 ; 
-	lds r18,reg_pc	 ;  reg_pc.76, reg_pc
-	lds r19,reg_pc+1	 ;  reg_pc.76, reg_pc
+	mov r18,rPC0	 ;  reg_pc.76, reg_pc
+	mov r19,rPC1	 ;  reg_pc.76, reg_pc
 	movw r28,r18	 ;  new_pc, reg_pc.76
 	add r28,r24	 ;  new_pc,
 	adc r29,__zero_reg__	 ;  new_pc
@@ -877,8 +877,8 @@ cpu6502_branch:
 	ldi r25,0	 ; 
 .L72:
 	call clock_advance	 ; 
-	sts reg_pc+1,r29	 ;  reg_pc, new_pc
-	sts reg_pc,r28	 ;  reg_pc, new_pc
+	mov rPC1,r29	 ;  reg_pc, new_pc
+	mov rPC0,r28	 ;  reg_pc, new_pc
 .L65:
 /* epilogue start */
 	pop r29	 ; 
@@ -893,16 +893,16 @@ cpu6502_CPY:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	lds r25,reg_y	 ;  reg_y.229, reg_y
+	mov r25,rY	 ;  reg_y.229, reg_y
 	ldi r18,lo8(1)	 ;  D.3838,
 	cp r25,r24	 ;  reg_y.229, D.3837
 	brsh .L74	 ; ,
 	ldi r18,0	 ;  D.3838
 .L74:
-	sts flag_c,r18	 ;  flag_c, D.3838
+	mov rC,r18	 ;  flag_c, D.3838
 	sub r25,r24	 ;  reg_y.229, D.3837
-	sts flag_z,r25	 ;  flag_z, flag_z.231
-	sts flag_n,r25	 ;  flag_n, flag_z.231
+	mov rZ,r25	 ;  flag_z, flag_z.231
+	mov rN,r25	 ;  flag_n, flag_z.231
 	ret
 	.size	cpu6502_CPY, .-cpu6502_CPY
 	.section	.text.cpu6502_CMP,"ax",@progbits
@@ -913,16 +913,16 @@ cpu6502_CMP:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; 
-	lds r25,reg_a	 ;  reg_a.235, reg_a
+	mov r25,rA	 ;  reg_a.235, reg_a
 	ldi r18,lo8(1)	 ;  D.3846,
 	cp r25,r24	 ;  reg_a.235, D.3845
 	brsh .L76	 ; ,
 	ldi r18,0	 ;  D.3846
 .L76:
-	sts flag_c,r18	 ;  flag_c, D.3846
+	mov rC,r18	 ;  flag_c, D.3846
 	sub r25,r24	 ;  reg_a.235, D.3845
-	sts flag_z,r25	 ;  flag_z, flag_z.231
-	sts flag_n,r25	 ;  flag_n, flag_z.231
+	mov rZ,r25	 ;  flag_z, flag_z.231
+	mov rN,r25	 ;  flag_n, flag_z.231
 	ret
 	.size	cpu6502_CMP, .-cpu6502_CMP
 	.section	.text.cpu6502_DCP,"ax",@progbits
@@ -950,13 +950,13 @@ addr_imm:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ;  reg_pc.0, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.0, reg_pc
+	mov r24,rPC0	 ;  reg_pc.0, reg_pc
+	mov r25,rPC1	 ;  reg_pc.0, reg_pc
 	movw r18,r24	 ;  reg_pc.2, reg_pc.0
 	subi r18,-1	 ;  reg_pc.2,
 	sbci r19,-1	 ;  reg_pc.2,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.2
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.2
+	mov rPC1,r19	 ;  reg_pc, reg_pc.2
+	mov rPC0,r18	 ;  reg_pc, reg_pc.2
 	ret
 	.size	addr_imm, .-addr_imm
 	.section	.text.addr_zpg,"ax",@progbits
@@ -967,13 +967,13 @@ addr_zpg:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ;  reg_pc.3, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.3, reg_pc
+	mov r24,rPC0	 ;  reg_pc.3, reg_pc
+	mov r25,rPC1	 ;  reg_pc.3, reg_pc
 	movw r18,r24	 ;  reg_pc.5, reg_pc.3
 	subi r18,-1	 ;  reg_pc.5,
 	sbci r19,-1	 ;  reg_pc.5,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.5
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.5
+	mov rPC1,r19	 ;  reg_pc, reg_pc.5
+	mov rPC0,r18	 ;  reg_pc, reg_pc.5
 	call mem_read	 ; 
 	ldi r25,0	 ; 
 	ret
@@ -986,15 +986,15 @@ addr_abs:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ; , reg_pc
-	lds r25,reg_pc+1	 ; , reg_pc
+	mov r24,rPC0	 ; , reg_pc
+	mov r25,rPC1	 ; , reg_pc
 	call mem_read_16	 ; 
-	lds r18,reg_pc	 ;  reg_pc.7, reg_pc
-	lds r19,reg_pc+1	 ;  reg_pc.7, reg_pc
+	mov r18,rPC0	 ;  reg_pc.7, reg_pc
+	mov r19,rPC1	 ;  reg_pc.7, reg_pc
 	subi r18,-2	 ;  reg_pc.7,
 	sbci r19,-1	 ;  reg_pc.7,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.7
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.7
+	mov rPC1,r19	 ;  reg_pc, reg_pc.7
+	mov rPC0,r18	 ;  reg_pc, reg_pc.7
 	ret
 	.size	addr_abs, .-addr_abs
 	.section	.text.addr_zpx,"ax",@progbits
@@ -1005,15 +1005,15 @@ addr_zpx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ;  reg_pc.8, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.8, reg_pc
+	mov r24,rPC0	 ;  reg_pc.8, reg_pc
+	mov r25,rPC1	 ;  reg_pc.8, reg_pc
 	movw r18,r24	 ;  reg_pc.10, reg_pc.8
 	subi r18,-1	 ;  reg_pc.10,
 	sbci r19,-1	 ;  reg_pc.10,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.10
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.10
+	mov rPC1,r19	 ;  reg_pc, reg_pc.10
+	mov rPC0,r18	 ;  reg_pc, reg_pc.10
 	call mem_read	 ; 
-	lds r25,reg_x	 ;  address, reg_x
+	mov r25,rX	 ;  address, reg_x
 	add r25,r24	 ;  address,
 	mov r24,r25	 ; , address
 	ldi r25,0	 ; 
@@ -1027,15 +1027,15 @@ addr_zpy:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ;  reg_pc.12, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.12, reg_pc
+	mov r24,rPC0	 ;  reg_pc.12, reg_pc
+	mov r25,rPC1	 ;  reg_pc.12, reg_pc
 	movw r18,r24	 ;  reg_pc.14, reg_pc.12
 	subi r18,-1	 ;  reg_pc.14,
 	sbci r19,-1	 ;  reg_pc.14,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.14
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.14
+	mov rPC1,r19	 ;  reg_pc, reg_pc.14
+	mov rPC0,r18	 ;  reg_pc, reg_pc.14
 	call mem_read	 ; 
-	lds r25,reg_y	 ;  address, reg_y
+	mov r25,rY	 ;  address, reg_y
 	add r25,r24	 ;  address,
 	mov r24,r25	 ; , address
 	ldi r25,0	 ; 
@@ -1051,19 +1051,19 @@ addr_abx:
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	lds r24,reg_pc	 ; , reg_pc
-	lds r25,reg_pc+1	 ; , reg_pc
+	mov r24,rPC0	 ; , reg_pc
+	mov r25,rPC1	 ; , reg_pc
 	call mem_read_16	 ; 
-	lds r18,reg_x	 ;  reg_x, reg_x
+	mov r18,rX	 ;  reg_x, reg_x
 	movw r28,r24	 ;  address, base
 	add r28,r18	 ;  address, reg_x
 	adc r29,__zero_reg__	 ;  address
-	lds r18,reg_pc	 ;  reg_pc.18, reg_pc
-	lds r19,reg_pc+1	 ;  reg_pc.18, reg_pc
+	mov r18,rPC0	 ;  reg_pc.18, reg_pc
+	mov r19,rPC1	 ;  reg_pc.18, reg_pc
 	subi r18,-2	 ;  reg_pc.18,
 	sbci r19,-1	 ;  reg_pc.18,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.18
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.18
+	mov rPC1,r19	 ;  reg_pc, reg_pc.18
+	mov rPC0,r18	 ;  reg_pc, reg_pc.18
 	cp r29,r25	 ;  tmp18, base
 	breq .L84	 ; ,
 	ldi r24,lo8(1)	 ; ,
@@ -1086,19 +1086,19 @@ addr_aby:
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	lds r24,reg_pc	 ; , reg_pc
-	lds r25,reg_pc+1	 ; , reg_pc
+	mov r24,rPC0	 ; , reg_pc
+	mov r25,rPC1	 ; , reg_pc
 	call mem_read_16	 ; 
-	lds r18,reg_y	 ;  reg_y, reg_y
+	mov r18,rY	 ;  reg_y, reg_y
 	movw r28,r24	 ;  address, base
 	add r28,r18	 ;  address, reg_y
 	adc r29,__zero_reg__	 ;  address
-	lds r18,reg_pc	 ;  reg_pc.23, reg_pc
-	lds r19,reg_pc+1	 ;  reg_pc.23, reg_pc
+	mov r18,rPC0	 ;  reg_pc.23, reg_pc
+	mov r19,rPC1	 ;  reg_pc.23, reg_pc
 	subi r18,-2	 ;  reg_pc.23,
 	sbci r19,-1	 ;  reg_pc.23,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.23
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.23
+	mov rPC1,r19	 ;  reg_pc, reg_pc.23
+	mov rPC0,r18	 ;  reg_pc, reg_pc.23
 	cp r29,r25	 ;  tmp18, base
 	breq .L86	 ; ,
 	ldi r24,lo8(1)	 ; ,
@@ -1119,15 +1119,15 @@ addr_inx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ;  reg_pc.24, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.24, reg_pc
+	mov r24,rPC0	 ;  reg_pc.24, reg_pc
+	mov r25,rPC1	 ;  reg_pc.24, reg_pc
 	movw r18,r24	 ;  reg_pc.26, reg_pc.24
 	subi r18,-1	 ;  reg_pc.26,
 	sbci r19,-1	 ;  reg_pc.26,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.26
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.26
+	mov rPC1,r19	 ;  reg_pc, reg_pc.26
+	mov rPC0,r18	 ;  reg_pc, reg_pc.26
 	call mem_read	 ; 
-	lds r25,reg_x	 ;  index, reg_x
+	mov r25,rX	 ;  index, reg_x
 	add r25,r24	 ;  index,
 	mov r24,r25	 ; , index
 	ldi r25,0	 ; 
@@ -1143,13 +1143,13 @@ addr_iny:
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	lds r24,reg_pc	 ;  reg_pc.28, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.28, reg_pc
+	mov r24,rPC0	 ;  reg_pc.28, reg_pc
+	mov r25,rPC1	 ;  reg_pc.28, reg_pc
 	movw r18,r24	 ;  reg_pc.30, reg_pc.28
 	subi r18,-1	 ;  reg_pc.30,
 	sbci r19,-1	 ;  reg_pc.30,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.30
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.30
+	mov rPC1,r19	 ;  reg_pc, reg_pc.30
+	mov rPC0,r18	 ;  reg_pc, reg_pc.30
 	call mem_read	 ; 
 	mov r30,r24	 ;  tmp63, index
 	ldi r31,0	 ; 
@@ -1161,7 +1161,7 @@ addr_iny:
 	clr r18	 ;  D.3885
 	ld r24,Z	 ;  tmp71, ram
 	or r18,r24	 ;  D.3885, tmp71
-	lds r24,reg_y	 ;  reg_y, reg_y
+	mov r24,rY	 ;  reg_y, reg_y
 	movw r28,r18	 ;  address, D.3885
 	add r28,r24	 ;  address, reg_y
 	adc r29,__zero_reg__	 ;  address
@@ -1185,15 +1185,15 @@ addr_ind:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc	 ; , reg_pc
-	lds r25,reg_pc+1	 ; , reg_pc
+	mov r24,rPC0	 ; , reg_pc
+	mov r25,rPC1	 ; , reg_pc
 	call mem_read_16	 ; 
-	lds r18,reg_pc	 ;  reg_pc.33, reg_pc
-	lds r19,reg_pc+1	 ;  reg_pc.33, reg_pc
+	mov r18,rPC0	 ;  reg_pc.33, reg_pc
+	mov r19,rPC1	 ;  reg_pc.33, reg_pc
 	subi r18,-2	 ;  reg_pc.33,
 	sbci r19,-1	 ;  reg_pc.33,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.33
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.33
+	mov rPC1,r19	 ;  reg_pc, reg_pc.33
+	mov rPC0,r18	 ;  reg_pc, reg_pc.33
 	jmp mem_read_16	 ; 
 	.size	addr_ind, .-addr_ind
 	.section	.text.cpu_reset,"ax",@progbits
@@ -1207,8 +1207,8 @@ cpu_reset:
 	ldi r24,lo8(-4)	 ; ,
 	ldi r25,lo8(-1)	 ; ,
 	call mem_read_16	 ; 
-	sts reg_pc+1,r25	 ;  reg_pc,
-	sts reg_pc,r24	 ;  reg_pc,
+	mov rPC1,r25	 ;  reg_pc,
+	mov rPC0,r24	 ;  reg_pc,
 	ret
 	.size	cpu_reset, .-cpu_reset
 	.section	.text.cpu_irq,"ax",@progbits
@@ -1251,10 +1251,10 @@ cpu_nmi:
 	call update_p	 ; 
 	lds r24,reg_p	 ;  D.3900, reg_p
 	andi r24,lo8(-17)	 ;  D.3900,
-	lds r30,reg_s	 ;  reg_s.59, reg_s
+	mov r30,rS	 ;  reg_s.59, reg_s
 	ldi r25,lo8(-1)	 ;  reg_s.61,
 	add r25,r30	 ;  reg_s.61, reg_s.59
-	sts reg_s,r25	 ;  reg_s, reg_s.61
+	mov rS,r25	 ;  reg_s, reg_s.61
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram+256))	 ;  tmp54,
 	sbci r31,hi8(-(ram+256))	 ;  tmp54,
@@ -1265,8 +1265,8 @@ cpu_nmi:
 .global	cpu_main
 	.type	cpu_main, @function
 cpu_main:
-	push rPC_lo
-	push rPC_hi
+	push rPC0
+	push rPC1
 	push rA
 	push rX
 	push rY
@@ -1281,42 +1281,56 @@ cpu_main:
 	push rTIME3
 	push r16	 ; 
 	push r17	 ; 
-	push r28	 ; 
+	push r28	 ;
+	lds rPC0,reg_pc
+	lds rPC1,reg_pc+1
+	lds rA,reg_a
+	lds rX,reg_x
+	lds rY,reg_y
+	lds rS,reg_s
+	lds rP,reg_p
+	lds rN,flag_n
+	lds rZ,flag_z
+	lds rC,flag_c
+	lds rTIME0,time_left
+	lds rTIME1,time_left+1
+	lds rTIME2,time_left+2
+	lds rTIME3,time_left+3
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 17 */
 .L__stack_usage = 17
-	lds r16,time_left	 ;  time_left.63, time_left
-	lds r17,time_left+1	 ;  time_left.63, time_left
-	lds r18,time_left+2	 ;  time_left.63, time_left
-	lds r19,time_left+3	 ;  time_left.63, time_left
+	mov r16,rTIME0	 ;  time_left.63, time_left
+	mov r17,rTIME1	 ;  time_left.63, time_left
+	mov r18,rTIME2	 ;  time_left.63, time_left
+	mov r19,rTIME3	 ;  time_left.63, time_left
 	add r16,r22	 ;  time_left.63, cycles
 	adc r17,r23	 ;  time_left.63, cycles
 	adc r18,r24	 ;  time_left.63, cycles
 	adc r19,r25	 ;  time_left.63, cycles
-	sts time_left,r16	 ;  time_left, time_left.63
-	sts time_left+1,r17	 ;  time_left, time_left.63
-	sts time_left+2,r18	 ;  time_left, time_left.63
-	sts time_left+3,r19	 ;  time_left, time_left.63
+	mov rTIME0,r16	 ;  time_left, time_left.63
+	mov rTIME1,r17	 ;  time_left, time_left.63
+	mov rTIME2,r18	 ;  time_left, time_left.63
+	mov rTIME3,r19	 ;  time_left, time_left.63
 	ldi r28,lo8(1)	 ;  D.4025,
 .L96:
-	lds r24,time_left	 ;  time_left, time_left
-	lds r25,time_left+1	 ;  time_left, time_left
-	lds r26,time_left+2	 ;  time_left, time_left
-	lds r27,time_left+3	 ;  time_left, time_left
+	mov r24,rTIME0	 ;  time_left, time_left
+	mov r25,rTIME1	 ;  time_left, time_left
+	mov r26,rTIME2	 ;  time_left, time_left
+	mov r27,rTIME3	 ;  time_left, time_left
 	cp __zero_reg__,r24	 ;  time_left
 	cpc __zero_reg__,r25	 ;  time_left
 	cpc __zero_reg__,r26	 ;  time_left
 	cpc __zero_reg__,r27	 ;  time_left
 	brlt .+4	 ; 
 	jmp .L366	 ; 
-	lds r24,reg_pc	 ;  reg_pc.64, reg_pc
-	lds r25,reg_pc+1	 ;  reg_pc.64, reg_pc
+	mov r24,rPC0	 ;  reg_pc.64, reg_pc
+	mov r25,rPC1	 ;  reg_pc.64, reg_pc
 	movw r18,r24	 ;  reg_pc.66, reg_pc.64
 	subi r18,-1	 ;  reg_pc.66,
 	sbci r19,-1	 ;  reg_pc.66,
-	sts reg_pc+1,r19	 ;  reg_pc, reg_pc.66
-	sts reg_pc,r18	 ;  reg_pc, reg_pc.66
+	mov rPC1,r19	 ;  reg_pc, reg_pc.66
+	mov rPC0,r18	 ;  reg_pc, reg_pc.66
 	call mem_read	 ; 
 	ldi r25,0	 ;  opcode
 	movw r30,r24	 ;  tmp360,
@@ -1392,16 +1406,16 @@ cpu_main:
 	.word gs(.xfc), gs(.xfd), gs(.xfe), gs(.xff)
 	.section	.text.cpu_main
 .x00:
-	ldi r24,lo8(-2)	 ; ,
-	ldi r25,lo8(-1)	 ; ,
+	ldi r24,0xfe	 ; ,
+	ldi r25,0xff	 ; ,
 	call mem_read_16	 ; 
 	call cpu6502_JSR	 ; 
 	call update_p	 ; 
 	lds r24,reg_p	 ;  reg_p.67, reg_p
-	lds r30,reg_s	 ;  reg_s.68, reg_s
+	mov r30,rS	 ;  reg_s.68, reg_s
 	ldi r25,lo8(-1)	 ;  reg_s.70,
 	add r25,r30	 ;  reg_s.70, reg_s.68
-	sts reg_s,r25	 ;  reg_s, reg_s.70
+	mov rS,r25	 ;  reg_s, reg_s.70
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram+256))	 ;  tmp364,
 	sbci r31,hi8(-(ram+256))	 ;  tmp364,
@@ -1472,18 +1486,18 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x0a:
-	lds r24,reg_a	 ;  reg_a.71, reg_a
+	mov r24,rA	 ;  reg_a.71, reg_a
 	mov r25,r24	 ;  flag_c.72, reg_a.71
 	rol r25	 ;  flag_c.72
 	clr r25	 ;  flag_c.72
 	rol r25	 ;  flag_c.72
-	sts flag_c,r25	 ;  flag_c, flag_c.72
+	mov rC,r25	 ;  flag_c, flag_c.72
 	ldi r25,0	 ;  D.4024
 	lsl r24	 ;  D.4024
 	rol r25	 ;  D.4024
-	sts flag_z,r24	 ;  flag_z, D.4024
-	sts flag_n,r24	 ;  flag_n, D.4024
-	sts reg_a,r24	 ;  reg_a, D.4024
+	mov rZ,r24	 ;  flag_z, D.4024
+	mov rN,r24	 ;  flag_n, D.4024
+	mov rA,r24	 ;  reg_a, D.4024
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -1491,12 +1505,12 @@ cpu_main:
 .x0b:
 	call addr_imm	 ; 
 	call cpu6502_AND	 ; 
-	lds r24,reg_a	 ;  D.4025, reg_a
+	mov r24,rA	 ;  D.4025, reg_a
 	com r24	 ;  D.4025
 	rol r24	 ;  D.4025
 	clr r24	 ;  D.4025
 	rol r24	 ;  D.4025
-	sts flag_c,r24	 ;  flag_c, D.4025
+	mov rC,r24	 ;  flag_c, D.4025
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -1531,7 +1545,7 @@ cpu_main:
 .x10:
 	call addr_imm	 ; 
 	movw r22,r24	 ;  D.4020,
-	lds r24,flag_n	 ;  tmp374, flag_n
+	mov r24,rN	 ;  tmp374, flag_n
 	com r24	 ;  tmp374
 	rol r24	 ; 
 	clr r24	 ; 
@@ -1586,7 +1600,7 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x18:
-	sts flag_c,__zero_reg__	 ;  flag_c,
+	mov rC,__zero_reg__	 ;  flag_c,
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -1703,18 +1717,18 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x2a:
-	lds r25,reg_a	 ;  reg_a.91, reg_a
+	mov r25,rA	 ;  reg_a.91, reg_a
 	mov r24,r25	 ;  result, reg_a.91
 	lsl r24	 ;  result
-	lds r18,flag_c	 ;  flag_c, flag_c
+	mov r18,rC	 ;  flag_c, flag_c
 	or r24,r18	 ;  result, flag_c
 	rol r25	 ;  flag_c.94
 	clr r25	 ;  flag_c.94
 	rol r25	 ;  flag_c.94
-	sts flag_c,r25	 ;  flag_c, flag_c.94
-	sts flag_z,r24	 ;  flag_z, result
-	sts flag_n,r24	 ;  flag_n, result
-	sts reg_a,r24	 ;  reg_a, result
+	mov rC,r25	 ;  flag_c, flag_c.94
+	mov rZ,r24	 ;  flag_z, result
+	mov rN,r24	 ;  flag_n, result
+	mov rA,r24	 ;  reg_a, result
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -1722,12 +1736,12 @@ cpu_main:
 .x2b:
 	call addr_imm	 ; 
 	call cpu6502_AND	 ; 
-	lds r24,reg_a	 ;  D.4025, reg_a
+	mov r24,rA	 ;  D.4025, reg_a
 	com r24	 ;  D.4025
 	rol r24	 ;  D.4025
 	clr r24	 ;  D.4025
 	rol r24	 ;  D.4025
-	sts flag_c,r24	 ;  flag_c, D.4025
+	mov rC,r24	 ;  flag_c, D.4025
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -1763,7 +1777,7 @@ cpu_main:
 .x30:
 	call addr_imm	 ; 
 	movw r22,r24	 ;  D.4020,
-	lds r24,flag_n	 ;  flag_n, flag_n
+	mov r24,rN	 ;  flag_n, flag_n
 	andi r24,lo8(-128)	 ; ,
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
@@ -1815,7 +1829,7 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x38:
-	sts flag_c,r28	 ;  flag_c, D.4025
+	mov rC,r28	 ;  flag_c, D.4025
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -1918,11 +1932,11 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x48:
-	lds r24,reg_a	 ;  reg_a.116, reg_a
-	lds r30,reg_s	 ;  reg_s.117, reg_s
+	mov r24,rA	 ;  reg_a.116, reg_a
+	mov r30,rS	 ;  reg_s.117, reg_s
 	ldi r25,lo8(-1)	 ;  reg_s.119,
 	add r25,r30	 ;  reg_s.119, reg_s.117
-	sts reg_s,r25	 ;  reg_s, reg_s.119
+	mov rS,r25	 ;  reg_s, reg_s.119
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram+256))	 ;  tmp389,
 	sbci r31,hi8(-(ram+256))	 ;  tmp389,
@@ -1954,8 +1968,8 @@ cpu_main:
 	rjmp .L96	 ; 
 .x4c:
 	call addr_abs	 ; 
-	sts reg_pc+1,r25	 ;  reg_pc,
-	sts reg_pc,r24	 ;  reg_pc,
+	mov rPC1,r25	 ;  reg_pc,
+	mov rPC0,r24	 ;  reg_pc,
 	ldi r24,lo8(3)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2143,16 +2157,16 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x68:
-	lds r30,reg_s	 ;  reg_s.145, reg_s
+	mov r30,rS	 ;  reg_s.145, reg_s
 	subi r30,lo8(-(1))	 ;  reg_s.145,
-	sts reg_s,r30	 ;  reg_s, reg_s.145
+	mov rS,r30	 ;  reg_s, reg_s.145
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram+256))	 ;  tmp400,
 	sbci r31,hi8(-(ram+256))	 ;  tmp400,
 	ld r24,Z	 ;  D.4026, *_931
-	sts flag_z,r24	 ;  flag_z, D.4026
-	sts flag_n,r24	 ;  flag_n, D.4026
-	sts reg_a,r24	 ;  reg_a, D.4026
+	mov rZ,r24	 ;  flag_z, D.4026
+	mov rN,r24	 ;  flag_n, D.4026
+	mov rA,r24	 ;  reg_a, D.4026
 	ldi r24,lo8(4)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2165,8 +2179,8 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x6a:
-	lds r18,reg_a	 ;  reg_a.149, reg_a
-	lds r24,flag_c	 ;  flag_c, flag_c
+	mov r18,rA	 ;  reg_a.149, reg_a
+	mov r24,rC	 ;  flag_c, flag_c
 	ldi r19,lo8(-128)	 ; ,
 	mul r24,r19	 ;  flag_c,
 	movw r24,r0	 ;  D.4024
@@ -2175,10 +2189,10 @@ cpu_main:
 	lsr r25	 ;  result
 	or r25,r24	 ;  result, D.4024
 	andi r18,lo8(1)	 ;  flag_c.151,
-	sts flag_c,r18	 ;  flag_c, flag_c.151
-	sts flag_z,r25	 ;  flag_z, result
-	sts flag_n,r25	 ;  flag_n, result
-	sts reg_a,r25	 ;  reg_a, result
+	mov rC,r18	 ;  flag_c, flag_c.151
+	mov rZ,r25	 ;  flag_z, result
+	mov rN,r25	 ;  flag_n, result
+	mov rA,r25	 ;  reg_a, result
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2191,8 +2205,8 @@ cpu_main:
 	rjmp .L96	 ; 
 .x6c:
 	call addr_ind	 ; 
-	sts reg_pc+1,r25	 ;  reg_pc,
-	sts reg_pc,r24	 ;  reg_pc,
+	mov rPC1,r25	 ;  reg_pc,
+	mov rPC0,r24	 ;  reg_pc,
 	ldi r24,lo8(5)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2354,7 +2368,7 @@ cpu_main:
 	rjmp .L96	 ; 
 .x84:
 	call addr_zpg	 ; 
-	lds r22,reg_y	 ; , reg_y
+	mov r22,rY	 ; , reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(3)	 ; ,
 	ldi r25,0	 ; 
@@ -2369,7 +2383,7 @@ cpu_main:
 	rjmp .L96	 ; 
 .x86:
 	call addr_zpg	 ; 
-	lds r22,reg_x	 ; , reg_x
+	mov r22,rX	 ; , reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(3)	 ; ,
 	ldi r25,0	 ; 
@@ -2383,11 +2397,11 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x88:
-	lds r24,reg_y	 ;  flag_z.170, reg_y
+	mov r24,rY	 ;  flag_z.170, reg_y
 	subi r24,lo8(-(-1))	 ;  flag_z.170,
-	sts flag_z,r24	 ;  flag_z, flag_z.170
-	sts flag_n,r24	 ;  flag_n, flag_z.170
-	sts reg_y,r24	 ;  reg_y, flag_z.170
+	mov rZ,r24	 ;  flag_z, flag_z.170
+	mov rN,r24	 ;  flag_n, flag_z.170
+	mov rY,r24	 ;  reg_y, flag_z.170
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2399,10 +2413,10 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x8a:
-	lds r24,reg_x	 ;  reg_x.173, reg_x
-	sts flag_z,r24	 ;  flag_z, reg_x.173
-	sts flag_n,r24	 ;  flag_n, reg_x.173
-	sts reg_a,r24	 ;  reg_a, reg_x.173
+	mov r24,rX	 ;  reg_x.173, reg_x
+	mov rZ,r24	 ;  flag_z, reg_x.173
+	mov rN,r24	 ;  flag_n, reg_x.173
+	mov rA,r24	 ;  reg_a, reg_x.173
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2415,7 +2429,7 @@ cpu_main:
 	rjmp .L96	 ; 
 .x8c:
 	call addr_abs	 ; 
-	lds r22,reg_y	 ; , reg_y
+	mov r22,rY	 ; , reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
 	ldi r25,0	 ; 
@@ -2430,7 +2444,7 @@ cpu_main:
 	rjmp .L96	 ; 
 .x8e:
 	call addr_abs	 ; 
-	lds r22,reg_x	 ; , reg_x
+	mov r22,rX	 ; , reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
 	ldi r25,0	 ; 
@@ -2447,7 +2461,7 @@ cpu_main:
 	call addr_imm	 ; 
 	movw r22,r24	 ;  D.4020,
 	ldi r24,lo8(1)	 ;  D.4025,
-	lds r25,flag_c	 ;  flag_c, flag_c
+	mov r25,rC	 ;  flag_c, flag_c
 	cpse r25,__zero_reg__	 ;  flag_c
 	ldi r24,0	 ;  D.4025
 .L355:
@@ -2475,7 +2489,7 @@ cpu_main:
 	rjmp .L96	 ; 
 .x94:
 	call addr_zpx	 ; 
-	lds r22,reg_y	 ; , reg_y
+	mov r22,rY	 ; , reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
 	ldi r25,0	 ; 
@@ -2490,7 +2504,7 @@ cpu_main:
 	rjmp .L96	 ; 
 .x96:
 	call addr_zpy	 ; 
-	lds r22,reg_x	 ; , reg_x
+	mov r22,rX	 ; , reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
 	ldi r25,0	 ; 
@@ -2504,10 +2518,10 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x98:
-	lds r24,reg_y	 ;  reg_y.181, reg_y
-	sts flag_z,r24	 ;  flag_z, reg_y.181
-	sts flag_n,r24	 ;  flag_n, reg_y.181
-	sts reg_a,r24	 ;  reg_a, reg_y.181
+	mov r24,rY	 ;  reg_y.181, reg_y
+	mov rZ,r24	 ;  flag_z, reg_y.181
+	mov rN,r24	 ;  flag_n, reg_y.181
+	mov rA,r24	 ;  reg_a, reg_y.181
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2520,8 +2534,8 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x9a:
-	lds r24,reg_x	 ;  reg_x, reg_x
-	sts reg_s,r24	 ;  reg_s, reg_x
+	mov r24,rX	 ;  reg_x, reg_x
+	mov rS,r24	 ;  reg_s, reg_x
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2536,7 +2550,7 @@ cpu_main:
 	call addr_abx	 ; 
 	ldi r22,lo8(1)	 ;  D.4021,
 	add r22,r25	 ;  D.4021, D.4020
-	lds r18,reg_y	 ;  reg_y, reg_y
+	mov r18,rY	 ;  reg_y, reg_y
 	and r22,r18	 ;  D.4021, reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(5)	 ; ,
@@ -2554,7 +2568,7 @@ cpu_main:
 	call addr_aby	 ; 
 	ldi r22,lo8(1)	 ;  D.4021,
 	add r22,r25	 ;  D.4021, D.4020
-	lds r18,reg_x	 ;  reg_x, reg_x
+	mov r18,rX	 ;  reg_x, reg_x
 	and r22,r18	 ;  D.4021, reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(5)	 ; ,
@@ -2625,10 +2639,10 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa8:
-	lds r24,reg_a	 ;  reg_a.190, reg_a
-	sts flag_z,r24	 ;  flag_z, reg_a.190
-	sts flag_n,r24	 ;  flag_n, reg_a.190
-	sts reg_y,r24	 ;  reg_y, reg_a.190
+	mov r24,rA	 ;  reg_a.190, reg_a
+	mov rZ,r24	 ;  flag_z, reg_a.190
+	mov rN,r24	 ;  flag_n, reg_a.190
+	mov rY,r24	 ;  reg_y, reg_a.190
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2641,10 +2655,10 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xaa:
-	lds r24,reg_a	 ;  reg_a.193, reg_a
-	sts flag_z,r24	 ;  flag_z, reg_a.193
-	sts flag_n,r24	 ;  flag_n, reg_a.193
-	sts reg_x,r24	 ;  reg_x, reg_a.193
+	mov r24,rA	 ;  reg_a.193, reg_a
+	mov rZ,r24	 ;  flag_z, reg_a.193
+	mov rN,r24	 ;  flag_n, reg_a.193
+	mov rX,r24	 ;  reg_x, reg_a.193
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2686,7 +2700,7 @@ cpu_main:
 .xb0:
 	call addr_imm	 ; 
 	movw r22,r24	 ; , D.4020
-	lds r24,flag_c	 ; , flag_c
+	mov r24,rC	 ; , flag_c
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
@@ -2753,10 +2767,10 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xba:
-	lds r24,reg_s	 ;  reg_s.199, reg_s
-	sts flag_z,r24	 ;  flag_z, reg_s.199
-	sts flag_n,r24	 ;  flag_n, reg_s.199
-	sts reg_x,r24	 ;  reg_x, reg_s.199
+	mov r24,rS	 ;  reg_s.199, reg_s
+	mov rZ,r24	 ;  flag_z, reg_s.199
+	mov rN,r24	 ;  flag_n, reg_s.199
+	mov rX,r24	 ;  reg_x, reg_s.199
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2851,11 +2865,11 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc8:
-	lds r24,reg_y	 ;  flag_z.216, reg_y
+	mov r24,rY	 ;  flag_z.216, reg_y
 	subi r24,lo8(-(1))	 ;  flag_z.216,
-	sts flag_z,r24	 ;  flag_z, flag_z.216
-	sts flag_n,r24	 ;  flag_n, flag_z.216
-	sts reg_y,r24	 ;  reg_y, flag_z.216
+	mov rZ,r24	 ;  flag_z, flag_z.216
+	mov rN,r24	 ;  flag_n, flag_z.216
+	mov rY,r24	 ;  reg_y, flag_z.216
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2868,11 +2882,11 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xca:
-	lds r24,reg_x	 ;  flag_z.220, reg_x
+	mov r24,rX	 ;  flag_z.220, reg_x
 	subi r24,lo8(-(-1))	 ;  flag_z.220,
-	sts flag_z,r24	 ;  flag_z, flag_z.220
-	sts flag_n,r24	 ;  flag_n, flag_z.220
-	sts reg_x,r24	 ;  reg_x, flag_z.220
+	mov rZ,r24	 ;  flag_z, flag_z.220
+	mov rN,r24	 ;  flag_n, flag_z.220
+	mov rX,r24	 ;  reg_x, flag_z.220
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2880,19 +2894,19 @@ cpu_main:
 .xcb:
 	call addr_imm	 ; 
 	call mem_read	 ; 
-	lds r25,reg_x	 ;  D.4021, reg_x
-	lds r18,reg_a	 ;  reg_a, reg_a
+	mov r25,rX	 ;  D.4021, reg_x
+	mov r18,rA	 ;  reg_a, reg_a
 	and r25,r18	 ;  D.4021, reg_a
 	ldi r18,lo8(1)	 ;  D.4025,
 	cp r25,r24	 ;  D.4021, data
 	brsh .L356	 ; ,
 	ldi r18,0	 ;  D.4025
 .L356:
-	sts flag_c,r18	 ;  flag_c, D.4025
+	mov rC,r18	 ;  flag_c, D.4025
 	sub r25,r24	 ;  flag_z.226, data
-	sts flag_z,r25	 ;  flag_z, flag_z.226
-	sts flag_n,r25	 ;  flag_n, flag_z.226
-	sts reg_x,r25	 ;  reg_x, flag_z.226
+	mov rZ,r25	 ;  flag_z, flag_z.226
+	mov rN,r25	 ;  flag_n, flag_z.226
+	mov rX,r25	 ;  reg_x, flag_z.226
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -2929,7 +2943,7 @@ cpu_main:
 	call addr_imm	 ; 
 	movw r22,r24	 ;  D.4020,
 	ldi r24,lo8(1)	 ;  D.4025,
-	lds r25,flag_z	 ;  flag_z, flag_z
+	mov r25,rZ	 ;  flag_z, flag_z
 	cpse r25,__zero_reg__	 ;  flag_z,
 	rjmp .L357	 ; 
 	ldi r24,0	 ;  D.4025
@@ -3093,11 +3107,11 @@ cpu_main:
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe8:
-	lds r24,reg_x	 ;  flag_z.240, reg_x
+	mov r24,rX	 ;  flag_z.240, reg_x
 	subi r24,lo8(-(1))	 ;  flag_z.240,
-	sts flag_z,r24	 ;  flag_z, flag_z.240
-	sts flag_n,r24	 ;  flag_n, flag_z.240
-	sts reg_x,r24	 ;  reg_x, flag_z.240
+	mov rZ,r24	 ;  flag_z, flag_z.240
+	mov rN,r24	 ;  flag_n, flag_z.240
+	mov rX,r24	 ;  reg_x, flag_z.240
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
 	call clock_advance	 ; 
@@ -3153,7 +3167,7 @@ cpu_main:
 	call addr_imm	 ; 
 	movw r22,r24	 ;  D.4020,
 	ldi r24,lo8(1)	 ;  D.4025,
-	lds r25,flag_z	 ;  flag_z, flag_z
+	mov r25,rZ	 ;  flag_z, flag_z
 	cpse r25,__zero_reg__	 ;  flag_z
 	ldi r24,0	 ;  D.4025
 .L358:
@@ -3262,6 +3276,20 @@ cpu_main:
 	jmp .L96	 ; 
 .L366:
 /* epilogue start */
+	sts reg_pc,rPC0
+	sts reg_pc+1,rPC1
+	sts reg_a,rA
+	sts reg_x,rX
+	sts reg_y,rY
+	sts reg_s,rS
+	sts reg_p,rP
+	sts flag_n,rN
+	sts flag_z,rZ
+	sts flag_c,rC
+	sts time_left,rTIME0
+	sts time_left+1,rTIME1
+	sts time_left+2,rTIME2
+	sts time_left+3,rTIME3
 	pop r28	 ; 
 	pop r17	 ; 
 	pop r16	 ; 
@@ -3277,8 +3305,8 @@ cpu_main:
 	pop rY
 	pop rX
 	pop rA
-	pop rPC_hi
-	pop rPC_lo
+	pop rPC1
+	pop rPC0
 	ret
 	.size	cpu_main, .-cpu_main
 	.section	.bss.time_left,"aw",@nobits
