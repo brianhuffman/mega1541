@@ -75,22 +75,10 @@ clock_advance:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	clr r26	 ;  D.3675
-	sbrc r25,7	 ;  D.3675
-	com r26	 ;  D.3675
-	mov r27,r26	 ;  D.3675
-	mov r20,rTIME0	 ;  time_left.20, time_left
-	mov r21,rTIME1	 ;  time_left.20, time_left
-	mov r22,rTIME2	 ;  time_left.20, time_left
-	mov r23,rTIME3	 ;  time_left.20, time_left
-	sub r20,r24	 ;  time_left.20, D.3675
-	sbc r21,r25	 ;  time_left.20, D.3675
-	sbc r22,r26	 ;  time_left.20, D.3675
-	sbc r23,r27	 ;  time_left.20, D.3675
-	mov rTIME0,r20	 ;  time_left, time_left.20
-	mov rTIME1,r21	 ;  time_left, time_left.20
-	mov rTIME2,r22	 ;  time_left, time_left.20
-	mov rTIME3,r23	 ;  time_left, time_left.20
+	sub rTIME0,r24	 ;  time_left.20, D.3675
+	sbc rTIME1,__zero_reg__	 ;  time_left.20, D.3675
+	sbc rTIME2,__zero_reg__	 ;  time_left.20, D.3675
+	sbc rTIME3,__zero_reg__	 ;  time_left.20, D.3675
 	ret
 	.size	clock_advance, .-clock_advance
 	.section	.text.cpu6502_PLP,"ax",@progbits
@@ -874,7 +862,6 @@ cpu6502_branch:
 	rjmp .L72	 ; 
 .L67:
 	ldi r24,lo8(1)	 ; ,
-	ldi r25,0	 ; 
 .L72:
 	call clock_advance	 ; 
 	mov rPC1,r29	 ;  reg_pc, new_pc
@@ -1067,7 +1054,6 @@ addr_abx:
 	cp r29,r25	 ;  tmp18, base
 	breq .L84	 ; ,
 	ldi r24,lo8(1)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 .L84:
 	movw r24,r28	 ; , address
@@ -1102,7 +1088,6 @@ addr_aby:
 	cp r29,r25	 ;  tmp18, base
 	breq .L86	 ; ,
 	ldi r24,lo8(1)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 .L86:
 	movw r24,r28	 ; , address
@@ -1168,7 +1153,6 @@ addr_iny:
 	cp r29,r19	 ;  tmp24, D.3885
 	breq .L89	 ; ,
 	ldi r24,lo8(1)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 .L89:
 	movw r24,r28	 ; , address
@@ -1231,7 +1215,6 @@ cpu_irq:
 	ori r24,lo8(4)	 ;  reg_p.57,
 	sts reg_p,r24	 ;  reg_p, reg_p.57
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	jmp clock_advance	 ; 
 .L92:
 	ret
@@ -1425,14 +1408,12 @@ cpu_main:
 	ori r24,lo8(4)	 ;  reg_p.57,
 	sts reg_p,r24	 ;  reg_p, reg_p.57
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x01:
 	call addr_inx	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x02:
@@ -1442,47 +1423,40 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x04:
 	call addr_zpg	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x05:
 	call addr_zpg	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x06:
 	call addr_zpg	 ; 
 	call cpu6502_ASL	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x07:
 	call addr_zpg	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x08:
 	call cpu6502_PHP	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x09:
 	call addr_imm	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x0a:
@@ -1499,7 +1473,6 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, D.4024
 	mov rA,r24	 ;  reg_a, D.4024
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x0b:
@@ -1512,34 +1485,29 @@ cpu_main:
 	rol r24	 ;  D.4025
 	mov rC,r24	 ;  flag_c, D.4025
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x0c:
 	call addr_abs	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x0d:
 	call addr_abs	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x0e:
 	call addr_abs	 ; 
 	call cpu6502_ASL	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x0f:
 	call addr_abs	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x10:
@@ -1552,14 +1520,12 @@ cpu_main:
 	rol r24	 ; 
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x11:
 	call addr_iny	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x12:
@@ -1569,100 +1535,85 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x14:
 	call addr_zpx	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x15:
 	call addr_zpx	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x16:
 	call addr_zpx	 ; 
 	call cpu6502_ASL	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x17:
 	call addr_zpx	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x18:
 	mov rC,__zero_reg__	 ;  flag_c,
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x19:
 	call addr_aby	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x1a:
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x1b:
 	call addr_aby	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x1c:
 	call addr_abx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x1d:
 	call addr_abx	 ; 
 	call cpu6502_ORA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x1e:
 	call addr_abx	 ; 
 	call cpu6502_ASL	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x1f:
 	call addr_abx	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x20:
 	call addr_abs	 ; 
 	call cpu6502_JSR	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x21:
 	call addr_inx	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x22:
@@ -1672,48 +1623,41 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_RLA	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x24:
 	call addr_zpg	 ; 
 	call cpu6502_BIT	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x25:
 	call addr_zpg	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x26:
 	call addr_zpg	 ; 
 	call cpu6502_ROL	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x27:
 	call addr_zpg	 ; 
 	call cpu6502_RLA	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x28:
 	call cpu6502_PLP	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x29:
 	call addr_imm	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x2a:
@@ -1730,7 +1674,6 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, result
 	mov rA,r24	 ;  reg_a, result
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x2b:
@@ -1743,35 +1686,30 @@ cpu_main:
 	rol r24	 ;  D.4025
 	mov rC,r24	 ;  flag_c, D.4025
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x2c:
 	call addr_abs	 ; 
 	call cpu6502_BIT	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x2d:
 	call addr_abs	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x2e:
 	call addr_abs	 ; 
 	call cpu6502_ROL	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x2f:
 	call addr_abs	 ; 
 	call cpu6502_RLA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x30:
@@ -1781,14 +1719,12 @@ cpu_main:
 	andi r24,lo8(-128)	 ; ,
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x31:
 	call addr_iny	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x32:
@@ -1798,100 +1734,85 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_RLA	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x34:
 	call addr_zpx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x35:
 	call addr_zpx	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x36:
 	call addr_zpx	 ; 
 	call cpu6502_ROL	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x37:
 	call addr_zpx	 ; 
 	call cpu6502_RLA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x38:
 	mov rC,r28	 ;  flag_c, D.4025
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x39:
 	call addr_aby	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x3a:
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x3b:
 	call addr_aby	 ; 
 	call cpu6502_RLA	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x3c:
 	call addr_abx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x3d:
 	call addr_abx	 ; 
 	call cpu6502_AND	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x3e:
 	call addr_abx	 ; 
 	call cpu6502_ROL	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x3f:
 	call addr_abx	 ; 
 	call cpu6502_RLA	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x40:
 	call cpu6502_PLP	 ; 
 	call cpu6502_RTS	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x41:
 	call addr_inx	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x42:
@@ -1901,34 +1822,29 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x44:
 	call addr_zpg	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x45:
 	call addr_zpg	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x46:
 	call addr_zpg	 ; 
 	call cpu6502_LSR	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x47:
 	call addr_zpg	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x48:
@@ -1942,20 +1858,17 @@ cpu_main:
 	sbci r31,hi8(-(ram+256))	 ;  tmp389,
 	st Z,r24	 ;  *_920, reg_a.116
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x49:
 	call addr_imm	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x4a:
 	call cpu6502_LSR_a	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x4b:
@@ -1963,7 +1876,6 @@ cpu_main:
 	call cpu6502_AND	 ; 
 	call cpu6502_LSR_a	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x4c:
@@ -1971,28 +1883,24 @@ cpu_main:
 	mov rPC1,r25	 ;  reg_pc,
 	mov rPC0,r24	 ;  reg_pc,
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x4d:
 	call addr_abs	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x4e:
 	call addr_abs	 ; 
 	call cpu6502_LSR	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x4f:
 	call addr_abs	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x50:
@@ -2005,14 +1913,12 @@ cpu_main:
 	eor r24,r28	 ; , D.4025
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x51:
 	call addr_iny	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x52:
@@ -2022,34 +1928,29 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x54:
 	call addr_zpx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x55:
 	call addr_zpx	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x56:
 	call addr_zpx	 ; 
 	call cpu6502_LSR	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x57:
 	call addr_zpx	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x58:
@@ -2057,66 +1958,56 @@ cpu_main:
 	andi r24,lo8(-5)	 ;  reg_p.127,
 	sts reg_p,r24	 ;  reg_p, reg_p.127
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x59:
 	call addr_aby	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x5a:
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x5b:
 	call addr_aby	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x5c:
 	call addr_abx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x5d:
 	call addr_abx	 ; 
 	call cpu6502_EOR	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x5e:
 	call addr_abx	 ; 
 	call cpu6502_LSR	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x5f:
 	call addr_abx	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x60:
 	call cpu6502_RTS	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x61:
 	call addr_inx	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x62:
@@ -2126,34 +2017,29 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_RRA	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x64:
 	call addr_zpg	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x65:
 	call addr_zpg	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x66:
 	call addr_zpg	 ; 
 	call cpu6502_ROR	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x67:
 	call addr_zpg	 ; 
 	call cpu6502_RRA	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x68:
@@ -2168,14 +2054,12 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, D.4026
 	mov rA,r24	 ;  reg_a, D.4026
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x69:
 	call addr_imm	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x6a:
@@ -2194,13 +2078,11 @@ cpu_main:
 	mov rN,r25	 ;  flag_n, result
 	mov rA,r25	 ;  reg_a, result
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x6b:
 	call cpu6502_JAM	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x6c:
@@ -2208,28 +2090,24 @@ cpu_main:
 	mov rPC1,r25	 ;  reg_pc,
 	mov rPC0,r24	 ;  reg_pc,
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x6d:
 	call addr_abs	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x6e:
 	call addr_abs	 ; 
 	call cpu6502_ROR	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x6f:
 	call addr_abs	 ; 
 	call cpu6502_RRA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x70:
@@ -2239,14 +2117,12 @@ cpu_main:
 	andi r24,lo8(64)	 ; ,
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x71:
 	call addr_iny	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x72:
@@ -2256,34 +2132,29 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_RRA	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x74:
 	call addr_zpx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x75:
 	call addr_zpx	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x76:
 	call addr_zpx	 ; 
 	call cpu6502_ROR	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x77:
 	call addr_zpx	 ; 
 	call cpu6502_RRA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x78:
@@ -2291,79 +2162,67 @@ cpu_main:
 	ori r24,lo8(4)	 ;  reg_p.57,
 	sts reg_p,r24	 ;  reg_p, reg_p.57
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x79:
 	call addr_aby	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x7a:
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x7b:
 	call addr_aby	 ; 
 	call cpu6502_RRA	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x7c:
 	call addr_abx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x7d:
 	call addr_abx	 ; 
 	call cpu6502_ADC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x7e:
 	call addr_abx	 ; 
 	call cpu6502_ROR	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x7f:
 	call addr_abx	 ; 
 	call cpu6502_RRA	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x80:
 	call addr_imm	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x81:
 	call addr_inx	 ; 
 	call cpu6502_STA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x82:
 	call addr_imm	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x83:
 	call addr_inx	 ; 
 	call cpu6502_SAX	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x84:
@@ -2371,14 +2230,12 @@ cpu_main:
 	mov r22,rY	 ; , reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x85:
 	call addr_zpg	 ; 
 	call cpu6502_STA	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x86:
@@ -2386,14 +2243,12 @@ cpu_main:
 	mov r22,rX	 ; , reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x87:
 	call addr_zpg	 ; 
 	call cpu6502_SAX	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x88:
@@ -2403,13 +2258,11 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, flag_z.170
 	mov rY,r24	 ;  reg_y, flag_z.170
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x89:
 	call addr_imm	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x8a:
@@ -2418,13 +2271,11 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, reg_x.173
 	mov rA,r24	 ;  reg_a, reg_x.173
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x8b:
 	call cpu6502_JAM	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x8c:
@@ -2432,14 +2283,12 @@ cpu_main:
 	mov r22,rY	 ; , reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x8d:
 	call addr_abs	 ; 
 	call cpu6502_STA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x8e:
@@ -2447,14 +2296,12 @@ cpu_main:
 	mov r22,rX	 ; , reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x8f:
 	call addr_abs	 ; 
 	call cpu6502_SAX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x90:
@@ -2467,14 +2314,12 @@ cpu_main:
 .L355:
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x91:
 	call addr_iny	 ; 
 	call cpu6502_STA	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x92:
@@ -2484,7 +2329,6 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_SHA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x94:
@@ -2492,14 +2336,12 @@ cpu_main:
 	mov r22,rY	 ; , reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x95:
 	call addr_zpx	 ; 
 	call cpu6502_STA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x96:
@@ -2507,14 +2349,12 @@ cpu_main:
 	mov r22,rX	 ; , reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x97:
 	call addr_zpy	 ; 
 	call cpu6502_SAX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x98:
@@ -2523,27 +2363,23 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, reg_y.181
 	mov rA,r24	 ;  reg_a, reg_y.181
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x99:
 	call addr_aby	 ; 
 	call cpu6502_STA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x9a:
 	mov r24,rX	 ;  reg_x, reg_x
 	mov rS,r24	 ;  reg_s, reg_x
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x9b:
 	call cpu6502_JAM	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x9c:
@@ -2554,14 +2390,12 @@ cpu_main:
 	and r22,r18	 ;  D.4021, reg_y
 	call mem_write	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x9d:
 	call addr_abx	 ; 
 	call cpu6502_STA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x9e:
@@ -2572,70 +2406,60 @@ cpu_main:
 	and r22,r18	 ;  D.4021, reg_x
 	call mem_write	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x9f:
 	call addr_aby	 ; 
 	call cpu6502_SHA	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa0:
 	call addr_imm	 ; 
 	call cpu6502_LDY	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa1:
 	call addr_inx	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa2:
 	call addr_imm	 ; 
 	call cpu6502_LDX	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa3:
 	call addr_inx	 ; 
 	call cpu6502_LAX	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa4:
 	call addr_zpg	 ; 
 	call cpu6502_LDY	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa5:
 	call addr_zpg	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa6:
 	call addr_zpg	 ; 
 	call cpu6502_LDX	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa7:
 	call addr_zpg	 ; 
 	call cpu6502_LAX	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa8:
@@ -2644,14 +2468,12 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, reg_a.190
 	mov rY,r24	 ;  reg_y, reg_a.190
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xa9:
 	call addr_imm	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xaa:
@@ -2660,41 +2482,35 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, reg_a.193
 	mov rX,r24	 ;  reg_x, reg_a.193
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xab:
 	call cpu6502_JAM	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xac:
 	call addr_abs	 ; 
 	call cpu6502_LDY	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xad:
 	call addr_abs	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xae:
 	call addr_abs	 ; 
 	call cpu6502_LDX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xaf:
 	call addr_abs	 ; 
 	call cpu6502_LAX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb0:
@@ -2703,14 +2519,12 @@ cpu_main:
 	mov r24,rC	 ; , flag_c
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb1:
 	call addr_iny	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb2:
@@ -2720,35 +2534,30 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_LAX	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb4:
 	call addr_zpx	 ; 
 	call cpu6502_LDY	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb5:
 	call addr_zpx	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb6:
 	call addr_zpy	 ; 
 	call cpu6502_LDX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb7:
 	call addr_zpy	 ; 
 	call cpu6502_LAX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb8:
@@ -2756,14 +2565,12 @@ cpu_main:
 	andi r24,lo8(-65)	 ;  reg_p.198,
 	sts reg_p,r24	 ;  reg_p, reg_p.198
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb9:
 	call addr_aby	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xba:
@@ -2772,96 +2579,82 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, reg_s.199
 	mov rX,r24	 ;  reg_x, reg_s.199
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xbb:
 	call cpu6502_JAM	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xbc:
 	call addr_abx	 ; 
 	call cpu6502_LDY	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xbd:
 	call addr_abx	 ; 
 	call cpu6502_LDA	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xbe:
 	call addr_aby	 ; 
 	call cpu6502_LDX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xbf:
 	call addr_aby	 ; 
 	call cpu6502_LAX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc0:
 	call addr_imm	 ; 
 	call cpu6502_CPY	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc1:
 	call addr_inx	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc2:
 	call addr_imm	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc3:
 	call addr_inx	 ; 
 	call cpu6502_DCP	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc4:
 	call addr_zpg	 ; 
 	call cpu6502_CPY	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc5:
 	call addr_zpg	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc6:
 	call addr_zpg	 ; 
 	call cpu6502_DEC	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc7:
 	call addr_zpg	 ; 
 	call cpu6502_DCP	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc8:
@@ -2871,14 +2664,12 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, flag_z.216
 	mov rY,r24	 ;  reg_y, flag_z.216
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xc9:
 	call addr_imm	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xca:
@@ -2888,7 +2679,6 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, flag_z.220
 	mov rX,r24	 ;  reg_x, flag_z.220
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xcb:
@@ -2908,35 +2698,30 @@ cpu_main:
 	mov rN,r25	 ;  flag_n, flag_z.226
 	mov rX,r25	 ;  reg_x, flag_z.226
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xcc:
 	call addr_abs	 ; 
 	call cpu6502_CPY	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xcd:
 	call addr_abs	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xce:
 	call addr_abs	 ; 
 	call cpu6502_DEC	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xcf:
 	call addr_abs	 ; 
 	call cpu6502_DCP	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xd0:
@@ -2950,14 +2735,12 @@ cpu_main:
 .L357:
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xd1:
 	call addr_iny	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xd2:
@@ -2967,34 +2750,29 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_DCP	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xd4:
 	call addr_zpx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xd5:
 	call addr_zpx	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xd6:
 	call addr_zpx	 ; 
 	call cpu6502_DEC	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xd7:
 	call addr_zpx	 ; 
 	call cpu6502_DCP	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xd8:
@@ -3002,108 +2780,92 @@ cpu_main:
 	andi r24,lo8(-9)	 ;  reg_p.234,
 	sts reg_p,r24	 ;  reg_p, reg_p.234
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xd9:
 	call addr_aby	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xda:
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xdb:
 	call addr_aby	 ; 
 	call cpu6502_DCP	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xdc:
 	call addr_abx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xdd:
 	call addr_abx	 ; 
 	call cpu6502_CMP	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xde:
 	call addr_abx	 ; 
 	call cpu6502_DEC	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xdf:
 	call addr_abx	 ; 
 	call cpu6502_DCP	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe0:
 	call addr_imm	 ; 
 	call cpu6502_CPX	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe1:
 	call addr_inx	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe2:
 	call addr_imm	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe3:
 	call addr_inx	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe4:
 	call addr_zpg	 ; 
 	call cpu6502_CPX	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe5:
 	call addr_zpg	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(3)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe6:
 	call addr_zpg	 ; 
 	call cpu6502_INC	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe7:
 	call addr_zpg	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe8:
@@ -3113,54 +2875,46 @@ cpu_main:
 	mov rN,r24	 ;  flag_n, flag_z.240
 	mov rX,r24	 ;  reg_x, flag_z.240
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xe9:
 	call addr_imm	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xea:
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xeb:
 	call addr_imm	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xec:
 	call addr_abs	 ; 
 	call cpu6502_CPX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xed:
 	call addr_abs	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xee:
 	call addr_abs	 ; 
 	call cpu6502_INC	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xef:
 	call addr_abs	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf0:
@@ -3173,14 +2927,12 @@ cpu_main:
 .L358:
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf1:
 	call addr_iny	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(5)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf2:
@@ -3190,34 +2942,29 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(8)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf4:
 	call addr_zpx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf5:
 	call addr_zpx	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf6:
 	call addr_zpx	 ; 
 	call cpu6502_INC	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf7:
 	call addr_zpx	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(6)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf8:
@@ -3225,53 +2972,45 @@ cpu_main:
 	ori r24,lo8(8)	 ;  reg_p.247,
 	sts reg_p,r24	 ;  reg_p, reg_p.247
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf9:
 	call addr_aby	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xfa:
 	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xfb:
 	call addr_aby	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xfc:
 	call addr_abx	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xfd:
 	call addr_abx	 ; 
 	call cpu6502_SBC	 ; 
 	ldi r24,lo8(4)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xfe:
 	call addr_abx	 ; 
 	call cpu6502_INC	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xff:
 	call addr_abx	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(7)	 ; ,
-	ldi r25,0	 ; 
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .L366:
