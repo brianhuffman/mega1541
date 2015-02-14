@@ -1114,6 +1114,18 @@ cpu_reset:
 	sts reg_pc+1,rPC1
 	ret
 	.size	cpu_reset, .-cpu_reset
+	.section	.text.cpu_get_pc,"ax",@progbits
+.global	cpu_get_pc
+	.type	cpu_get_pc, @function
+cpu_get_pc:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	lds r24,reg_pc
+	lds r25,reg_pc+1
+	ret
+	.size	cpu_get_pc, .-cpu_get_pc
 	.section	.text.cpu_irq,"ax",@progbits
 .global	cpu_irq
 	.type	cpu_irq, @function

@@ -13,4 +13,6 @@ void cpu_irq (void);
 void cpu_nmi (void);
 //void cpu_brk (void);
 
+word cpu_get_pc (void);
+
 #endif
