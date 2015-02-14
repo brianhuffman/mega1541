@@ -813,43 +813,6 @@ cpu6502_PHP:
 	st Z,r24	 ;  *_10, reg_p.43
 	ret
 	.size	cpu6502_PHP, .-cpu6502_PHP
-	.section	.text.cpu6502_branch,"ax",@progbits
-	.type	cpu6502_branch, @function
-cpu6502_branch:
-	push r16	 ; 
-	push r17	 ; 
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	tst r24	 ;  condition
-	breq .L65	 ; ,
-	movw r24,r22	 ; , address
-	call mem_read	 ; 
-	mov r18,rPC0	 ;  reg_pc.76, reg_pc
-	mov r19,rPC1	 ;  reg_pc.76, reg_pc
-	movw r16,r18	 ;  new_pc, reg_pc.76
-	add r16,r24	 ;  new_pc,
-	adc r17,__zero_reg__	 ;  new_pc
-	sbrc r24,7	 ; 
-	dec r17	 ;  new_pc
-	cp r17,r19	 ;  tmp24, reg_pc.76
-	breq .L67	 ; ,
-	ldi r24,lo8(2)	 ; ,
-	ldi r25,0	 ; 
-	rjmp .L72	 ; 
-.L67:
-	ldi r24,lo8(1)	 ; ,
-.L72:
-	call clock_advance	 ; 
-	mov rPC1,r17	 ;  reg_pc, new_pc
-	mov rPC0,r16	 ;  reg_pc, new_pc
-.L65:
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	ret
-	.size	cpu6502_branch, .-cpu6502_branch
 	.section	.text.cpu6502_CPY,"ax",@progbits
 	.type	cpu6502_CPY, @function
 cpu6502_CPY:
@@ -1310,6 +1273,82 @@ cpu_main:
 	.word gs(.xf8), gs(.xf9), gs(.xfa), gs(.xfb)
 	.word gs(.xfc), gs(.xfd), gs(.xfe), gs(.xff)
 	.section	.text.cpu_main
+/* BPL */
+.x10:
+	call addr_imm	 ;
+	tst rN	 ; branch on N >= 0
+	brpl .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
+/* BMI */
+.x30:
+	call addr_imm	 ;
+	tst rN	 ; branch on N < 0
+	brmi .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
+/* BVC */
+.x50:
+	call addr_imm	 ;
+	bst rP,6	 ; branch on P bit 6 = 0
+	brtc .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
+/* BVS */
+.x70:
+	call addr_imm	 ;
+	bst rP,6	 ; branch on P bit 6 = 1
+	brts .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
+.take_branch:
+	call mem_read	 ;
+	movw r18,rPC0	 ; old_pc = reg_pc
+	add rPC0,r24	 ; reg_pc += offset
+	adc rPC1,__zero_reg__	 ;
+	sbrc r24,7	 ; if (offset & 0x80) reg_pc -= 0x100
+	dec rPC1	 ;
+	ldi r24,3	 ; 3 cycles for branch to same page
+	cpse rPC1,r19	 ; skip if same page
+	ldi r24,4	 ; 4 cycles for branch to different page
+	call clock_advance	 ;
+	rjmp .L96	 ;
+/* BCC */
+.x90:
+	call addr_imm	 ;
+	tst rC	 ; branch on rC = 0
+	breq .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
+/* BCS */
+.xb0:
+	call addr_imm	 ;
+	tst rC	 ; branch on rC != 0
+	brne .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
+/* BNE */
+.xd0:
+	call addr_imm	 ;
+	tst rZ	 ; branch on rZ != 0
+	brne .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
+/* BEQ */
+.xf0:
+	call addr_imm	 ;
+	tst rZ	 ; branch on rZ = 0
+	breq .take_branch	 ;
+	ldi r24,2	 ;
+	call clock_advance	 ;
+	rjmp .L96	 ;
 .x00:
 	ldi r24,0xfe	 ; ,
 	ldi r25,0xff	 ; ,
@@ -1430,18 +1469,6 @@ cpu_main:
 	call addr_abs	 ; 
 	call cpu6502_SLO	 ; 
 	ldi r24,lo8(6)	 ; ,
-	call clock_advance	 ; 
-	rjmp .L96	 ; 
-.x10:
-	call addr_imm	 ; 
-	movw r22,r24	 ;  D.4020,
-	mov r24,rN	 ;  tmp374, flag_n
-	com r24	 ;  tmp374
-	rol r24	 ; 
-	clr r24	 ; 
-	rol r24	 ; 
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x11:
@@ -1634,15 +1661,6 @@ cpu_main:
 	ldi r24,lo8(6)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
-.x30:
-	call addr_imm	 ; 
-	movw r22,r24	 ;  D.4020,
-	mov r24,rN	 ;  flag_n, flag_n
-	andi r24,lo8(-128)	 ; ,
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
-	call clock_advance	 ; 
-	rjmp .L96	 ; 
 .x31:
 	call addr_iny	 ; 
 	call cpu6502_AND	 ; 
@@ -1823,18 +1841,6 @@ cpu_main:
 	call addr_abs	 ; 
 	call cpu6502_SRE	 ; 
 	ldi r24,lo8(6)	 ; ,
-	call clock_advance	 ; 
-	rjmp .L96	 ; 
-.x50:
-	call addr_imm	 ; 
-	movw r22,r24	 ;  D.4020,
-	lds r24,reg_p	 ;  reg_p, reg_p
-	bst r24,6	 ;  reg_p,
-	clr r24	 ;  tmp392
-	bld r24,0	 ;  tmp392
-	eor r24,r16	 ; , D.4025
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x51:
@@ -2032,15 +2038,6 @@ cpu_main:
 	ldi r24,lo8(6)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
-.x70:
-	call addr_imm	 ; 
-	movw r22,r24	 ;  D.4020,
-	lds r24,reg_p	 ;  reg_p, reg_p
-	andi r24,lo8(64)	 ; ,
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
-	call clock_advance	 ; 
-	rjmp .L96	 ; 
 .x71:
 	call addr_iny	 ; 
 	call cpu6502_ADC	 ; 
@@ -2224,18 +2221,6 @@ cpu_main:
 	call addr_abs	 ; 
 	call cpu6502_SAX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	call clock_advance	 ; 
-	rjmp .L96	 ; 
-.x90:
-	call addr_imm	 ; 
-	movw r22,r24	 ;  D.4020,
-	ldi r24,lo8(1)	 ;  D.4025,
-	mov r25,rC	 ;  flag_c, flag_c
-	cpse r25,__zero_reg__	 ;  flag_c
-	ldi r24,0	 ;  D.4025
-.L355:
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x91:
@@ -2433,14 +2418,6 @@ cpu_main:
 	call addr_abs	 ; 
 	call cpu6502_LAX	 ; 
 	ldi r24,lo8(4)	 ; ,
-	call clock_advance	 ; 
-	rjmp .L96	 ; 
-.xb0:
-	call addr_imm	 ; 
-	movw r22,r24	 ; , D.4020
-	mov r24,rC	 ; , flag_c
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .xb1:
@@ -2646,19 +2623,6 @@ cpu_main:
 	ldi r24,lo8(6)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
-.xd0:
-	call addr_imm	 ; 
-	movw r22,r24	 ;  D.4020,
-	ldi r24,lo8(1)	 ;  D.4025,
-	mov r25,rZ	 ;  flag_z, flag_z
-	cpse r25,__zero_reg__	 ;  flag_z,
-	rjmp .L357	 ; 
-	ldi r24,0	 ;  D.4025
-.L357:
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
-	call clock_advance	 ; 
-	rjmp .L96	 ; 
 .xd1:
 	call addr_iny	 ; 
 	call cpu6502_CMP	 ; 
@@ -2837,18 +2801,6 @@ cpu_main:
 	call addr_abs	 ; 
 	call cpu6502_ISB	 ; 
 	ldi r24,lo8(6)	 ; ,
-	call clock_advance	 ; 
-	jmp .L96	 ; 
-.xf0:
-	call addr_imm	 ; 
-	movw r22,r24	 ;  D.4020,
-	ldi r24,lo8(1)	 ;  D.4025,
-	mov r25,rZ	 ;  flag_z, flag_z
-	cpse r25,__zero_reg__	 ;  flag_z
-	ldi r24,0	 ;  D.4025
-.L358:
-	call cpu6502_branch	 ; 
-	ldi r24,lo8(2)	 ; ,
 	call clock_advance	 ; 
 	jmp .L96	 ; 
 .xf1:
