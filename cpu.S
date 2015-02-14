@@ -5,8 +5,8 @@ __SREG__ = 0x3f
 __tmp_reg__ = 0
 __zero_reg__ = 1
 
-#define rPC0 r2
-#define rPC1 r3
+#define rPC0 r28
+#define rPC1 r29
 #define rA r4
 #define rX r5
 #define rY r6
@@ -212,37 +212,37 @@ cpu6502_BIT:
 	.section	.text.cpu6502_AND,"ax",@progbits
 	.type	cpu6502_AND, @function
 cpu6502_AND:
-	push r28	 ; 
+	push r16	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 1 */
 .L__stack_usage = 1
-	mov r28,rA	 ;  reg_a.107, reg_a
+	mov r16,rA	 ;  reg_a.107, reg_a
 	call mem_read	 ; 
-	and r24,r28	 ;  flag_z.108, reg_a.107
+	and r24,r16	 ;  flag_z.108, reg_a.107
 	mov rZ,r24	 ;  flag_z, flag_z.108
 	mov rN,r24	 ;  flag_n, flag_z.108
 	mov rA,r24	 ;  reg_a, flag_z.108
 /* epilogue start */
-	pop r28	 ; 
+	pop r16	 ; 
 	ret
 	.size	cpu6502_AND, .-cpu6502_AND
 	.section	.text.cpu6502_EOR,"ax",@progbits
 	.type	cpu6502_EOR, @function
 cpu6502_EOR:
-	push r28	 ; 
+	push r16	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 1 */
 .L__stack_usage = 1
-	mov r28,rA	 ;  reg_a.128, reg_a
+	mov r16,rA	 ;  reg_a.128, reg_a
 	call mem_read	 ; 
-	eor r24,r28	 ;  flag_z.129, reg_a.128
+	eor r24,r16	 ;  flag_z.129, reg_a.128
 	mov rZ,r24	 ;  flag_z, flag_z.129
 	mov rN,r24	 ;  flag_n, flag_z.129
 	mov rA,r24	 ;  reg_a, flag_z.129
 /* epilogue start */
-	pop r28	 ; 
+	pop r16	 ; 
 	ret
 	.size	cpu6502_EOR, .-cpu6502_EOR
 	.section	.text.cpu6502_ADC,"ax",@progbits
@@ -477,13 +477,13 @@ cpu6502_SBC:
 	.section	.text.cpu6502_ASL,"ax",@progbits
 	.type	cpu6502_ASL, @function
 cpu6502_ASL:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call mem_read	 ; 
 	mov r25,r24	 ;  flag_c.81, data
 	rol r25	 ;  flag_c.81
@@ -494,39 +494,39 @@ cpu6502_ASL:
 	lsl r22	 ;  flag_z.82
 	mov rZ,r22	 ;  flag_z, flag_z.82
 	mov rN,r22	 ;  flag_n, flag_z.82
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp mem_write	 ; 
 	.size	cpu6502_ASL, .-cpu6502_ASL
 	.section	.text.cpu6502_SLO,"ax",@progbits
 	.type	cpu6502_SLO, @function
 cpu6502_SLO:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call cpu6502_ASL	 ; 
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp cpu6502_ORA	 ; 
 	.size	cpu6502_SLO, .-cpu6502_SLO
 	.section	.text.cpu6502_ROL,"ax",@progbits
 	.type	cpu6502_ROL, @function
 cpu6502_ROL:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call mem_read	 ; 
 	mov r22,r24	 ;  result, data
 	lsl r22	 ;  result
@@ -538,39 +538,39 @@ cpu6502_ROL:
 	mov rC,r24	 ;  flag_c, flag_c.113
 	mov rZ,r22	 ;  flag_z, result
 	mov rN,r22	 ;  flag_n, result
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp mem_write	 ; 
 	.size	cpu6502_ROL, .-cpu6502_ROL
 	.section	.text.cpu6502_RLA,"ax",@progbits
 	.type	cpu6502_RLA, @function
 cpu6502_RLA:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call cpu6502_ROL	 ; 
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp cpu6502_AND	 ; 
 	.size	cpu6502_RLA, .-cpu6502_RLA
 	.section	.text.cpu6502_LSR,"ax",@progbits
 	.type	cpu6502_LSR, @function
 cpu6502_LSR:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call mem_read	 ; 
 	mov r25,r24	 ;  flag_c.132, data
 	andi r25,lo8(1)	 ;  flag_c.132,
@@ -579,39 +579,39 @@ cpu6502_LSR:
 	lsr r22	 ;  flag_z.133
 	mov rZ,r22	 ;  flag_z, flag_z.133
 	mov rN,r22	 ;  flag_n, flag_z.133
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp mem_write	 ; 
 	.size	cpu6502_LSR, .-cpu6502_LSR
 	.section	.text.cpu6502_SRE,"ax",@progbits
 	.type	cpu6502_SRE, @function
 cpu6502_SRE:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call cpu6502_LSR	 ; 
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp cpu6502_EOR	 ; 
 	.size	cpu6502_SRE, .-cpu6502_SRE
 	.section	.text.cpu6502_ROR,"ax",@progbits
 	.type	cpu6502_ROR, @function
 cpu6502_ROR:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call mem_read	 ; 
 	mov r22,r24	 ;  result, data
 	lsr r22	 ;  result
@@ -625,27 +625,27 @@ cpu6502_ROR:
 	mov rC,r24	 ;  flag_c, flag_c.166
 	mov rZ,r22	 ;  flag_z, result
 	mov rN,r22	 ;  flag_n, result
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp mem_write	 ; 
 	.size	cpu6502_ROR, .-cpu6502_ROR
 	.section	.text.cpu6502_RRA,"ax",@progbits
 	.type	cpu6502_RRA, @function
 cpu6502_RRA:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call cpu6502_ROR	 ; 
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp cpu6502_ADC	 ; 
 	.size	cpu6502_RRA, .-cpu6502_RRA
 	.section	.text.cpu6502_SAX,"ax",@progbits
@@ -687,60 +687,60 @@ cpu6502_SHA:
 	.section	.text.cpu6502_DEC,"ax",@progbits
 	.type	cpu6502_DEC, @function
 cpu6502_DEC:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call mem_read	 ; 
 	ldi r22,lo8(-1)	 ;  flag_z.236,
 	add r22,r24	 ;  flag_z.236,
 	mov rZ,r22	 ;  flag_z, flag_z.236
 	mov rN,r22	 ;  flag_n, flag_z.236
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp mem_write	 ; 
 	.size	cpu6502_DEC, .-cpu6502_DEC
 	.section	.text.cpu6502_INC,"ax",@progbits
 	.type	cpu6502_INC, @function
 cpu6502_INC:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call mem_read	 ; 
 	ldi r22,lo8(1)	 ;  flag_z.258,
 	add r22,r24	 ;  flag_z.258,
 	mov rZ,r22	 ;  flag_z, flag_z.258
 	mov rN,r22	 ;  flag_n, flag_z.258
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp mem_write	 ; 
 	.size	cpu6502_INC, .-cpu6502_INC
 	.section	.text.cpu6502_ISB,"ax",@progbits
 	.type	cpu6502_ISB, @function
 cpu6502_ISB:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call cpu6502_INC	 ; 
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp cpu6502_SBC	 ; 
 	.size	cpu6502_ISB, .-cpu6502_ISB
 	.section	.text.cpu6502_JAM,"ax",@progbits
@@ -816,8 +816,8 @@ cpu6502_PHP:
 	.section	.text.cpu6502_branch,"ax",@progbits
 	.type	cpu6502_branch, @function
 cpu6502_branch:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
@@ -828,12 +828,12 @@ cpu6502_branch:
 	call mem_read	 ; 
 	mov r18,rPC0	 ;  reg_pc.76, reg_pc
 	mov r19,rPC1	 ;  reg_pc.76, reg_pc
-	movw r28,r18	 ;  new_pc, reg_pc.76
-	add r28,r24	 ;  new_pc,
-	adc r29,__zero_reg__	 ;  new_pc
+	movw r16,r18	 ;  new_pc, reg_pc.76
+	add r16,r24	 ;  new_pc,
+	adc r17,__zero_reg__	 ;  new_pc
 	sbrc r24,7	 ; 
-	dec r29	 ;  new_pc
-	cp r29,r19	 ;  tmp24, reg_pc.76
+	dec r17	 ;  new_pc
+	cp r17,r19	 ;  tmp24, reg_pc.76
 	breq .L67	 ; ,
 	ldi r24,lo8(2)	 ; ,
 	ldi r25,0	 ; 
@@ -842,12 +842,12 @@ cpu6502_branch:
 	ldi r24,lo8(1)	 ; ,
 .L72:
 	call clock_advance	 ; 
-	mov rPC1,r29	 ;  reg_pc, new_pc
-	mov rPC0,r28	 ;  reg_pc, new_pc
+	mov rPC1,r17	 ;  reg_pc, new_pc
+	mov rPC0,r16	 ;  reg_pc, new_pc
 .L65:
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	ret
 	.size	cpu6502_branch, .-cpu6502_branch
 	.section	.text.cpu6502_CPY,"ax",@progbits
@@ -893,18 +893,18 @@ cpu6502_CMP:
 	.section	.text.cpu6502_DCP,"ax",@progbits
 	.type	cpu6502_DCP, @function
 cpu6502_DCP:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r28,r24	 ;  address, address
+	movw r16,r24	 ;  address, address
 	call cpu6502_DEC	 ; 
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	jmp cpu6502_CMP	 ; 
 	.size	cpu6502_DCP, .-cpu6502_DCP
 	.section	.text.addr_imm,"ax",@progbits
@@ -995,8 +995,8 @@ addr_zpy:
 .global	addr_abx
 	.type	addr_abx, @function
 addr_abx:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
@@ -1004,30 +1004,30 @@ addr_abx:
 	movw r24,rPC0	 ; , reg_pc
 	call mem_read_16	 ; 
 	mov r18,rX	 ;  reg_x, reg_x
-	movw r28,r24	 ;  address, base
-	add r28,r18	 ;  address, reg_x
-	adc r29,__zero_reg__	 ;  address
+	movw r16,r24	 ;  address, base
+	add r16,r18	 ;  address, reg_x
+	adc r17,__zero_reg__	 ;  address
 	movw r18,rPC0	 ;  reg_pc.18, reg_pc
 	subi r18,-2	 ;  reg_pc.18,
 	sbci r19,-1	 ;  reg_pc.18,
 	movw rPC0,r18	 ;  reg_pc, reg_pc.18
-	cp r29,r25	 ;  tmp18, base
+	cp r17,r25	 ;  tmp18, base
 	breq .L84	 ; ,
 	ldi r24,lo8(1)	 ; ,
 	call clock_advance	 ; 
 .L84:
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	ret
 	.size	addr_abx, .-addr_abx
 	.section	.text.addr_aby,"ax",@progbits
 .global	addr_aby
 	.type	addr_aby, @function
 addr_aby:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
@@ -1035,22 +1035,22 @@ addr_aby:
 	movw r24,rPC0	 ; , reg_pc
 	call mem_read_16	 ; 
 	mov r18,rY	 ;  reg_y, reg_y
-	movw r28,r24	 ;  address, base
-	add r28,r18	 ;  address, reg_y
-	adc r29,__zero_reg__	 ;  address
+	movw r16,r24	 ;  address, base
+	add r16,r18	 ;  address, reg_y
+	adc r17,__zero_reg__	 ;  address
 	movw r18,rPC0	 ;  reg_pc.23, reg_pc
 	subi r18,-2	 ;  reg_pc.23,
 	sbci r19,-1	 ;  reg_pc.23,
 	movw rPC0,r18	 ;  reg_pc, reg_pc.23
-	cp r29,r25	 ;  tmp18, base
+	cp r17,r25	 ;  tmp18, base
 	breq .L86	 ; ,
 	ldi r24,lo8(1)	 ; ,
 	call clock_advance	 ; 
 .L86:
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	ret
 	.size	addr_aby, .-addr_aby
 	.section	.text.addr_inx,"ax",@progbits
@@ -1075,8 +1075,8 @@ addr_inx:
 .global	addr_iny
 	.type	addr_iny, @function
 addr_iny:
-	push r28	 ; 
-	push r29	 ; 
+	push r16	 ; 
+	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 2 */
@@ -1098,18 +1098,18 @@ addr_iny:
 	ld r24,Z	 ;  tmp71, ram
 	or r18,r24	 ;  D.3885, tmp71
 	mov r24,rY	 ;  reg_y, reg_y
-	movw r28,r18	 ;  address, D.3885
-	add r28,r24	 ;  address, reg_y
-	adc r29,__zero_reg__	 ;  address
-	cp r29,r19	 ;  tmp24, D.3885
+	movw r16,r18	 ;  address, D.3885
+	add r16,r24	 ;  address, reg_y
+	adc r17,__zero_reg__	 ;  address
+	cp r17,r19	 ;  tmp24, D.3885
 	breq .L89	 ; ,
 	ldi r24,lo8(1)	 ; ,
 	call clock_advance	 ; 
 .L89:
-	movw r24,r28	 ; , address
+	movw r24,r16	 ; , address
 /* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
+	pop r17	 ; 
+	pop r16	 ; 
 	ret
 	.size	addr_iny, .-addr_iny
 	.section	.text.addr_ind,"ax",@progbits
@@ -1211,7 +1211,6 @@ cpu_main:
 	push rTIME3
 	push r16	 ; 
 	push r17	 ; 
-	push r28	 ;
 	lds rPC0,reg_pc
 	lds rPC1,reg_pc+1
 	lds rA,reg_a
@@ -1234,7 +1233,7 @@ cpu_main:
 	adc rTIME1,r23	 ;  time_left.63, cycles
 	adc rTIME2,r24	 ;  time_left.63, cycles
 	adc rTIME3,r25	 ;  time_left.63, cycles
-	ldi r28,lo8(1)	 ;  D.4025,
+	ldi r16,lo8(1)	 ;  D.4025,
 .L96:
 	mov r24,rTIME0	 ;  time_left, time_left
 	mov r25,rTIME1	 ;  time_left, time_left
@@ -1709,7 +1708,7 @@ cpu_main:
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
 .x38:
-	mov rC,r28	 ;  flag_c, D.4025
+	mov rC,r16	 ;  flag_c, D.4025
 	ldi r24,lo8(2)	 ; ,
 	call clock_advance	 ; 
 	rjmp .L96	 ; 
@@ -1859,7 +1858,7 @@ cpu_main:
 	bst r24,6	 ;  reg_p,
 	clr r24	 ;  tmp392
 	bld r24,0	 ;  tmp392
-	eor r24,r28	 ; , D.4025
+	eor r24,r16	 ; , D.4025
 	call cpu6502_branch	 ; 
 	ldi r24,lo8(2)	 ; ,
 	call clock_advance	 ; 
@@ -2978,7 +2977,6 @@ cpu_main:
 	sts time_left+1,rTIME1
 	sts time_left+2,rTIME2
 	sts time_left+3,rTIME3
-	pop r28	 ; 
 	pop r17	 ; 
 	pop r16	 ; 
 	pop rTIME3
