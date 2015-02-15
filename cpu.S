@@ -95,6 +95,39 @@ mem_read:
 	ldi r24,0xff	 ; other addresses return 0xff
 	ret
 	.size	mem_read, .-mem_read
+/*
+mem_read_pc
+input address in _PCH_:_PCL_
+output in r24
+*/
+	.section	.text.mem_read_pc,"ax",@progbits
+.global	mem_read_pc
+	.type	mem_read_pc, @function
+mem_read_pc:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	cpi _PCH_,0xc0	 ; branch if addr_hi < 0xc0
+	brlo .mem_read_pc_L9	 ;
+	movw r30,_PCL_	 ;
+	andi r31,0x3f	 ; mask to 16k range
+	subi r30,lo8(-(dos1541))	 ;  D.2241,
+	sbci r31,hi8(-(dos1541))	 ;  D.2241,
+	lpm r24, Z	 ; load from rom[addr & 0x3fff]
+	ret
+.mem_read_pc_L9:
+	cpi _PCH_,0x04	 ; branch if addr_hi >= 0x40
+	brsh .mem_read_pc_L6	 ;
+	movw r30,_PCL_	 ;
+	subi r30,lo8(-(ram))	 ;
+	sbci r31,hi8(-(ram))	 ;
+	ld r24,Z	 ; load from ram[addr]
+	ret
+.mem_read_pc_L6:
+	ldi r24,0xff	 ; other addresses return 0xff
+	ret
+	.size	mem_read_pc, .-mem_read_pc
 	.section	.text.mem_read_16,"ax",@progbits
 .global	mem_read_16
 	.type	mem_read_16, @function
@@ -1019,9 +1052,8 @@ addr_zpx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	movw r24,_PCL_	 ;  reg_pc.8, reg_pc
-	adiw _PCL_,1	 ;  PC++
-	call mem_read	 ; 
+	call mem_read_pc	 ; r24 = mem_read(PC)
+	adiw _PCL_,1	 ; PC++
 	add r24,_X_
 	ldi r25,0	 ; 
 	ret
@@ -1034,9 +1066,8 @@ addr_zpy:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	movw r24,_PCL_	 ;  reg_pc.12, reg_pc
-	adiw _PCL_,1	 ;  PC++
-	call mem_read	 ; 
+	call mem_read_pc	 ; r24 = mem_read(PC)
+	adiw _PCL_,1	 ; PC++
 	add r24,_Y_
 	ldi r25,0	 ; 
 	ret
@@ -1105,9 +1136,8 @@ addr_inx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	movw r24,_PCL_	 ;  reg_pc.24, reg_pc
+	call mem_read_pc	 ; r24 = mem_read(PC)
 	adiw _PCL_,1	 ;  PC++
-	call mem_read	 ; 
 	add r24,_X_	 ;  index,
 	ldi r25,0	 ; 
 	jmp mem_read_16	 ; 
@@ -1122,9 +1152,8 @@ addr_iny:
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	movw r24,_PCL_	 ;  reg_pc.28, reg_pc
+	call mem_read_pc	 ; r24 = mem_read(PC)
 	adiw _PCL_,1	 ;  PC++
-	call mem_read	 ; 
 	mov r30,r24	 ;  tmp63, index
 	ldi r31,0	 ; 
 	subi r30,lo8(-(ram))	 ;  tmp63,
@@ -1293,9 +1322,8 @@ cpu_main:
 	brpl .L98	 ; time >= 0?
 	jmp .L366	 ; save state and exit
 .L98:
-	movw r24,_PCL_	 ; reg_pc.64, reg_pc
+	call mem_read_pc	 ; r24 = mem_read(PC)
 	adiw _PCL_,1	 ; PC++
-	call mem_read	 ; read opcode
 	ldi r25,0	 ; opcode
 	movw r30,r24	 ;  tmp360,
 	subi r30,lo8(-(gs(.L99)))	 ;  tmp360,
@@ -1383,38 +1411,35 @@ cpu_main:
 	.section	.text.cpu_main
 /* BPL */
 .x10:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
 	tst _N_	 ; branch on N >= 0
 	brpl .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* BMI */
 .x30:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
 	tst _N_	 ; branch on N < 0
 	brmi .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* BVC */
 .x50:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
 	bst _P_,6	 ; branch on P bit 6 = 0
 	brtc .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* BVS */
 .x70:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
 	bst _P_,6	 ; branch on P bit 6 = 1
 	brts .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 .take_branch:
-	call mem_read	 ;
+	call mem_read_pc	 ; r24 = mem_read(PC)
+	adiw _PCL_,1	 ; PC++
 	movw r18,_PCL_	 ; old_pc = reg_pc
 	add _PCL_,r24	 ; reg_pc += offset
 	adc _PCH_,__zero_reg__	 ;
@@ -1426,34 +1451,30 @@ cpu_main:
 	rjmp .tick	 ;
 /* BCC */
 .x90:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	tst _C_	 ; branch on _C_ = 0
+	tst _C_	 ; branch on C = 0
 	breq .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* BCS */
 .xb0:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	tst _C_	 ; branch on _C_ != 0
+	tst _C_	 ; branch on C != 0
 	brne .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* BNE */
 .xd0:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	tst _Z_	 ; branch on _Z_ != 0
+	tst _Z_	 ; branch on Z != 0
 	brne .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* BEQ */
 .xf0:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	tst _Z_	 ; branch on _Z_ = 0
+	tst _Z_	 ; branch on Z = 0
 	breq .take_branch	 ;
+	adiw _PCL_,1	 ; PC++
 	ldi r24,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x00:
