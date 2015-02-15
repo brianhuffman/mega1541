@@ -75,28 +75,24 @@ mem_read:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	cp r24,__zero_reg__	 ;  address
-	ldi r18,4	 ; ,
-	cpc r25,r18	 ;  address,
-	brsh .mem_L6	 ; ,
-	movw r30,r24	 ;  tmp50, address
-	subi r30,lo8(-(ram))	 ;  tmp50,
-	sbci r31,hi8(-(ram))	 ;  tmp50,
-	ld r24,Z	 ;  D.2239, ram
+	cpi r25,0x04	 ; branch if addr_hi >= 0x40
+	brsh .mem_L6	 ;
+	movw r30,r24	 ;
+	subi r30,lo8(-(ram))	 ;
+	sbci r31,hi8(-(ram))	 ;
+	ld r24,Z	 ; load from ram[addr]
 	ret
 .mem_L6:
-	cp r24,__zero_reg__	 ;  address
-	ldi r18,-64	 ; ,
-	cpc r25,r18	 ;  address,
-	brlo .mem_L9	 ; ,
-	movw r30,r24	 ;  D.2241, address
-	andi r31,63	 ;  D.2241,
+	cpi r25,0xc0	 ; branch if addr_hi < 0xc0
+	brlo .mem_L9	 ;
+	movw r30,r24	 ;
+	andi r31,0x3f	 ; mask to 16k range
 	subi r30,lo8(-(dos1541))	 ;  D.2241,
 	sbci r31,hi8(-(dos1541))	 ;  D.2241,
-	lpm r24, Z	 ;  D.2239
+	lpm r24, Z	 ; load from rom[addr & 0x3fff]
 	ret
 .mem_L9:
-	ldi r24,lo8(-1)	 ;  D.2239,
+	ldi r24,0xff	 ; other addresses return 0xff
 	ret
 	.size	mem_read, .-mem_read
 	.section	.text.mem_read_16,"ax",@progbits
