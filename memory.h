@@ -45,9 +45,6 @@ inline static void stack_write(byte address, byte value) {
 /* other function prototypes */
 /*****************************/
 
-extern byte mem_read(word address);
-extern word mem_read_16(word address);
-extern void mem_write(word address, byte value);
 
 extern void mem_reset();
 

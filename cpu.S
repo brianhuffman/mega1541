@@ -68,6 +68,125 @@ __zero_reg__ = 1
  ;  -ftree-ter -ftree-vect-loop-version -ftree-vrp -funit-at-a-time
  ;  -fverbose-asm -fzero-initialized-in-bss
 
+	.section	.text.mem_read,"ax",@progbits
+.global	mem_read
+	.type	mem_read, @function
+mem_read:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	cp r24,__zero_reg__	 ;  address
+	ldi r18,4	 ; ,
+	cpc r25,r18	 ;  address,
+	brsh .mem_L6	 ; ,
+	movw r30,r24	 ;  tmp50, address
+	subi r30,lo8(-(ram))	 ;  tmp50,
+	sbci r31,hi8(-(ram))	 ;  tmp50,
+	ld r24,Z	 ;  D.2239, ram
+	ret
+.mem_L6:
+	cp r24,__zero_reg__	 ;  address
+	ldi r18,-64	 ; ,
+	cpc r25,r18	 ;  address,
+	brlo .mem_L9	 ; ,
+	movw r30,r24	 ;  D.2241, address
+	andi r31,63	 ;  D.2241,
+	subi r30,lo8(-(dos1541))	 ;  D.2241,
+	sbci r31,hi8(-(dos1541))	 ;  D.2241,
+	lpm r24, Z	 ;  D.2239
+	ret
+.mem_L9:
+	ldi r24,lo8(-1)	 ;  D.2239,
+	ret
+	.size	mem_read, .-mem_read
+	.section	.text.mem_read_16,"ax",@progbits
+.global	mem_read_16
+	.type	mem_read_16, @function
+mem_read_16:
+	push r17	 ; 
+	push r28	 ; 
+	push r29	 ; 
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 3 */
+.L__stack_usage = 3
+	movw r28,r24	 ;  address, address
+	cpi r24,-1	 ;  address,
+	ldi r20,3	 ; ,
+	cpc r25,r20	 ;  address,
+	brsh .mem_L11	 ; ,
+	movw r30,r24	 ;  tmp71, address
+	subi r30,lo8(-(ram+1))	 ;  tmp71,
+	sbci r31,hi8(-(ram+1))	 ;  tmp71,
+	ld r18,Z	 ;  tmp73, ram
+	ldi r19,0	 ;  D.2246
+	mov r19,r18	 ;  D.2245, D.2246
+	clr r18	 ;  D.2245
+	subi r28,lo8(-(ram))	 ;  tmp76,
+	sbci r29,hi8(-(ram))	 ;  tmp76,
+	ld r24,Y	 ;  tmp78, ram
+	rjmp .mem_L14	 ; 
+.mem_L11:
+	adiw r24,1	 ;  D.2246,
+	movw r18,r28	 ;  D.2246, address
+	subi r18,1	 ;  D.2246,
+	sbci r19,-64	 ;  D.2246,
+	cpi r18,-2	 ;  D.2246,
+	sbci r19,63	 ;  D.2246,
+	brsh .mem_L13	 ; ,
+	movw r30,r24	 ;  D.2248, D.2246
+	andi r31,63	 ;  D.2248,
+	subi r30,lo8(-(dos1541))	 ;  D.2248,
+	sbci r31,hi8(-(dos1541))	 ;  D.2248,
+	lpm r24, Z	 ;  __result
+	movw r30,r28	 ;  D.2248, address
+	andi r31,63	 ;  D.2248,
+	subi r30,lo8(-(dos1541))	 ;  D.2248,
+	sbci r31,hi8(-(dos1541))	 ;  D.2248,
+	lpm r28, Z	 ;  __result
+	mov r18,r28	 ;  D.2245, __result
+	ldi r19,0	 ;  D.2245
+	or r19,r24	 ;  D.2245, __result
+	rjmp .mem_L12	 ; 
+.mem_L13:
+	call mem_read	 ; 
+	mov r17,r24	 ;  D.2247,
+	movw r24,r28	 ; , address
+	call mem_read	 ; 
+	mov r18,r17	 ;  D.2246, D.2247
+	ldi r19,0	 ;  D.2246
+	mov r19,r18	 ;  D.2245, D.2246
+	clr r18	 ;  D.2245
+.mem_L14:
+	or r18,r24	 ;  D.2245,
+.mem_L12:
+	movw r24,r18	 ; , D.2245
+/* epilogue start */
+	pop r29	 ; 
+	pop r28	 ; 
+	pop r17	 ; 
+	ret
+	.size	mem_read_16, .-mem_read_16
+	.section	.text.mem_write,"ax",@progbits
+.global	mem_write
+	.type	mem_write, @function
+mem_write:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	cp r24,__zero_reg__	 ;  address
+	ldi r18,4	 ; ,
+	cpc r25,r18	 ;  address,
+	brsh .mem_L15	 ; ,
+	movw r30,r24	 ;  tmp45, address
+	subi r30,lo8(-(ram))	 ;  tmp45,
+	sbci r31,hi8(-(ram))	 ;  tmp45,
+	st Z,r22	 ;  ram, value
+.mem_L15:
+	ret
+	.size	mem_write, .-mem_write
 	.section	.text.clock_advance,"ax",@progbits
 	.type	clock_advance, @function
 clock_advance:
