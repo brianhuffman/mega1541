@@ -21,11 +21,10 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   unsigned long time1 = micros();
-  cpu_main(1000000);
+  cpu_main(100000);
   unsigned long time2 = micros();
   unsigned long delta = time2 - time1;
   Serial.println(delta);
+  Serial.println("PC=$" + String(cpu_get_pc(), HEX));
   //Serial.println(cpu_state_string());
-  delay(500);
 }
-
