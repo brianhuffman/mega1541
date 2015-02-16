@@ -1180,6 +1180,11 @@ cpu_reset:
 	movw _PCL_,r24	 ;  reg_pc,
 	sts reg_pc,_PCL_
 	sts reg_pc+1,_PCH_
+	ldi r24,0xff
+	sts time_left,r24
+	sts time_left+1,r24
+	sts time_left+2,r24
+	sts time_left+3,r24
 	ret
 	.size	cpu_reset, .-cpu_reset
 	.section	.text.cpu_get_pc,"ax",@progbits
