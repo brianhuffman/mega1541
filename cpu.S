@@ -1298,8 +1298,8 @@ cpu_main:
 .L98:
 	call mem_read_pc	 ; r24 = mem_read(PC)
 	adiw _PCL_,1	 ; PC++
-	ldi r25,0	 ; opcode
-	movw r30,r24	 ;  tmp360,
+	mov r30,r24	 ;  tmp360,
+	ldi r31,0	 ; opcode
 	subi r30,lo8(-(gs(.L99)))	 ;  tmp360,
 	sbci r31,hi8(-(gs(.L99)))	 ;  tmp360,
 	jmp __tablejump2__
@@ -1414,10 +1414,10 @@ cpu_main:
 .take_branch:
 	call mem_read_pc	 ; r24 = mem_read(PC)
 	adiw _PCL_,1	 ; PC++
-	movw r18,_PCL_	 ; old_pc = reg_pc
+	mov r19,_PCH_	 ; temp = PCH
 	add _PCL_,r24	 ; reg_pc += offset
 	adc _PCH_,__zero_reg__	 ;
-	sbrc r24,7	 ; if (offset & 0x80) reg_pc -= 0x100
+	sbrc r24,7	 ; if (offset & 0x80) PCH--
 	dec _PCH_	 ;
 	ldi _cycles_,3	 ; 3 cycles for branch to same page
 	cpse _PCH_,r19	 ; skip if same page
