@@ -19,6 +19,12 @@ _time1_ = 13
 _time2_ = 14
 _time3_ = 15
 _cycles_ = 24
+XL = 26
+XH = 27
+YL = 28
+YH = 29
+ZL = 30
+ZH = 31
 
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
@@ -236,21 +242,18 @@ cpu6502_PLP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	inc _S_
-	mov r30,_S_	 ;  reg_s.86, reg_s
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp55,
-	sbci r31,hi8(-(ram+256))	 ;  tmp55,
-	ld r24,Z	 ;  D.3681, *_14
-	mov _P_,r24	 ;  reg_p, D.3681
-	mov _N_,r24	 ;  flag_n, D.3681
-	bst r24,1	 ;  D.3681,
-	clr _Z_	 ;  D.3678
-	bld _Z_,0	 ;  D.3678
-	ldi r18,lo8(1)	 ;  tmp58,
-	eor _Z_,r18	 ;  D.3678, tmp58
-	andi r24,lo8(1)	 ;  flag_c.90,
-	mov _C_,r24	 ;  flag_c, flag_c.90
+	inc _S_	 ; S ++
+	mov ZL,_S_	 ;
+	ldi ZH,hi8(ram+256)	 ;
+	ld _P_,Z	 ; P <- stack[S]
+	mov _N_,_P_	 ; N <- P
+	bst _P_,1	 ; b <- P bit 1
+	clr _Z_	 ; Z <- 0
+	bld _Z_,0	 ; Z bit 0 <- b
+	ldi r18,0x01	 ; temp <- 0x01 (FIXME: save 1 instr if _Z_ >= 16)
+	eor _Z_,r18	 ; Z ^= 0x01
+	mov _C_,_P_	 ; C <- P (FIXME: save 1 instr if _C_ >= 16)
+	and _C_,r18	 ; C &= 0x01
 	ret
 	.size	cpu6502_PLP, .-cpu6502_PLP
 	.section	.text.cpu6502_JSR,"ax",@progbits
@@ -260,24 +263,15 @@ cpu6502_JSR:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	movw r18,_PCL_	 ;  PC -= 1
-	subi r18,1	 ;
-	sbc r19,__zero_reg__	 ;
-	mov r30,_S_	 ;  reg_s.38, reg_s
-	mov r26,_S_	 ;  tmp60, reg_s
-	ldi r27,0	 ; 
-	subi r26,lo8(-(ram+256))	 ;  tmp60,
-	sbci r27,hi8(-(ram+256))	 ;  tmp60,
-	st X,r19	 ;  stack[S] = PC
-	ldi r19,lo8(-2)	 ;  S -= 2
-	add r19,_S_	 ;  reg_s.42, reg_s.38
-	mov _S_,r19	 ;  reg_s, reg_s.42
-	subi r30,lo8(-(-1))	 ;  reg_s.40,
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp66,
-	sbci r31,hi8(-(ram+256))	 ;  tmp66,
-	st Z,r18	 ;  *_22, reg_pc.37
-	movw _PCL_,r24	 ;  reg_pc, address
+	sbiw _PCL_,1	 ; PC -= 1
+	mov XL,_S_	 ;
+	ldi XH,hi8(ram+256)	 ;
+	st X,_PCH_	 ; stack[S] = PCH
+	dec XL	 ;
+	st X,_PCL_	 ; stack[S-1] = PCL
+	dec _S_	 ;  S -= 2
+	dec _S_	 ; (FIXME: save 1 instr if _S_ >= 16)
+	movw _PCL_,r24	 ; PC <- address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
 	.section	.text.cpu6502_RTS,"ax",@progbits
@@ -287,27 +281,14 @@ cpu6502_RTS:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	mov r30,_S_	 ;  reg_s.136, reg_s
-	ldi r18,lo8(2)	 ;  D.3693,
-	add r18,r30	 ;  D.3693, reg_s.136
-	mov r26,r18	 ;  tmp60, D.3693
-	ldi r27,0	 ; 
-	subi r26,lo8(-(ram+256))	 ;  tmp60,
-	sbci r27,hi8(-(ram+256))	 ;  tmp60,
-	ld r24,X	 ;  *_14, *_14
-	ldi r25,0	 ;  D.3697
-	mov r25,r24	 ;  reg_pc.143, D.3697
-	clr r24	 ;  reg_pc.143
-	subi r30,lo8(-(1))	 ;  reg_s.138,
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp67,
-	sbci r31,hi8(-(ram+256))	 ;  tmp67,
-	ld r19,Z	 ;  *_20, *_20
-	or r24,r19	 ;  reg_pc.143, *_20
-	mov _S_,r18	 ;  reg_s, D.3693
-	adiw r24,1	 ;  reg_pc.143,
-	mov _PCH_,r25	 ;  reg_pc, reg_pc.143
-	mov _PCL_,r24	 ;  reg_pc, reg_pc.143
+	inc _S_	 ; S += 1
+	ldi XH,hi8(ram+256)	 ;
+	mov XL,_S_	 ;
+	ld _PCL_,X	 ; PCL <- stack[S]
+	inc _S_	 ; S += 1
+	mov XL,_S_	 ;
+	ld _PCH_,X	 ; PCH <- stack[S]
+	adiw _PCL_,1	 ; PC ++
 	ret
 	.size	cpu6502_RTS, .-cpu6502_RTS
 	.section	.text.cpu6502_LSR_a,"ax",@progbits
@@ -949,16 +930,11 @@ cpu6502_PHP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call update_p	 ; 
-	mov r24,_P_	 ;  reg_p.43, reg_p
-	mov r30,_S_	 ;  reg_s.44, reg_s
-	ldi r25,lo8(-1)	 ;  reg_s.46,
-	add r25,r30	 ;  reg_s.46, reg_s.44
-	mov _S_,r25	 ;  reg_s, reg_s.46
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp51,
-	sbci r31,hi8(-(ram+256))	 ;  tmp51,
-	st Z,r24	 ;  *_10, reg_p.43
+	call update_p	 ;
+	inc _S_	 ; S ++
+	mov ZL,_S_	 ;
+	ldi ZH,hi8(ram+256)	 ;
+	st Z,_P_	 ; stack[S] <- P
 	ret
 	.size	cpu6502_PHP, .-cpu6502_PHP
 	.section	.text.cpu6502_CPY,"ax",@progbits
@@ -1478,27 +1454,23 @@ cpu_main:
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* BRK */
 .x00:
-	ldi r24,0xfe	 ; ,
-	ldi r25,0xff	 ; ,
-	call mem_read_16	 ; 
-	call cpu6502_JSR	 ; 
-	call update_p	 ; 
-	lds r24,reg_p	 ;  reg_p.67, reg_p
-	mov r30,_S_	 ;  reg_s.68, reg_s
-	ldi r25,lo8(-1)	 ;  reg_s.70,
-	add r25,r30	 ;  reg_s.70, reg_s.68
-	mov _S_,r25	 ;  reg_s, reg_s.70
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp364,
-	sbci r31,hi8(-(ram+256))	 ;  tmp364,
-	mov r25,r24	 ;  D.4021, reg_p.67
-	ori r25,lo8(16)	 ;  D.4021,
-	st Z,r25	 ;  *_884, D.4021
-	ori r24,lo8(4)	 ;  reg_p.57,
-	sts reg_p,r24	 ;  reg_p, reg_p.57
+	ldi r24,0xfe	 ;
+	ldi r25,0xff	 ;
+	call mem_read_16	 ;
+	call cpu6502_JSR	 ;
+	call update_p	 ;
+	mov r25,_P_	 ; temp = P
+	ori r25,0x10	 ; temp |= B_FLAG
+	mov ZL,_S_	 ;
+	ldi ZH,hi8(ram+256)	 ;
+	st Z,r25	 ; stack[S] <- temp
+	dec _S_	 ; S --
+	ldi r25,0x04	 ; temp = I_FLAG
+	or _P_,r25	 ; P |= I_FLAG (disable interrupts)
 	ldi _cycles_,7	 ; 7 cycles
-	rjmp .tick	 ; 
+	rjmp .tick	 ;
 .x01:
 	call addr_inx	 ; 
 	call cpu6502_ORA	 ; 
@@ -1857,16 +1829,12 @@ cpu_main:
 	call cpu6502_SRE	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
+/* PHA */
 .x48:
-	mov r24,_A_	 ;  reg_a.116, reg_a
-	mov r30,_S_	 ;  reg_s.117, reg_s
-	ldi r25,lo8(-1)	 ;  reg_s.119,
-	add r25,r30	 ;  reg_s.119, reg_s.117
-	mov _S_,r25	 ;  reg_s, reg_s.119
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp389,
-	sbci r31,hi8(-(ram+256))	 ;  tmp389,
-	st Z,r24	 ;  *_920, reg_a.116
+	mov ZL,_S_	 ;
+	ldi ZH,hi8(ram+256)	 ;
+	st Z,_A_	 ; stack[S] <- A
+	dec _S_	 ; S --
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
 .x49:
@@ -2013,17 +1981,14 @@ cpu_main:
 	call cpu6502_RRA	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
+/* PLA */
 .x68:
-	mov r30,_S_	 ;  reg_s.145, reg_s
-	subi r30,lo8(-(1))	 ;  reg_s.145,
-	mov _S_,r30	 ;  reg_s, reg_s.145
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp400,
-	sbci r31,hi8(-(ram+256))	 ;  tmp400,
-	ld r24,Z	 ;  D.4026, *_931
-	mov _Z_,r24	 ;  flag_z, D.4026
-	mov _N_,r24	 ;  flag_n, D.4026
-	mov _A_,r24	 ;  reg_a, D.4026
+	inc _S_	 ; S ++
+	mov ZL,_S_	 ;
+	ldi ZH,hi8(ram+256)	 ;
+	ld _A_,Z	 ; A <- stack[S]
+	mov _Z_,_A_	 ; Z <- A
+	mov _N_,_A_	 ; N <- A
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x69:

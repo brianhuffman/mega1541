@@ -4,7 +4,7 @@
 #include "rom.h"
 
 /* 2k ram (0x0000 - 0x07ff) */
-byte ram[RAM_SIZE];
+byte ram[RAM_SIZE] __attribute__ ((aligned (256)));
 
 /* clear all ram */
 void mem_reset() {
