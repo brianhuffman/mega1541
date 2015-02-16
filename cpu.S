@@ -117,18 +117,15 @@ mem_read_pc:
 .L__stack_usage = 0
 	cpi _PCH_,0xc0	 ; branch if addr_hi < 0xc0
 	brlo .mem_read_pc_L9	 ;
-	movw r30,_PCL_	 ;
-	andi r31,0x3f	 ; mask to 16k range
-	subi r30,lo8(-(dos1541))	 ;  D.2241,
-	sbci r31,hi8(-(dos1541))	 ;  D.2241,
-	lpm r24, Z	 ; load from rom[addr & 0x3fff]
+	movw ZL,_PCL_	 ;
+	subi ZH,hi8(-(dos1541-0xc000))	 ;
+	lpm r24,Z	 ; load from rom[addr - 0xc0000]
 	ret
 .mem_read_pc_L9:
 	cpi _PCH_,0x04	 ; branch if addr_hi >= 0x40
 	brsh .mem_read_pc_L6	 ;
-	movw r30,_PCL_	 ;
-	subi r30,lo8(-(ram))	 ;
-	sbci r31,hi8(-(ram))	 ;
+	movw ZL,_PCL_	 ;
+	subi ZH,hi8(-(ram))	 ;
 	ld r24,Z	 ; load from ram[addr]
 	ret
 .mem_read_pc_L6:
