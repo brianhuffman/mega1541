@@ -1298,91 +1298,268 @@ cpu_main:
 .L98:
 	call mem_read_pc	 ; r24 = mem_read(PC)
 	adiw _PCL_,1	 ; PC++
-	mov r30,r24	 ;  tmp360,
-	ldi r31,0	 ; opcode
-	subi r30,lo8(-(gs(.L99)))	 ;  tmp360,
-	sbci r31,hi8(-(gs(.L99)))	 ;  tmp360,
-	jmp __tablejump2__
-	/*
-
-0001f48c <__tablejump2__>:
-   1f48c:	ee 0f       	add	r30, r30
-   1f48e:	ff 1f       	adc	r31, r31
-
-0001f490 <__tablejump__>:
-   1f490:	05 90       	lpm	r0, Z+
-   1f492:	f4 91       	lpm	r31, Z
-   1f494:	e0 2d       	mov	r30, r0
-   1f496:	09 94       	ijmp
-	*/
-	.section	.progmem.gcc_sw_table.cpu_main,"a",@progbits
-	.p2align	1
-.L99:
-	.word gs(.x00), gs(.x01), gs(.x02), gs(.x03)
-	.word gs(.x04), gs(.x05), gs(.x06), gs(.x07)
-	.word gs(.x08), gs(.x09), gs(.x0a), gs(.x0b)
-	.word gs(.x0c), gs(.x0d), gs(.x0e), gs(.x0f)
-	.word gs(.x10), gs(.x11), gs(.x12), gs(.x13)
-	.word gs(.x14), gs(.x15), gs(.x16), gs(.x17)
-	.word gs(.x18), gs(.x19), gs(.x1a), gs(.x1b)
-	.word gs(.x1c), gs(.x1d), gs(.x1e), gs(.x1f)
-	.word gs(.x20), gs(.x21), gs(.x22), gs(.x23)
-	.word gs(.x24), gs(.x25), gs(.x26), gs(.x27)
-	.word gs(.x28), gs(.x29), gs(.x2a), gs(.x2b)
-	.word gs(.x2c), gs(.x2d), gs(.x2e), gs(.x2f)
-	.word gs(.x30), gs(.x31), gs(.x32), gs(.x33)
-	.word gs(.x34), gs(.x35), gs(.x36), gs(.x37)
-	.word gs(.x38), gs(.x39), gs(.x3a), gs(.x3b)
-	.word gs(.x3c), gs(.x3d), gs(.x3e), gs(.x3f)
-	.word gs(.x40), gs(.x41), gs(.x42), gs(.x43)
-	.word gs(.x44), gs(.x45), gs(.x46), gs(.x47)
-	.word gs(.x48), gs(.x49), gs(.x4a), gs(.x4b)
-	.word gs(.x4c), gs(.x4d), gs(.x4e), gs(.x4f)
-	.word gs(.x50), gs(.x51), gs(.x52), gs(.x53)
-	.word gs(.x54), gs(.x55), gs(.x56), gs(.x57)
-	.word gs(.x58), gs(.x59), gs(.x5a), gs(.x5b)
-	.word gs(.x5c), gs(.x5d), gs(.x5e), gs(.x5f)
-	.word gs(.x60), gs(.x61), gs(.x62), gs(.x63)
-	.word gs(.x64), gs(.x65), gs(.x66), gs(.x67)
-	.word gs(.x68), gs(.x69), gs(.x6a), gs(.x6b)
-	.word gs(.x6c), gs(.x6d), gs(.x6e), gs(.x6f)
-	.word gs(.x70), gs(.x71), gs(.x72), gs(.x73)
-	.word gs(.x74), gs(.x75), gs(.x76), gs(.x77)
-	.word gs(.x78), gs(.x79), gs(.x7a), gs(.x7b)
-	.word gs(.x7c), gs(.x7d), gs(.x7e), gs(.x7f)
-	.word gs(.x80), gs(.x81), gs(.x82), gs(.x83)
-	.word gs(.x84), gs(.x85), gs(.x86), gs(.x87)
-	.word gs(.x88), gs(.x89), gs(.x8a), gs(.x8b)
-	.word gs(.x8c), gs(.x8d), gs(.x8e), gs(.x8f)
-	.word gs(.x90), gs(.x91), gs(.x92), gs(.x93)
-	.word gs(.x94), gs(.x95), gs(.x96), gs(.x97)
-	.word gs(.x98), gs(.x99), gs(.x9a), gs(.x9b)
-	.word gs(.x9c), gs(.x9d), gs(.x9e), gs(.x9f)
-	.word gs(.xa0), gs(.xa1), gs(.xa2), gs(.xa3)
-	.word gs(.xa4), gs(.xa5), gs(.xa6), gs(.xa7)
-	.word gs(.xa8), gs(.xa9), gs(.xaa), gs(.xab)
-	.word gs(.xac), gs(.xad), gs(.xae), gs(.xaf)
-	.word gs(.xb0), gs(.xb1), gs(.xb2), gs(.xb3)
-	.word gs(.xb4), gs(.xb5), gs(.xb6), gs(.xb7)
-	.word gs(.xb8), gs(.xb9), gs(.xba), gs(.xbb)
-	.word gs(.xbc), gs(.xbd), gs(.xbe), gs(.xbf)
-	.word gs(.xc0), gs(.xc1), gs(.xc2), gs(.xc3)
-	.word gs(.xc4), gs(.xc5), gs(.xc6), gs(.xc7)
-	.word gs(.xc8), gs(.xc9), gs(.xca), gs(.xcb)
-	.word gs(.xcc), gs(.xcd), gs(.xce), gs(.xcf)
-	.word gs(.xd0), gs(.xd1), gs(.xd2), gs(.xd3)
-	.word gs(.xd4), gs(.xd5), gs(.xd6), gs(.xd7)
-	.word gs(.xd8), gs(.xd9), gs(.xda), gs(.xdb)
-	.word gs(.xdc), gs(.xdd), gs(.xde), gs(.xdf)
-	.word gs(.xe0), gs(.xe1), gs(.xe2), gs(.xe3)
-	.word gs(.xe4), gs(.xe5), gs(.xe6), gs(.xe7)
-	.word gs(.xe8), gs(.xe9), gs(.xea), gs(.xeb)
-	.word gs(.xec), gs(.xed), gs(.xee), gs(.xef)
-	.word gs(.xf0), gs(.xf1), gs(.xf2), gs(.xf3)
-	.word gs(.xf4), gs(.xf5), gs(.xf6), gs(.xf7)
-	.word gs(.xf8), gs(.xf9), gs(.xfa), gs(.xfb)
-	.word gs(.xfc), gs(.xfd), gs(.xfe), gs(.xff)
-	.section	.text.cpu_main
+	mov ZL,r24	 ;
+	ldi ZH,0	 ;
+	subi ZL,lo8(-(gs(.opcode_table)))	 ;
+	sbci ZH,hi8(-(gs(.opcode_table)))	 ;
+	ijmp	 ; jmp (.opcode_table + opcode)
+.opcode_table:
+	rjmp .x00
+	rjmp .x01
+	rjmp .x02
+	rjmp .x03
+	rjmp .x04
+	rjmp .x05
+	rjmp .x06
+	rjmp .x07
+	rjmp .x08
+	rjmp .x09
+	rjmp .x0a
+	rjmp .x0b
+	rjmp .x0c
+	rjmp .x0d
+	rjmp .x0e
+	rjmp .x0f
+	rjmp .x10
+	rjmp .x11
+	rjmp .x12
+	rjmp .x13
+	rjmp .x14
+	rjmp .x15
+	rjmp .x16
+	rjmp .x17
+	rjmp .x18
+	rjmp .x19
+	rjmp .x1a
+	rjmp .x1b
+	rjmp .x1c
+	rjmp .x1d
+	rjmp .x1e
+	rjmp .x1f
+	rjmp .x20
+	rjmp .x21
+	rjmp .x22
+	rjmp .x23
+	rjmp .x24
+	rjmp .x25
+	rjmp .x26
+	rjmp .x27
+	rjmp .x28
+	rjmp .x29
+	rjmp .x2a
+	rjmp .x2b
+	rjmp .x2c
+	rjmp .x2d
+	rjmp .x2e
+	rjmp .x2f
+	rjmp .x30
+	rjmp .x31
+	rjmp .x32
+	rjmp .x33
+	rjmp .x34
+	rjmp .x35
+	rjmp .x36
+	rjmp .x37
+	rjmp .x38
+	rjmp .x39
+	rjmp .x3a
+	rjmp .x3b
+	rjmp .x3c
+	rjmp .x3d
+	rjmp .x3e
+	rjmp .x3f
+	rjmp .x40
+	rjmp .x41
+	rjmp .x42
+	rjmp .x43
+	rjmp .x44
+	rjmp .x45
+	rjmp .x46
+	rjmp .x47
+	rjmp .x48
+	rjmp .x49
+	rjmp .x4a
+	rjmp .x4b
+	rjmp .x4c
+	rjmp .x4d
+	rjmp .x4e
+	rjmp .x4f
+	rjmp .x50
+	rjmp .x51
+	rjmp .x52
+	rjmp .x53
+	rjmp .x54
+	rjmp .x55
+	rjmp .x56
+	rjmp .x57
+	rjmp .x58
+	rjmp .x59
+	rjmp .x5a
+	rjmp .x5b
+	rjmp .x5c
+	rjmp .x5d
+	rjmp .x5e
+	rjmp .x5f
+	rjmp .x60
+	rjmp .x61
+	rjmp .x62
+	rjmp .x63
+	rjmp .x64
+	rjmp .x65
+	rjmp .x66
+	rjmp .x67
+	rjmp .x68
+	rjmp .x69
+	rjmp .x6a
+	rjmp .x6b
+	rjmp .x6c
+	rjmp .x6d
+	rjmp .x6e
+	rjmp .x6f
+	rjmp .x70
+	rjmp .x71
+	rjmp .x72
+	rjmp .x73
+	rjmp .x74
+	rjmp .x75
+	rjmp .x76
+	rjmp .x77
+	rjmp .x78
+	rjmp .x79
+	rjmp .x7a
+	rjmp .x7b
+	rjmp .x7c
+	rjmp .x7d
+	rjmp .x7e
+	rjmp .x7f
+	rjmp .x80
+	rjmp .x81
+	rjmp .x82
+	rjmp .x83
+	rjmp .x84
+	rjmp .x85
+	rjmp .x86
+	rjmp .x87
+	rjmp .x88
+	rjmp .x89
+	rjmp .x8a
+	rjmp .x8b
+	rjmp .x8c
+	rjmp .x8d
+	rjmp .x8e
+	rjmp .x8f
+	rjmp .x90
+	rjmp .x91
+	rjmp .x92
+	rjmp .x93
+	rjmp .x94
+	rjmp .x95
+	rjmp .x96
+	rjmp .x97
+	rjmp .x98
+	rjmp .x99
+	rjmp .x9a
+	rjmp .x9b
+	rjmp .x9c
+	rjmp .x9d
+	rjmp .x9e
+	rjmp .x9f
+	rjmp .xa0
+	rjmp .xa1
+	rjmp .xa2
+	rjmp .xa3
+	rjmp .xa4
+	rjmp .xa5
+	rjmp .xa6
+	rjmp .xa7
+	rjmp .xa8
+	rjmp .xa9
+	rjmp .xaa
+	rjmp .xab
+	rjmp .xac
+	rjmp .xad
+	rjmp .xae
+	rjmp .xaf
+	rjmp .xb0
+	rjmp .xb1
+	rjmp .xb2
+	rjmp .xb3
+	rjmp .xb4
+	rjmp .xb5
+	rjmp .xb6
+	rjmp .xb7
+	rjmp .xb8
+	rjmp .xb9
+	rjmp .xba
+	rjmp .xbb
+	rjmp .xbc
+	rjmp .xbd
+	rjmp .xbe
+	rjmp .xbf
+	rjmp .xc0
+	rjmp .xc1
+	rjmp .xc2
+	rjmp .xc3
+	rjmp .xc4
+	rjmp .xc5
+	rjmp .xc6
+	rjmp .xc7
+	rjmp .xc8
+	rjmp .xc9
+	rjmp .xca
+	rjmp .xcb
+	rjmp .xcc
+	rjmp .xcd
+	rjmp .xce
+	rjmp .xcf
+	rjmp .xd0
+	rjmp .xd1
+	rjmp .xd2
+	rjmp .xd3
+	rjmp .xd4
+	rjmp .xd5
+	rjmp .xd6
+	rjmp .xd7
+	rjmp .xd8
+	rjmp .xd9
+	rjmp .xda
+	rjmp .xdb
+	rjmp .xdc
+	rjmp .xdd
+	rjmp .xde
+	rjmp .xdf
+	rjmp .xe0
+	rjmp .xe1
+	rjmp .xe2
+	rjmp .xe3
+	rjmp .xe4
+	rjmp .xe5
+	rjmp .xe6
+	rjmp .xe7
+	rjmp .xe8
+	rjmp .xe9
+	rjmp .xea
+	rjmp .xeb
+	rjmp .xec
+	rjmp .xed
+	rjmp .xee
+	rjmp .xef
+	rjmp .xf0
+	rjmp .xf1
+	rjmp .xf2
+	rjmp .xf3
+	rjmp .xf4
+	rjmp .xf5
+	rjmp .xf6
+	rjmp .xf7
+	rjmp .xf8
+	rjmp .xf9
+	rjmp .xfa
+	rjmp .xfb
+	rjmp .xfc
+	rjmp .xfd
+	rjmp .xfe
+	rjmp .xff
 /* BPL */
 .x10:
 	tst _N_	 ; branch on N >= 0
