@@ -1476,10 +1476,6 @@ cpu_main:
 	call cpu6502_ORA	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-.x02:
-	call cpu6502_JAM	 ;
-        ldi 24,7	 ; 7 cycles (?)
-	rjmp .tick	 ;
 .x03:
 	call addr_inx	 ; 
 	call cpu6502_SLO	 ; 
@@ -1566,9 +1562,6 @@ cpu_main:
 	call cpu6502_ORA	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
-.x12:
-	call cpu6502_JAM	 ; 
-	rjmp .tick	 ;
 .x13:
 	call addr_iny	 ; 
 	call cpu6502_SLO	 ; 
@@ -1638,9 +1631,6 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_AND	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	rjmp .tick	 ;
-.x22:
-	call cpu6502_JAM	 ; 
 	rjmp .tick	 ;
 .x23:
 	call addr_inx	 ; 
@@ -1729,9 +1719,6 @@ cpu_main:
 	call cpu6502_AND	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
-.x32:
-	call cpu6502_JAM	 ; 
-	rjmp .tick	 ;
 .x33:
 	call addr_iny	 ; 
 	call cpu6502_RLA	 ; 
@@ -1801,9 +1788,6 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_EOR	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	rjmp .tick	 ;
-.x42:
-	call cpu6502_JAM	 ; 
 	rjmp .tick	 ;
 .x43:
 	call addr_inx	 ; 
@@ -1880,9 +1864,6 @@ cpu_main:
 	call cpu6502_EOR	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
-.x52:
-	call cpu6502_JAM	 ; 
-	rjmp .tick	 ;
 .x53:
 	call addr_iny	 ; 
 	call cpu6502_SRE	 ; 
@@ -1953,9 +1934,6 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_ADC	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	rjmp .tick	 ;
-.x62:
-	call cpu6502_JAM	 ; 
 	rjmp .tick	 ;
 .x63:
 	call addr_inx	 ; 
@@ -2043,9 +2021,6 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_ADC	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	rjmp .tick	 ;
-.x72:
-	call cpu6502_JAM	 ; 
 	rjmp .tick	 ;
 .x73:
 	call addr_iny	 ; 
@@ -2201,9 +2176,6 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_STA	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	rjmp .tick	 ;
-.x92:
-	call cpu6502_JAM	 ; 
 	rjmp .tick	 ;
 .x93:
 	call addr_iny	 ; 
@@ -2371,9 +2343,6 @@ cpu_main:
 	call addr_iny	 ; 
 	call cpu6502_LDA	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	rjmp .tick	 ;
-.xb2:
-	call cpu6502_JAM	 ; 
 	rjmp .tick	 ;
 .xb3:
 	call addr_iny	 ; 
@@ -2549,9 +2518,6 @@ cpu_main:
 	call cpu6502_CMP	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
-.xd2:
-	call cpu6502_JAM	 ; 
-	rjmp .tick	 ;
 .xd3:
 	call addr_iny	 ; 
 	call cpu6502_DCP	 ; 
@@ -2570,91 +2536,91 @@ cpu_main:
 	call addr_zpx	 ; 
 	call cpu6502_DEC	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xd7:
 	call addr_zpx	 ; 
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xd8:
 	lds r24,reg_p	 ;  reg_p.234, reg_p
 	andi r24,lo8(-9)	 ;  reg_p.234,
 	sts reg_p,r24	 ;  reg_p, reg_p.234
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xd9:
 	call addr_aby	 ; 
 	call cpu6502_CMP	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xda:
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xdb:
 	call addr_aby	 ; 
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xdc:
 	call addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xdd:
 	call addr_abx	 ; 
 	call cpu6502_CMP	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xde:
 	call addr_abx	 ; 
 	call cpu6502_DEC	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xdf:
 	call addr_abx	 ; 
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe0:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	call cpu6502_CPX	 ; 
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe1:
 	call addr_inx	 ; 
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe2:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe3:
 	call addr_inx	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe4:
 	call addr_zpg	 ; 
 	call cpu6502_CPX	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe5:
 	call addr_zpg	 ; 
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe6:
 	call addr_zpg	 ; 
 	call cpu6502_INC	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe7:
 	call addr_zpg	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe8:
 	mov r24,_X_	 ;  flag_z.240, reg_x
 	subi r24,lo8(-(1))	 ;  flag_z.240,
@@ -2662,112 +2628,125 @@ cpu_main:
 	mov _N_,r24	 ;  flag_n, flag_z.240
 	mov _X_,r24	 ;  reg_x, flag_z.240
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xe9:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xea:
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xeb:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xec:
 	call addr_abs	 ; 
 	call cpu6502_CPX	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xed:
 	call addr_abs	 ; 
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xee:
 	call addr_abs	 ; 
 	call cpu6502_INC	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xef:
 	call addr_abs	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf1:
 	call addr_iny	 ; 
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	jmp .tick	 ;
-.xf2:
-	call cpu6502_JAM	 ; 
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf3:
 	call addr_iny	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf4:
 	call addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf5:
 	call addr_zpx	 ; 
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf6:
 	call addr_zpx	 ; 
 	call cpu6502_INC	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf7:
 	call addr_zpx	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf8:
 	lds r24,reg_p	 ;  reg_p.247, reg_p
 	ori r24,lo8(8)	 ;  reg_p.247,
 	sts reg_p,r24	 ;  reg_p, reg_p.247
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xf9:
 	call addr_aby	 ; 
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xfa:
 	ldi _cycles_,2	 ; 2 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xfb:
 	call addr_aby	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xfc:
 	call addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xfd:
 	call addr_abx	 ; 
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xfe:
 	call addr_abx	 ; 
 	call cpu6502_INC	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
 .xff:
 	call addr_abx	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	jmp .tick	 ;
+	rjmp .tick	 ;
+.x02:
+.x12:
+.x22:
+.x32:
+.x42:
+.x52:
+.x62:
+.x72:
+.x92:
+.xb2:
+.xd2:
+.xf2:
+	call cpu6502_JAM	 ;
+	sbiw _PCL_,1	 ;  PC--
+	ldi _cycles_,128	 ; loop in place, very slowly
+	rjmp .tick	 ;
 .L366:
 /* epilogue start */
 	sts reg_pc,_PCL_
