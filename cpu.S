@@ -1511,19 +1511,13 @@ cpu_main:
 	call cpu6502_ORA	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* ASL accumulator */
 .x0a:
-	mov r24,_A_	 ;  reg_a.71, reg_a
-	mov r25,r24	 ;  flag_c.72, reg_a.71
-	rol r25	 ;  flag_c.72
-	clr r25	 ;  flag_c.72
-	rol r25	 ;  flag_c.72
-	mov _C_,r25	 ;  flag_c, flag_c.72
-	ldi r25,0	 ;  D.4024
-	lsl r24	 ;  D.4024
-	rol r25	 ;  D.4024
-	mov _Z_,r24	 ;  flag_z, D.4024
-	mov _N_,r24	 ;  flag_n, D.4024
-	mov _A_,r24	 ;  reg_a, D.4024
+	clr _C_	 ; C <- 0
+	lsl _A_	 ; A <- A << 1, carry <- A bit 7
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x0b:
@@ -1586,8 +1580,9 @@ cpu_main:
 	call cpu6502_SLO	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
+/* CLC */
 .x18:
-	mov _C_,__zero_reg__	 ;  flag_c,
+	clr _C_	 ; C <- 0
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x19:
@@ -1667,19 +1662,13 @@ cpu_main:
 	call cpu6502_AND	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* ROL accumulator */
 .x2a:
-	mov r25,_A_	 ;  reg_a.91, reg_a
-	mov r24,r25	 ;  result, reg_a.91
-	lsl r24	 ;  result
-	mov r18,_C_	 ;  flag_c, flag_c
-	or r24,r18	 ;  result, flag_c
-	rol r25	 ;  flag_c.94
-	clr r25	 ;  flag_c.94
-	rol r25	 ;  flag_c.94
-	mov _C_,r25	 ;  flag_c, flag_c.94
-	mov _Z_,r24	 ;  flag_z, result
-	mov _N_,r24	 ;  flag_n, result
-	mov _A_,r24	 ;  reg_a, result
+	lsr _C_	 ; carry <- C, C <- 0
+	rol _A_	 ; carry <- A7, A <- [A6, A5 .. A1, carry]
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x2b:
@@ -1743,6 +1732,7 @@ cpu_main:
 	call cpu6502_RLA	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
+/* CLC */
 .x38:
 	mov _C_,r16	 ;  flag_c, D.4025
 	ldi _cycles_,2	 ; 2 cycles
@@ -1827,8 +1817,13 @@ cpu_main:
 	call cpu6502_EOR	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* LSR accumulator */
 .x4a:
-	call cpu6502_LSR_a	 ; 
+	clr _C_	 ; C <- 0
+	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x4b:
@@ -1888,10 +1883,10 @@ cpu_main:
 	call cpu6502_SRE	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
+/* CLI */
 .x58:
-	lds r24,reg_p	 ;  reg_p.127, reg_p
-	andi r24,lo8(-5)	 ;  reg_p.127,
-	sts reg_p,r24	 ;  reg_p, reg_p.127
+	ldi r24,0xfa	 ; P &= ~I_FLAG
+	and _P_,r24	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x59:
@@ -1975,21 +1970,13 @@ cpu_main:
 	call cpu6502_ADC	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* ROR accumulator */
 .x6a:
-	mov r18,_A_	 ;  reg_a.149, reg_a
-	mov r24,_C_	 ;  flag_c, flag_c
-	ldi r19,lo8(-128)	 ; ,
-	mul r24,r19	 ;  flag_c,
-	movw r24,r0	 ;  D.4024
-	clr __zero_reg__
-	mov r25,r18	 ;  result, reg_a.149
-	lsr r25	 ;  result
-	or r25,r24	 ;  result, D.4024
-	andi r18,lo8(1)	 ;  flag_c.151,
-	mov _C_,r18	 ;  flag_c, flag_c.151
-	mov _Z_,r25	 ;  flag_z, result
-	mov _N_,r25	 ;  flag_n, result
-	mov _A_,r25	 ;  reg_a, result
+	lsr _C_	 ; carry <- C, C <- 0
+	ror _A_	 ; A <- [carry, A7 .. A2, A1], carry <- A0
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x6b:
@@ -2046,10 +2033,10 @@ cpu_main:
 	call cpu6502_RRA	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
+/* SEI */
 .x78:
-	lds r24,reg_p	 ;  reg_p.57, reg_p
-	ori r24,lo8(4)	 ;  reg_p.57,
-	sts reg_p,r24	 ;  reg_p, reg_p.57
+	ldi r24,0x04	 ;
+	or _P_,r24	 ; P |= 0x04
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x79:
@@ -2126,12 +2113,11 @@ cpu_main:
 	call cpu6502_SAX	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
+/* DEY */
 .x88:
-	mov r24,_Y_	 ;  flag_z.170, reg_y
-	subi r24,lo8(-(-1))	 ;  flag_z.170,
-	mov _Z_,r24	 ;  flag_z, flag_z.170
-	mov _N_,r24	 ;  flag_n, flag_z.170
-	mov _Y_,r24	 ;  reg_y, flag_z.170
+	dec _Y_	 ; Y--
+	mov _Z_,_Y_	 ;
+	mov _N_,_Y_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x89:
@@ -2139,11 +2125,11 @@ cpu_main:
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* TXA */
 .x8a:
-	mov r24,_X_	 ;  reg_x.173, reg_x
-	mov _Z_,r24	 ;  flag_z, reg_x.173
-	mov _N_,r24	 ;  flag_n, reg_x.173
-	mov _A_,r24	 ;  reg_a, reg_x.173
+	mov _A_,_X_	 ; A <- X
+	mov _Z_,_X_	 ;
+	mov _N_,_X_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x8b:
@@ -2204,11 +2190,11 @@ cpu_main:
 	call cpu6502_SAX	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
+/* TYA */
 .x98:
-	mov r24,_Y_	 ;  reg_y.181, reg_y
-	mov _Z_,r24	 ;  flag_z, reg_y.181
-	mov _N_,r24	 ;  flag_n, reg_y.181
-	mov _A_,r24	 ;  reg_a, reg_y.181
+	mov _A_,_Y_	 ; A <- Y
+	mov _Z_,_Y_	 ;
+	mov _N_,_Y_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x99:
@@ -2216,9 +2202,11 @@ cpu_main:
 	call cpu6502_STA	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
+/* TXS */
 .x9a:
-	mov r24,_X_	 ;  reg_x, reg_x
-	mov _S_,r24	 ;  reg_s, reg_x
+	mov _S_,_X_	 ; S <- X
+	mov _Z_,_X_	 ;
+	mov _N_,_X_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x9b:
@@ -2295,11 +2283,11 @@ cpu_main:
 	call cpu6502_LAX	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
+/* TAY */
 .xa8:
-	mov r24,_A_	 ;  reg_a.190, reg_a
-	mov _Z_,r24	 ;  flag_z, reg_a.190
-	mov _N_,r24	 ;  flag_n, reg_a.190
-	mov _Y_,r24	 ;  reg_y, reg_a.190
+	mov _Y_,_A_	 ; Y <- A
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xa9:
@@ -2308,11 +2296,11 @@ cpu_main:
 	call cpu6502_LDA	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* TAX */
 .xaa:
-	mov r24,_A_	 ;  reg_a.193, reg_a
-	mov _Z_,r24	 ;  flag_z, reg_a.193
-	mov _N_,r24	 ;  flag_n, reg_a.193
-	mov _X_,r24	 ;  reg_x, reg_a.193
+	mov _X_,_A_	 ; X <- A
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xab:
@@ -2369,10 +2357,10 @@ cpu_main:
 	call cpu6502_LAX	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
+/* CLV */
 .xb8:
-	lds r24,reg_p	 ;  reg_p.198, reg_p
-	andi r24,lo8(-65)	 ;  reg_p.198,
-	sts reg_p,r24	 ;  reg_p, reg_p.198
+	ldi r24,0xaf	 ; P &= ~V_FLAG
+	and _P_,r24	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xb9:
@@ -2380,11 +2368,11 @@ cpu_main:
 	call cpu6502_LDA	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
+/* TSX */
 .xba:
-	mov r24,_S_	 ;  reg_s.199, reg_s
-	mov _Z_,r24	 ;  flag_z, reg_s.199
-	mov _N_,r24	 ;  flag_n, reg_s.199
-	mov _X_,r24	 ;  reg_x, reg_s.199
+	mov _X_,_S_	 ; X <- S
+	mov _Z_,_S_	 ;  flag_z, reg_s.199
+	mov _N_,_S_	 ;  flag_n, reg_s.199
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xbb:
@@ -2452,12 +2440,11 @@ cpu_main:
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
+/* INY */
 .xc8:
-	mov r24,_Y_	 ;  flag_z.216, reg_y
-	subi r24,lo8(-(1))	 ;  flag_z.216,
-	mov _Z_,r24	 ;  flag_z, flag_z.216
-	mov _N_,r24	 ;  flag_n, flag_z.216
-	mov _Y_,r24	 ;  reg_y, flag_z.216
+	inc _Y_	 ; Y++
+	mov _Z_,_Y_	 ;
+	mov _N_,_Y_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xc9:
@@ -2466,12 +2453,11 @@ cpu_main:
 	call cpu6502_CMP	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* DEX */
 .xca:
-	mov r24,_X_	 ;  flag_z.220, reg_x
-	subi r24,lo8(-(-1))	 ;  flag_z.220,
-	mov _Z_,r24	 ;  flag_z, flag_z.220
-	mov _N_,r24	 ;  flag_n, flag_z.220
-	mov _X_,r24	 ;  reg_x, flag_z.220
+	dec _X_	 ; X--
+	mov _Z_,_X_	 ;  flag_z, flag_z.220
+	mov _N_,_X_	 ;  flag_n, flag_z.220
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xcb:
@@ -2542,10 +2528,10 @@ cpu_main:
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
+/* CLD */
 .xd8:
-	lds r24,reg_p	 ;  reg_p.234, reg_p
-	andi r24,lo8(-9)	 ;  reg_p.234,
-	sts reg_p,r24	 ;  reg_p, reg_p.234
+	ldi r24,0xf7	 ; P &= ~D_FLAG
+	and _P_,r24	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xd9:
@@ -2621,12 +2607,11 @@ cpu_main:
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
+/* INX */
 .xe8:
-	mov r24,_X_	 ;  flag_z.240, reg_x
-	subi r24,lo8(-(1))	 ;  flag_z.240,
-	mov _Z_,r24	 ;  flag_z, flag_z.240
-	mov _N_,r24	 ;  flag_n, flag_z.240
-	mov _X_,r24	 ;  reg_x, flag_z.240
+	inc _X_	 ; X++
+	mov _Z_,_X_	 ;
+	mov _N_,_X_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xe9:
@@ -2635,6 +2620,7 @@ cpu_main:
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
+/* NOP */
 .xea:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2693,10 +2679,10 @@ cpu_main:
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
+/* SED */
 .xf8:
-	lds r24,reg_p	 ;  reg_p.247, reg_p
-	ori r24,lo8(8)	 ;  reg_p.247,
-	sts reg_p,r24	 ;  reg_p, reg_p.247
+	ldi r24,0x08	 ; P |= D_FLAG
+	or _P_,r24	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xf9:
