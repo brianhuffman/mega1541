@@ -378,16 +378,32 @@ cpu6502_ADC:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
-	mov r25,_P_	 ;  reg_p.156, reg_p
-	mov r30,_A_	 ;  reg_a.157, reg_a
-	mov r26,_C_	 ;  flag_c, flag_c
-	mov r22,r24	 ;  D.3729, D.3728
-	ldi r23,0	 ;  D.3729
-	mov r31,r25	 ;  reg_p.160, reg_p.156
-	andi r31,lo8(-65)	 ;  reg_p.160,
-	sbrs r25,3	 ;  reg_p.156,
-	rjmp .L11	 ; 
+	call mem_read	 ; r24 <- read_mem(r25:r24)
+	sbrc _P_,3	 ; skip if decimal mode is set
+	rjmp .ADC_dec	 ; jump if decimal mode is clear
+.ADC_bin:
+	lsr _C_	 ; carry <- C, C <- 0
+	adc _A_,r24	 ; (carry, A) <- A + r24 + carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	brvs .ADC_bin_overflow	 ; branch on overflow
+	rol _C_	 ; C <- carry, carry <- 0
+	ldi r22,0xaf	 ;
+	and _P_,r22	 ; P &= ~V_FLAG
+	ret
+.ADC_bin_overflow:
+	rol _C_	 ; C <- carry, carry <- 0
+	ldi r22,0x40	 ;
+	or _P_,r22	 ; P |= V_FLAG
+	ret
+.ADC_dec:
+	mov r25,_P_	 ; r25 <- P
+	mov r30,_A_	 ; r30 <- A
+	mov r26,_C_	 ; r26 <- C
+	mov r22,r24	 ; r22 <- r24
+	ldi r23,0	 ; r23 <- 0
+	mov r31,_P_	 ; r31 <- P
+	andi r31,lo8(-65)	 ; r31 &= ~V_FLAG
 	mov r18,r30	 ;  total, reg_a.157
 	ldi r19,0	 ;  total
 	add r18,r26	 ;  total, flag_c
@@ -433,22 +449,6 @@ cpu6502_ADC:
 .L17:
 	mov _C_,r24	 ;  flag_c, D.3731
 	rjmp .L18	 ; 
-.L11:
-	mov r20,r30	 ;  total, reg_a.157
-	ldi r21,0	 ;  total
-	add r20,r26	 ;  total, flag_c
-	adc r21,__zero_reg__	 ;  total
-	add r20,r22	 ;  total, D.3729
-	adc r21,r23	 ;  total, D.3729
-	mov _C_,r21	 ;  flag_c, total
-	mov r18,r20	 ;  result, total
-	mov _Z_,r20	 ;  flag_z, total
-	mov _N_,r20	 ;  flag_n, total
-	eor r24,r20	 ;  D.3728, total
-	eor r20,r30	 ;  D.3728, reg_a.157
-	and r24,r20	 ;  D.3728, D.3728
-	sbrc r24,7	 ;  D.3728,
-	ori r31,lo8(64)	 ;  reg_p.161,
 .L21:
 	mov _P_,r31	 ;  reg_p, reg_p.161
 .L18:
@@ -1409,7 +1409,7 @@ cpu_main:
 	rjmp .x66
 	rjmp .x67
 	rjmp .x68
-	rjmp .x69
+	rjmp .x69_ADC_imm
 	rjmp .x6a
 	rjmp .x6b
 	rjmp .x6c
@@ -2138,7 +2138,7 @@ cpu_main:
 	mov _N_,_A_	 ; N <- A
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x69:
+.x69_ADC_imm:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	call cpu6502_ADC	 ; 
