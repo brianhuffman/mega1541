@@ -2159,7 +2159,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x6b:
-	call cpu6502_JAM	 ; 
+	/* TODO */
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x6c:
@@ -2312,7 +2312,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x8b:
-	call cpu6502_JAM	 ; 
+	/* TODO */
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x8c:
@@ -2393,7 +2393,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x9b:
-	call cpu6502_JAM	 ; 
+	/* TODO */
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
 .x9c:
@@ -2487,7 +2487,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xab:
-	call cpu6502_JAM	 ; 
+	/* TODO */
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xac:
@@ -2559,7 +2559,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xbb:
-	call cpu6502_JAM	 ; 
+	/* TODO */
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xbc:
@@ -2912,7 +2912,6 @@ cpu_main:
 .xb2:
 .xd2:
 .xf2:
-	call cpu6502_JAM	 ;
 	sbiw _PCL_,1	 ;  PC--
 	ldi _cycles_,128	 ; loop in place, very slowly
 	rjmp .tick	 ;
