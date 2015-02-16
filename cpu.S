@@ -1453,7 +1453,7 @@ cpu_main:
 	rjmp .x92
 	rjmp .x93
 	rjmp .x94
-	rjmp .x95
+	rjmp .x95_STA_zpx
 	rjmp .x96
 	rjmp .x97
 	rjmp .x98
@@ -2348,9 +2348,13 @@ cpu_main:
 	call mem_write	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x95:
-	call addr_zpx	 ; 
-	call cpu6502_STA	 ; 
+.x95_STA_zpx:
+	call mem_read_pc	 ; r24 <- mem_read(PC)
+	adiw _PCL_,1	 ; PC++
+	mov ZL,r24	 ;
+	add ZL,_X_      ;
+	ldi ZH,hi8(ram)	 ;
+	st Z,_A_	 ; ram[r24+X] <- A
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x96:
