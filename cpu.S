@@ -1097,8 +1097,6 @@ cpu_main:
 	push _time1_
 	push _time2_
 	push _time3_
-	push r16	 ; 
-	push r17	 ; 
 	lds _PCL_,reg_pc
 	lds _PCH_,reg_pc+1
 	lds _A_,reg_a
@@ -1115,9 +1113,8 @@ cpu_main:
 	lds _time3_,time_left+3
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 17 */
-.L__stack_usage = 17
-	ldi r16,lo8(1)	 ; D.4025,
+/* stack size = 14 */
+.L__stack_usage = 14
 	add _time0_,r22	 ; time_left += cycles
 	adc _time1_,r23	 ;
 	adc _time2_,r24	 ;
@@ -3213,8 +3210,6 @@ output: data value in _data_, tick count in _cycles_
 	sts time_left+1,_time1_
 	sts time_left+2,_time2_
 	sts time_left+3,_time3_
-	pop r17	 ; 
-	pop r16	 ; 
 	pop _time3_
 	pop _time2_
 	pop _time1_
