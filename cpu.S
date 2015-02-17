@@ -346,7 +346,7 @@ cpu6502_ADC:
 	mov _N_,_A_	 ;
 	brvs .ADC_bin_overflow	 ; branch on overflow
 	rol _C_	 ; C <- carry <- 0
-	ldi r22,0xaf	 ;
+	ldi r22,~0x40	 ;
 	and _P_,r22	 ; P &= ~V_FLAG
 	ret
 .ADC_bin_overflow:
@@ -361,7 +361,7 @@ cpu6502_ADC:
 	mov r22,_data_	 ; r22 <- data
 	ldi r23,0	 ; r23 <- 0
 	mov r31,_P_	 ; r31 <- P
-	andi r31,lo8(-65)	 ; r31 &= ~V_FLAG
+	andi r31,~0x40	 ; r31 &= ~V_FLAG
 	mov r18,r30	 ;  total, reg_a.157
 	ldi r19,0	 ;  total
 	add r18,r26	 ;  total, flag_c
@@ -2219,7 +2219,7 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
 .x58_CLI:
-	ldi _data_,0xfa	 ; P &= ~I_FLAG
+	ldi _data_,~0x04	 ; P &= ~I_FLAG
 	and _P_,_data_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2694,7 +2694,7 @@ cpu_main:
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xb8_CLV:
-	ldi _data_,0xaf	 ; P &= ~V_FLAG
+	ldi _data_,~0x40	 ; P &= ~V_FLAG
 	and _P_,_data_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2864,7 +2864,7 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
 .xd8_CLD:
-	ldi _data_,0xf7	 ; P &= ~D_FLAG
+	ldi _data_,~0x08	 ; P &= ~D_FLAG
 	and _P_,_data_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
