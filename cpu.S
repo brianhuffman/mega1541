@@ -1584,7 +1584,7 @@ cpu_main:
 	rjmp .xfe
 	rjmp .xff
 
-/***************************** LOAD INSTRUCTIONS ******************************/
+/***************************** READ INSTRUCTIONS ******************************/
 
 .ORA:
 	or _A_,_data_	 ; A |= data
@@ -1594,35 +1594,35 @@ cpu_main:
 .x01_ORA_inx:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_inx
+	rjmp .read_inx
 .x05_ORA_zpg:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .x09_ORA_imm:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_imm
+	rjmp .read_imm
 .x0d_ORA_abs:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_abs
+	rjmp .read_abs
 .x11_ORA_iny:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_iny
+	rjmp .read_iny
 .x15_ORA_zpx:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .x19_ORA_aby:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_aby
+	rjmp .read_aby
 .x1d_ORA_abx:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
-	rjmp .load_abx
+	rjmp .read_abx
 .AND:
 	and _A_,_data_	 ; A &= data
 	mov _Z_,_A_
@@ -1631,35 +1631,35 @@ cpu_main:
 .x21_AND_inx:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_inx
+	rjmp .read_inx
 .x25_AND_zpg:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .x29_AND_imm:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_imm
+	rjmp .read_imm
 .x2d_AND_abs:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_abs
+	rjmp .read_abs
 .x31_AND_iny:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_iny
+	rjmp .read_iny
 .x35_AND_zpx:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .x39_AND_aby:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_aby
+	rjmp .read_aby
 .x3d_AND_abx:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
-	rjmp .load_abx
+	rjmp .read_abx
 .EOR:
 	eor _A_,_data_	 ; A ^= data
 	mov _Z_,_A_
@@ -1668,35 +1668,35 @@ cpu_main:
 .x41_EOR_inx:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_inx
+	rjmp .read_inx
 .x45_EOR_zpg:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .x49_EOR_imm:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_imm
+	rjmp .read_imm
 .x4d_EOR_abs:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_abs
+	rjmp .read_abs
 .x51_EOR_iny:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_iny
+	rjmp .read_iny
 .x55_EOR_zpx:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .x59_EOR_aby:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_aby
+	rjmp .read_aby
 .x5d_EOR_abx:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
-	rjmp .load_abx
+	rjmp .read_abx
 /*
 .ADC:
 	and _A_,_data_	 ;  A &= data
@@ -1706,35 +1706,35 @@ cpu_main:
 .x61_ADC_inx:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_inx
+	rjmp .read_inx
 .x65_ADC_zpg:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .x69_ADC_imm:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_imm
+	rjmp .read_imm
 .x6d_ADC_abs:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_abs
+	rjmp .read_abs
 .x71_ADC_iny:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_iny
+	rjmp .read_iny
 .x75_ADC_zpx:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .x79_ADC_aby:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_aby
+	rjmp .read_aby
 .x7d_ADC_abx:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
-	rjmp .load_abx
+	rjmp .read_abx
 */
 .LDA:
 	mov _A_,_data_	 ; A <- data
@@ -1744,35 +1744,35 @@ cpu_main:
 .xa1_LDA_inx:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_inx
+	rjmp .read_inx
 .xa5_LDA_zpg:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .xa9_LDA_imm:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_imm
+	rjmp .read_imm
 .xad_LDA_abs:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_abs
+	rjmp .read_abs
 .xb1_LDA_iny:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_iny
+	rjmp .read_iny
 .xb5_LDA_zpx:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .xb9_LDA_aby:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_aby
+	rjmp .read_aby
 .xbd_LDA_abx:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
-	rjmp .load_abx
+	rjmp .read_abx
 .CMP:
 	mov _Z_,_A_	 ; Z <- A
 	sub _Z_,_data_	 ; Z <- A - data
@@ -1787,35 +1787,35 @@ cpu_main:
 .xc1_CMP_inx:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_inx
+	rjmp .read_inx
 .xc5_CMP_zpg:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .xc9_CMP_imm:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_imm
+	rjmp .read_imm
 .xcd_CMP_abs:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_abs
+	rjmp .read_abs
 .xd1_CMP_iny:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_iny
+	rjmp .read_iny
 .xd5_CMP_zpx:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .xd9_CMP_aby:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_aby
+	rjmp .read_aby
 .xdd_CMP_abx:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
-	rjmp .load_abx
+	rjmp .read_abx
 /*
 .SBC:
 	mov _Z_,_A_	 ; Z <- A
@@ -1831,35 +1831,35 @@ cpu_main:
 .xe1_SBC_inx:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_inx
+	rjmp .read_inx
 .xe5_SBC_zpg:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .xe9_SBC_imm:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_imm
+	rjmp .read_imm
 .xed_SBC_abs:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_abs
+	rjmp .read_abs
 .xf1_SBC_iny:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_iny
+	rjmp .read_iny
 .xf5_SBC_zpx:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .xf9_SBC_aby:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_aby
+	rjmp .read_aby
 .xfd_SBC_abx:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
-	rjmp .load_abx
+	rjmp .read_abx
 */
 .LDX:
 	mov _X_,_data_	 ; X <- data
@@ -1869,23 +1869,23 @@ cpu_main:
 .xa2_LDX_imm:
 	ldi XL,lo8(gs(.LDX))
 	ldi XH,hi8(gs(.LDX))
-	rjmp .load_imm
+	rjmp .read_imm
 .xa6_LDX_zpg:
 	ldi XL,lo8(gs(.LDX))
 	ldi XH,hi8(gs(.LDX))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .xae_LDX_abs:
 	ldi XL,lo8(gs(.LDX))
 	ldi XH,hi8(gs(.LDX))
-	rjmp .load_abs
+	rjmp .read_abs
 .xb6_LDX_zpy:
 	ldi XL,lo8(gs(.LDX))
 	ldi XH,hi8(gs(.LDX))
-	rjmp .load_zpy
+	rjmp .read_zpy
 .xbe_LDX_aby:
 	ldi XL,lo8(gs(.LDX))
 	ldi XH,hi8(gs(.LDX))
-	rjmp .load_aby
+	rjmp .read_aby
 .LDY:
 	mov _Y_,_data_	 ; Y <- data
 	sub _Z_,_data_	 ;
@@ -1894,23 +1894,23 @@ cpu_main:
 .xa0_LDY_imm:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
-	rjmp .load_imm
+	rjmp .read_imm
 .xa4_LDY_zpg:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
-	rjmp .load_zpg
+	rjmp .read_zpg
 .xac_LDY_abs:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
-	rjmp .load_abs
+	rjmp .read_abs
 .xb4_LDY_zpx:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
-	rjmp .load_zpx
+	rjmp .read_zpx
 .xbc_LDY_abx:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
-	rjmp .load_abx
+	rjmp .read_abx
 
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
@@ -3260,19 +3260,19 @@ cpu_main:
 	ldi _cycles_,128	 ; loop in place, very slowly
 	rjmp .tick	 ;
 
-/******************* ADDRESSING MODES FOR LOAD INSTRUCTIONS *******************/
+/******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
 input:  return address in XH:XL
 output: data value in _data_, tick count in _cycles_
 */
-.load_imm:
+.read_imm:
 	call mem_read_pc	 ; r24 <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov _data_,r24	 ; data <- r24
 	ldi _cycles_,2	 ; cycles <- 2
 	movw ZL,XL
 	ijmp
-.load_zpg:
+.read_zpg:
 	call mem_read_pc	 ; r24 <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov ZL,r24	 ;
@@ -3281,7 +3281,7 @@ output: data value in _data_, tick count in _cycles_
 	ldi _cycles_,3	 ; cycles <- 3
 	movw ZL,XL
 	ijmp
-.load_zpx:
+.read_zpx:
 	call mem_read_pc	 ; r24 <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	add r24,_X_	 ; r24 += X
@@ -3291,7 +3291,7 @@ output: data value in _data_, tick count in _cycles_
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
-.load_zpy:
+.read_zpy:
 	call mem_read_pc	 ; r24 <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	add r24,_Y_	 ; r24 += Y
@@ -3301,7 +3301,7 @@ output: data value in _data_, tick count in _cycles_
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
-.load_abs:
+.read_abs:
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	call mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
@@ -3310,43 +3310,43 @@ output: data value in _data_, tick count in _cycles_
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
-.load_abx:
+.read_abx:
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	call mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_X_	 ; r24 += X
-	brcs .load_abx_carry	 ; branch if r24+X carries
+	brcs .read_abx_carry	 ; branch if r24+X carries
 	call mem_read	 ; r24 <- read(r25:r24)
 	mov _data_,r24	 ; data <- r24
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
-.load_abx_carry:
+.read_abx_carry:
 	inc r25	 ; r25++
 	call mem_read	 ; r24 <- read(r25:r24)
 	mov _data_,r24	 ; data <- r24
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
-.load_aby:
+.read_aby:
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	call mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_Y_	 ; r24 += Y
-	brcs .load_aby_carry	 ; branch if r24+X carries
+	brcs .read_aby_carry	 ; branch if r24+X carries
 	call mem_read	 ; r24 <- read(r25:r24)
 	mov _data_,r24	 ; data <- r24
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
-.load_aby_carry:
+.read_aby_carry:
 	inc r25	 ; r25++
 	call mem_read	 ; r24 <- read(r25:r24)
 	mov _data_,r24	 ; data <- r24
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
-.load_inx:
+.read_inx:
 	call mem_read_pc	 ; r24 <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	add r24,_X_	 ; r24 += X
@@ -3360,7 +3360,7 @@ output: data value in _data_, tick count in _cycles_
 	ldi _cycles_,6	 ; cycles <- 6
 	movw ZL,XL
 	ijmp
-.load_iny:
+.read_iny:
 	call mem_read_pc	 ; r24 <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov ZL,r24	 ;
@@ -3369,13 +3369,13 @@ output: data value in _data_, tick count in _cycles_
 	inc ZL	 ; ZL++
 	ld r25,Z	 ; r25 <- ram[r24+1]
 	add r24,_Y_	 ; r24 += Y
-	brcs .load_iny_carry	 ; branch if r24+Y carries
+	brcs .read_iny_carry	 ; branch if r24+Y carries
 	call mem_read	 ; r24 <- read(r25:r24)
 	mov _data_,r24	 ; data <- r24
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
-.load_iny_carry:
+.read_iny_carry:
 	inc r25	 ; r25++
 	call mem_read	 ; r24 <- read(r25:r24)
 	mov _data_,r24	 ; data <- r24
