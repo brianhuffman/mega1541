@@ -1343,7 +1343,7 @@ cpu_main:
 	rjmp .x0d_ORA_abs
 	rjmp .x0e
 	rjmp .x0f
-	rjmp .x10
+	rjmp .x10_BPL
 	rjmp .x11_ORA_iny
 	rjmp .x12
 	rjmp .x13
@@ -1375,7 +1375,7 @@ cpu_main:
 	rjmp .x2d_AND_abs
 	rjmp .x2e
 	rjmp .x2f
-	rjmp .x30
+	rjmp .x30_BMI
 	rjmp .x31_AND_iny
 	rjmp .x32
 	rjmp .x33
@@ -1407,7 +1407,7 @@ cpu_main:
 	rjmp .x4d_EOR_abs
 	rjmp .x4e
 	rjmp .x4f
-	rjmp .x50
+	rjmp .x50_BVC
 	rjmp .x51_EOR_iny
 	rjmp .x52
 	rjmp .x53
@@ -1439,7 +1439,7 @@ cpu_main:
 	rjmp .x6d
 	rjmp .x6e
 	rjmp .x6f
-	rjmp .x70
+	rjmp .x70_BVS
 	rjmp .x71
 	rjmp .x72
 	rjmp .x73
@@ -1471,7 +1471,7 @@ cpu_main:
 	rjmp .x8d
 	rjmp .x8e
 	rjmp .x8f
-	rjmp .x90
+	rjmp .x90_BCC
 	rjmp .x91
 	rjmp .x92
 	rjmp .x93
@@ -1503,7 +1503,7 @@ cpu_main:
 	rjmp .xad_LDA_abs
 	rjmp .xae_LDX_abs
 	rjmp .xaf
-	rjmp .xb0
+	rjmp .xb0_BCS
 	rjmp .xb1_LDA_iny
 	rjmp .xb2
 	rjmp .xb3
@@ -1535,7 +1535,7 @@ cpu_main:
 	rjmp .xcd_CMP_abs
 	rjmp .xce
 	rjmp .xcf
-	rjmp .xd0
+	rjmp .xd0_BNE
 	rjmp .xd1_CMP_iny
 	rjmp .xd2
 	rjmp .xd3
@@ -1567,7 +1567,7 @@ cpu_main:
 	rjmp .xed
 	rjmp .xee
 	rjmp .xef
-	rjmp .xf0
+	rjmp .xf0_BEQ
 	rjmp .xf1
 	rjmp .xf2
 	rjmp .xf3
@@ -1914,29 +1914,25 @@ cpu_main:
 
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
-/* BPL */
-.x10:
+.x10_BPL:
 	tst _N_	 ; branch on N >= 0
 	brpl .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-/* BMI */
-.x30:
+.x30_BMI:
 	tst _N_	 ; branch on N < 0
 	brmi .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-/* BVC */
-.x50:
+.x50_BVC:
 	bst _P_,6	 ; branch on P bit 6 = 0
 	brtc .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-/* BVS */
-.x70:
+.x70_BVS:
 	bst _P_,6	 ; branch on P bit 6 = 1
 	brts .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
@@ -1954,29 +1950,25 @@ cpu_main:
 	cpse _PCH_,r19	 ; skip if same page
 	ldi _cycles_,4	 ; 4 cycles for branch to different page
 	rjmp .tick	 ;
-/* BCC */
-.x90:
+.x90_BCC:
 	tst _C_	 ; branch on C = 0
 	breq .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-/* BCS */
-.xb0:
+.xb0_BCS:
 	tst _C_	 ; branch on C != 0
 	brne .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-/* BNE */
-.xd0:
+.xd0_BNE:
 	tst _Z_	 ; branch on Z != 0
 	brne .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-/* BEQ */
-.xf0:
+.xf0_BEQ:
 	tst _Z_	 ; branch on Z = 0
 	breq .take_branch	 ;
 	adiw _PCL_,1	 ; PC++
