@@ -79,39 +79,36 @@ ZH = 31
 .global	mem_read
 	.type	mem_read, @function
 mem_read:
+/* input: r25:r24 */
+/* output: _data_ */
+/* touches: ZH, ZL */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
 	cpi r25,0x04	 ; branch if addr_hi >= 0x40
 	brsh .mem_L6	 ;
-	movw r30,r24	 ;
-	subi r30,lo8(-(ram))	 ;
-	sbci r31,hi8(-(ram))	 ;
-	ld r24,Z	 ; load from ram[addr]
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(ram))	 ;
+	ld _data_,Z	 ; load from ram[addr]
 	ret
 .mem_L6:
 	cpi r25,0xc0	 ; branch if addr_hi < 0xc0
 	brlo .mem_L9	 ;
-	movw r30,r24	 ;
-	andi r31,0x3f	 ; mask to 16k range
-	subi r30,lo8(-(dos1541))	 ;  D.2241,
-	sbci r31,hi8(-(dos1541))	 ;  D.2241,
-	lpm r24, Z	 ; load from rom[addr & 0x3fff]
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(dos1541-0xc000))	 ;
+	lpm _data_,Z	 ; load from rom[addr - 0xc0000]
 	ret
 .mem_L9:
-	ldi r24,0xff	 ; other addresses return 0xff
+	ldi _data_,0xff	 ; other addresses return 0xff
 	ret
 	.size	mem_read, .-mem_read
-/*
-mem_read_pc
-input address in _PCH_:_PCL_
-output in r24
-*/
 	.section	.text.mem_read_pc,"ax",@progbits
 .global	mem_read_pc
 	.type	mem_read_pc, @function
 mem_read_pc:
+/* input: _PCH_:_PCL_ */
+/* output: _data_ */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
@@ -120,104 +117,79 @@ mem_read_pc:
 	brlo .mem_read_pc_L9	 ;
 	movw ZL,_PCL_	 ;
 	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm r24,Z	 ; load from rom[addr - 0xc0000]
+	lpm _data_,Z	 ; data <- rom[addr - 0xc0000]
 	ret
 .mem_read_pc_L9:
 	cpi _PCH_,0x04	 ; branch if addr_hi >= 0x40
 	brsh .mem_read_pc_L6	 ;
 	movw ZL,_PCL_	 ;
 	subi ZH,hi8(-(ram))	 ;
-	ld r24,Z	 ; load from ram[addr]
+	ld _data_,Z	 ; data <- ram[addr]
 	ret
 .mem_read_pc_L6:
-	ldi r24,0xff	 ; other addresses return 0xff
+	ldi _data_,0xff	 ; other addresses return 0xff
 	ret
 	.size	mem_read_pc, .-mem_read_pc
 	.section	.text.mem_read_16,"ax",@progbits
 .global	mem_read_16
 	.type	mem_read_16, @function
 mem_read_16:
-	push r17	 ; 
-	push r28	 ; 
-	push r29	 ; 
+/* input: r25:r24 */
+/* output: r25:r24 */
+/* touches: ZH, ZL, _data_, r18 */
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 3 */
-.L__stack_usage = 3
-	movw r28,r24	 ;  address, address
-	cpi r24,-1	 ;  address,
-	ldi r20,3	 ; ,
-	cpc r25,r20	 ;  address,
-	brsh .mem_L11	 ; ,
-	movw r30,r24	 ;  tmp71, address
-	subi r30,lo8(-(ram+1))	 ;  tmp71,
-	sbci r31,hi8(-(ram+1))	 ;  tmp71,
-	ld r18,Z	 ;  tmp73, ram
-	ldi r19,0	 ;  D.2246
-	mov r19,r18	 ;  D.2245, D.2246
-	clr r18	 ;  D.2245
-	subi r28,lo8(-(ram))	 ;  tmp76,
-	sbci r29,hi8(-(ram))	 ;  tmp76,
-	ld r24,Y	 ;  tmp78, ram
-	rjmp .mem_L14	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	cpi r24,0xff	 ;
+	breq .mem_L11	 ; branch if addr_lo = $ff
+.mem_16_ram:
+	cpi r25,0x04	 ;
+	brsh .mem_16_L6	 ; branch if addr_hi >= 0x40
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(ram))	 ;
+	ld r24,Z+	 ; r24 <- ram[addr]
+	ld r25,Z	 ; r25 <- ram[addr+1]
+	ret
+.mem_16_L6:
+	cpi r25,0xc0	 ;
+	brlo .mem_16_L9	 ; branch if addr_hi < 0xc0
+.mem_16_rom:
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(dos1541-0xc000))	 ;
+	lpm r24,Z+	 ; r24 <- rom[addr - 0xc0000]
+	lpm r25,Z	 ; r25 <- rom[addr+1 - 0xc0000]
+	ret
+.mem_16_L9:
+	ldi r24,0xff	 ; other addresses return 0xff
+	ldi r25,0xff	 ; other addresses return 0xff
+	ret
 .mem_L11:
-	adiw r24,1	 ;  D.2246,
-	movw r18,r28	 ;  D.2246, address
-	subi r18,1	 ;  D.2246,
-	sbci r19,-64	 ;  D.2246,
-	cpi r18,-2	 ;  D.2246,
-	sbci r19,63	 ;  D.2246,
-	brsh .mem_L13	 ; ,
-	movw r30,r24	 ;  D.2248, D.2246
-	andi r31,63	 ;  D.2248,
-	subi r30,lo8(-(dos1541))	 ;  D.2248,
-	sbci r31,hi8(-(dos1541))	 ;  D.2248,
-	lpm r24, Z	 ;  __result
-	movw r30,r28	 ;  D.2248, address
-	andi r31,63	 ;  D.2248,
-	subi r30,lo8(-(dos1541))	 ;  D.2248,
-	sbci r31,hi8(-(dos1541))	 ;  D.2248,
-	lpm r28, Z	 ;  __result
-	mov r18,r28	 ;  D.2245, __result
-	ldi r19,0	 ;  D.2245
-	or r19,r24	 ;  D.2245, __result
-	rjmp .mem_L12	 ; 
-.mem_L13:
-	call mem_read	 ; 
-	mov r17,r24	 ;  D.2247,
-	movw r24,r28	 ; , address
-	call mem_read	 ; 
-	mov r18,r17	 ;  D.2246, D.2247
-	ldi r19,0	 ;  D.2246
-	mov r19,r18	 ;  D.2245, D.2246
-	clr r18	 ;  D.2245
-.mem_L14:
-	or r18,r24	 ;  D.2245,
-.mem_L12:
-	movw r24,r18	 ; , D.2245
-/* epilogue start */
-	pop r29	 ; 
-	pop r28	 ; 
-	pop r17	 ; 
+	call mem_read	 ; data <- mem_read(addr)
+	mov r18,_data_	 ; temp <- data
+	adiw r24,1	 ; addr++
+	call mem_read	 ; data <- mem_read(addr+1)
+	mov r24,r18	 ;
+	mov r25,_data_	 ;
 	ret
 	.size	mem_read_16, .-mem_read_16
 	.section	.text.mem_write,"ax",@progbits
 .global	mem_write
 	.type	mem_write, @function
 mem_write:
+/* input: r25:r24, _data_ */
+/* touches: ZH, ZL */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	cp r24,__zero_reg__	 ;  address
-	ldi r18,4	 ; ,
-	cpc r25,r18	 ;  address,
-	brsh .mem_L15	 ; ,
-	movw r30,r24	 ;  tmp45, address
-	subi r30,lo8(-(ram))	 ;  tmp45,
-	sbci r31,hi8(-(ram))	 ;  tmp45,
-	st Z,r22	 ;  ram, value
+	cpi r25,4	 ;
+	brsh .mem_L15	 ; branch if address >= $0400
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(ram))	 ;
+	st Z,_data_	 ; ram[address] <- data
 .mem_L15:
+	/* TODO: write io memory */
 	ret
 	.size	mem_write, .-mem_write
 	.section	.text.clock_advance,"ax",@progbits
@@ -310,8 +282,8 @@ cpu6502_ORA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ;  r24 <- mem_read
-	or _A_,r24	 ;  A |= data
+	call mem_read	 ; data <- mem_read(r25:r24)
+	or _A_,_data_	 ; A |= data
 	mov _Z_,_A_
 	mov _N_,_A_
 	ret
@@ -323,16 +295,16 @@ cpu6502_BIT:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
-	mov r25,r24	 ;  D.3706, data
+	call mem_read	 ; data <- mem_read(r25:r24)
+	mov r25,_data_	 ;  D.3706, data
 	andi r25,lo8(64)	 ;  D.3706,
 	mov r18,_P_	 ;  reg_p.101, reg_p
 	andi r18,lo8(-65)	 ;  reg_p.101,
 	or r25,r18	 ;  D.3706, reg_p.101
 	mov _P_,r25	 ;  reg_p, D.3706
-	mov _N_,r24	 ;  flag_n, data
+	mov _N_,_data_	 ;  flag_n, data
 	mov r25,_A_	 ;  flag_z.106, reg_a
-	and r25,r24	 ;  flag_z.106, data
+	and r25,_data_	 ;  flag_z.106, data
 	mov _Z_,r25	 ;  flag_z, flag_z.106
 	ret
 	.size	cpu6502_BIT, .-cpu6502_BIT
@@ -343,8 +315,8 @@ cpu6502_AND:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; r24 <- read_mem(r25:r24)
-	and _A_,r24	 ; A &= r24
+	call mem_read	 ; data <- mem_read(r25:r24)
+	and _A_,_data_	 ; A &= data
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	ret
@@ -356,8 +328,8 @@ cpu6502_EOR:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; r24 <- read_mem(r25:r24)
-	eor _A_,r24	 ; A ^= r24
+	call mem_read	 ; data <- mem_read(r25:r24)
+	eor _A_,_data_	 ; A ^= data
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	ret
@@ -369,21 +341,21 @@ cpu6502_ADC:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; r24 <- read_mem(r25:r24)
+	call mem_read	 ; data <- mem_read(r25:r24)
 	sbrc _P_,3	 ; skip if decimal mode is set
 	rjmp .ADC_dec	 ; jump if decimal mode is clear
 .ADC_bin:
-	lsr _C_	 ; carry <- C, C <- 0
-	adc _A_,r24	 ; (carry, A) <- A + r24 + carry
+	lsr _C_	 ; carry <- C <- 0
+	adc _A_,_data_	 ; (carry, A) <- A + data + carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	brvs .ADC_bin_overflow	 ; branch on overflow
-	rol _C_	 ; C <- carry, carry <- 0
+	rol _C_	 ; C <- carry <- 0
 	ldi r22,0xaf	 ;
 	and _P_,r22	 ; P &= ~V_FLAG
 	ret
 .ADC_bin_overflow:
-	rol _C_	 ; C <- carry, carry <- 0
+	rol _C_	 ; C <- carry <- 0
 	ldi r22,0x40	 ;
 	or _P_,r22	 ; P |= V_FLAG
 	ret
@@ -391,7 +363,7 @@ cpu6502_ADC:
 	mov r25,_P_	 ; r25 <- P
 	mov r30,_A_	 ; r30 <- A
 	mov r26,_C_	 ; r26 <- C
-	mov r22,r24	 ; r22 <- r24
+	mov r22,_data_	 ; r22 <- data
 	ldi r23,0	 ; r23 <- 0
 	mov r31,_P_	 ; r31 <- P
 	andi r31,lo8(-65)	 ; r31 &= ~V_FLAG
@@ -405,7 +377,7 @@ cpu6502_ADC:
 	mov r25,r30	 ;  temp, reg_a.157
 	andi r25,lo8(15)	 ;  temp,
 	add r25,r26	 ;  temp, flag_c
-	mov r20,r24	 ;  D.3728, D.3728
+	mov r20,_data_	 ;  D.3728, D.3728
 	andi r20,lo8(15)	 ;  D.3728,
 	add r25,r20	 ;  temp, D.3728
 	cpi r25,lo8(10)	 ;  temp,
@@ -453,10 +425,10 @@ cpu6502_LDY:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
-	mov _Z_,r24	 ;  flag_z, flag_z.202
-	mov _N_,r24	 ;  flag_n, flag_z.202
-	mov _Y_,r24	 ;  reg_y, flag_z.202
+	call mem_read	 ; data <- mem_read(r25:r24)
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	mov _Y_,_data_	 ;
 	ret
 	.size	cpu6502_LDY, .-cpu6502_LDY
 	.section	.text.cpu6502_LDA,"ax",@progbits
@@ -466,10 +438,10 @@ cpu6502_LDA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
-	mov _Z_,r24	 ;  flag_z, flag_z.205
-	mov _N_,r24	 ;  flag_n, flag_z.205
-	mov _A_,r24	 ;  reg_a, flag_z.205
+	call mem_read	 ; data <- mem_read(r25:r24)
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	mov _A_,_data_	 ;
 	ret
 	.size	cpu6502_LDA, .-cpu6502_LDA
 	.section	.text.cpu6502_LDX,"ax",@progbits
@@ -479,10 +451,10 @@ cpu6502_LDX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
-	mov _Z_,r24	 ;  flag_z, flag_z.208
-	mov _N_,r24	 ;  flag_n, flag_z.208
-	mov _X_,r24	 ;  reg_x, flag_z.208
+	call mem_read	 ; data <- mem_read(r25:r24)
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	mov _X_,_data_	 ;
 	ret
 	.size	cpu6502_LDX, .-cpu6502_LDX
 	.section	.text.cpu6502_LAX,"ax",@progbits
@@ -492,11 +464,11 @@ cpu6502_LAX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
-	mov _Z_,r24	 ;  flag_z, flag_z.211
-	mov _N_,r24	 ;  flag_n, flag_z.211
-	mov _X_,r24	 ;  reg_x, flag_z.211
-	mov _A_,r24	 ;  reg_a, flag_z.211
+	call mem_read	 ; data <- mem_read(r25:r24)
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	mov _X_,_data_	 ;
+	mov _A_,_data_	 ;
 	ret
 	.size	cpu6502_LAX, .-cpu6502_LAX
 	.section	.text.cpu6502_CPX,"ax",@progbits
@@ -506,15 +478,15 @@ cpu6502_CPX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
+	call mem_read	 ; data <- mem_read(r25:r24)
 	mov r25,_X_	 ;  reg_x.243, reg_x
 	ldi r18,lo8(1)	 ;  D.3747,
-	cp r25,r24	 ;  reg_x.243, D.3746
+	cp r25,_data_	 ;  reg_x.243, D.3746
 	brsh .L28	 ; ,
 	ldi r18,0	 ;  D.3747
 .L28:
 	mov _C_,r18	 ;  flag_c, D.3747
-	sub r25,r24	 ;  reg_x.243, D.3746
+	sub r25,_data_	 ;  reg_x.243, D.3746
 	mov _Z_,r25	 ;  flag_z, flag_z.231
 	mov _N_,r25	 ;  flag_n, flag_z.231
 	ret
@@ -526,7 +498,7 @@ cpu6502_SBC:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
+	call mem_read	 ; data <- mem_read(r25:r24)
 	mov r21,_P_	 ;  reg_p.249, reg_p
 	mov r20,_A_	 ;  reg_a.250, reg_a
 	mov r18,_C_	 ;  flag_c, flag_c
@@ -535,7 +507,7 @@ cpu6502_SBC:
 	mov r25,r20	 ;  D.3761, reg_a.250
 	andi r25,lo8(15)	 ;  D.3761,
 	add r25,r18	 ;  D.3761, flag_c
-	mov r18,r24	 ;  D.3761, D.3761
+	mov r18,_data_	 ;  D.3761, D.3761
 	andi r18,lo8(15)	 ;  D.3761,
 	sub r25,r18	 ;  D.3761, D.3761
 	ldi r18,lo8(-7)	 ;  result,
@@ -547,7 +519,7 @@ cpu6502_SBC:
 .L31:
 	mov r25,r20	 ;  result, reg_a.250
 	andi r25,lo8(-16)	 ;  result,
-	mov r19,r24	 ;  D.3761, D.3761
+	mov r19,_data_	 ;  D.3761, D.3761
 	andi r19,lo8(-16)	 ;  D.3761,
 	sub r25,r19	 ;  result, D.3761
 	add r25,r18	 ;  result, result
@@ -556,7 +528,7 @@ cpu6502_SBC:
 	andi r21,lo8(-66)	 ;  reg_p.253,
 	mov r18,r25	 ;  D.3761, result
 	eor r18,r20	 ;  D.3761, reg_a.250
-	eor r20,r24	 ;  D.3761, D.3761
+	eor r20,_data_	 ;  D.3761, D.3761
 	and r18,r20	 ;  D.3761, D.3761
 	sbrc r18,7	 ;  D.3761,
 	ori r21,lo8(64)	 ;  reg_p.254,
@@ -571,7 +543,7 @@ cpu6502_SBC:
 	adc r19,__zero_reg__	 ;  total
 	subi r18,1	 ;  total,
 	sbc r19,__zero_reg__	 ;  total
-	sub r18,r24	 ;  total, D.3761
+	sub r18,_data_	 ;  total, D.3761
 	sbc r19,__zero_reg__	 ;  total
 	mov _C_,r19	 ;  flag_c, total
 	mov r25,r18	 ;  result, total
@@ -579,7 +551,7 @@ cpu6502_SBC:
 	andi r22,lo8(-65)	 ;  reg_p.257,
 	mov r21,r20	 ;  D.3761, reg_a.250
 	eor r21,r18	 ;  D.3761, total
-	eor r20,r24	 ;  D.3761, D.3761
+	eor r20,_data_	 ;  D.3761, D.3761
 	and r21,r20	 ;  D.3761, D.3761
 	sbrc r21,7	 ;  D.3761,
 	ori r22,lo8(64)	 ;  reg_p.254,
@@ -594,176 +566,102 @@ cpu6502_SBC:
 	.section	.text.cpu6502_ASL,"ax",@progbits
 	.type	cpu6502_ASL, @function
 cpu6502_ASL:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call mem_read	 ; 
-	mov r25,r24	 ;  flag_c.81, data
-	rol r25	 ;  flag_c.81
-	clr r25	 ;  flag_c.81
-	rol r25	 ;  flag_c.81
-	mov _C_,r25	 ;  flag_c, flag_c.81
-	mov r22,r24	 ;  flag_z.82, data
-	lsl r22	 ;  flag_z.82
-	mov _Z_,r22	 ;  flag_z, flag_z.82
-	mov _N_,r22	 ;  flag_n, flag_z.82
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp mem_write	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; data <- mem_read(r25:r24)
+	lsr _C_	 ; carry <- C <- 0
+	lsl _data_	 ; carry <- data.7 <- ... <- data.0 <- 0
+	rol _C_	 ; C <- carry <- 0
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	jmp mem_write	 ;
 	.size	cpu6502_ASL, .-cpu6502_ASL
 	.section	.text.cpu6502_SLO,"ax",@progbits
 	.type	cpu6502_SLO, @function
 cpu6502_SLO:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call cpu6502_ASL	 ; 
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp cpu6502_ORA	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call cpu6502_ASL	 ;
+	jmp cpu6502_ORA	 ;
 	.size	cpu6502_SLO, .-cpu6502_SLO
 	.section	.text.cpu6502_ROL,"ax",@progbits
 	.type	cpu6502_ROL, @function
 cpu6502_ROL:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call mem_read	 ; 
-	mov r22,r24	 ;  result, data
-	lsl r22	 ;  result
-	mov r25,_C_	 ;  flag_c, flag_c
-	or r22,r25	 ;  result, flag_c
-	rol r24	 ;  flag_c.113
-	clr r24	 ;  flag_c.113
-	rol r24	 ;  flag_c.113
-	mov _C_,r24	 ;  flag_c, flag_c.113
-	mov _Z_,r22	 ;  flag_z, result
-	mov _N_,r22	 ;  flag_n, result
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp mem_write	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; data <- mem_read(r25:r24)
+	lsr _C_	 ; carry <- C <- 0
+	rol _data_	 ; carry <- data.7 <- ... <- data.0 <- carry
+	rol _C_	 ; C <- carry <- 0
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	jmp mem_write	 ;
 	.size	cpu6502_ROL, .-cpu6502_ROL
 	.section	.text.cpu6502_RLA,"ax",@progbits
 	.type	cpu6502_RLA, @function
 cpu6502_RLA:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call cpu6502_ROL	 ; 
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp cpu6502_AND	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call cpu6502_ROL	 ;
+	jmp cpu6502_AND	 ;
 	.size	cpu6502_RLA, .-cpu6502_RLA
 	.section	.text.cpu6502_LSR,"ax",@progbits
 	.type	cpu6502_LSR, @function
 cpu6502_LSR:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call mem_read	 ; 
-	mov r25,r24	 ;  flag_c.132, data
-	andi r25,lo8(1)	 ;  flag_c.132,
-	mov _C_,r25	 ;  flag_c, flag_c.132
-	mov r22,r24	 ;  flag_z.133, data
-	lsr r22	 ;  flag_z.133
-	mov _Z_,r22	 ;  flag_z, flag_z.133
-	mov _N_,r22	 ;  flag_n, flag_z.133
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp mem_write	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; data <- mem_read(r25:r24)
+	lsr _C_	 ; carry <- C <- 0
+	lsr _data_	 ; carry <- data.0 <- ... <- data.7 <- 0
+	rol _C_	 ; C <- carry <- 0
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	jmp mem_write	 ;
 	.size	cpu6502_LSR, .-cpu6502_LSR
 	.section	.text.cpu6502_SRE,"ax",@progbits
 	.type	cpu6502_SRE, @function
 cpu6502_SRE:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call cpu6502_LSR	 ; 
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp cpu6502_EOR	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call cpu6502_LSR	 ;
+	jmp cpu6502_EOR	 ;
 	.size	cpu6502_SRE, .-cpu6502_SRE
 	.section	.text.cpu6502_ROR,"ax",@progbits
 	.type	cpu6502_ROR, @function
 cpu6502_ROR:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call mem_read	 ; 
-	mov r22,r24	 ;  result, data
-	lsr r22	 ;  result
-	mov r18,_C_	 ;  flag_c, flag_c
-	ldi r25,lo8(-128)	 ; ,
-	mul r18,r25	 ;  flag_c,
-	movw r18,r0	 ;  D.3782
-	clr __zero_reg__
-	or r22,r18	 ;  result, D.3782
-	andi r24,lo8(1)	 ;  flag_c.166,
-	mov _C_,r24	 ;  flag_c, flag_c.166
-	mov _Z_,r22	 ;  flag_z, result
-	mov _N_,r22	 ;  flag_n, result
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp mem_write	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; data <- mem_read(r25:r24)
+	lsr _C_	 ; carry <- C <- 0
+	ror _data_	 ; carry <- data.0 <- ... <- data.7 <- carry
+	rol _C_	 ; C <- carry <- 0
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	jmp mem_write	 ;
 	.size	cpu6502_ROR, .-cpu6502_ROR
 	.section	.text.cpu6502_RRA,"ax",@progbits
 	.type	cpu6502_RRA, @function
 cpu6502_RRA:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call cpu6502_ROR	 ; 
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp cpu6502_ADC	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call cpu6502_ROR	 ;
+	jmp cpu6502_ADC	 ;
 	.size	cpu6502_RRA, .-cpu6502_RRA
 	.section	.text.cpu6502_SAX,"ax",@progbits
 	.type	cpu6502_SAX, @function
@@ -772,8 +670,8 @@ cpu6502_SAX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	mov r22,_X_	 ;  D.3787, reg_x
-	and r22,_A_	 ;  D.3787, reg_a
+	mov _data_,_X_	 ;  D.3787, reg_x
+	and _data_,_A_	 ;  D.3787, reg_a
 	jmp mem_write	 ; 
 	.size	cpu6502_SAX, .-cpu6502_SAX
 	.section	.text.cpu6502_STA,"ax",@progbits
@@ -783,7 +681,7 @@ cpu6502_STA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	mov r22,_A_	 ; , reg_a
+	mov _data_,_A_	 ; , reg_a
 	jmp mem_write	 ; 
 	.size	cpu6502_STA, .-cpu6502_STA
 	.section	.text.cpu6502_SHA,"ax",@progbits
@@ -804,61 +702,38 @@ cpu6502_SHA:
 	.section	.text.cpu6502_DEC,"ax",@progbits
 	.type	cpu6502_DEC, @function
 cpu6502_DEC:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call mem_read	 ; 
-	ldi r22,lo8(-1)	 ;  flag_z.236,
-	add r22,r24	 ;  flag_z.236,
-	mov _Z_,r22	 ;  flag_z, flag_z.236
-	mov _N_,r22	 ;  flag_n, flag_z.236
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp mem_write	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; data <- mem_read(r25:r24)
+	dec _data_	 ; data--
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	jmp mem_write	 ;
 	.size	cpu6502_DEC, .-cpu6502_DEC
 	.section	.text.cpu6502_INC,"ax",@progbits
 	.type	cpu6502_INC, @function
 cpu6502_INC:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call mem_read	 ; 
-	ldi r22,lo8(1)	 ;  flag_z.258,
-	add r22,r24	 ;  flag_z.258,
-	mov _Z_,r22	 ;  flag_z, flag_z.258
-	mov _N_,r22	 ;  flag_n, flag_z.258
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp mem_write	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; data <- mem_read(r25:r24)
+	inc _data_	 ; data++
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	jmp mem_write	 ;
 	.size	cpu6502_INC, .-cpu6502_INC
 	.section	.text.cpu6502_ISB,"ax",@progbits
 	.type	cpu6502_ISB, @function
 cpu6502_ISB:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call cpu6502_INC	 ; 
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp cpu6502_SBC	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call cpu6502_INC	 ;
+	jmp cpu6502_SBC	 ;
 	.size	cpu6502_ISB, .-cpu6502_ISB
 	.section	.text.cpu6502_JAM,"ax",@progbits
 	.type	cpu6502_JAM, @function
@@ -872,7 +747,7 @@ cpu6502_JAM:
 	sbiw r24,1	 ;  reg_pc.245,
 	mov _PCH_,r25	 ;  reg_pc, reg_pc.245
 	mov _PCL_,r24	 ;  reg_pc, reg_pc.245
-	call mem_read	 ; 
+	call mem_read	 ; data <- mem_read(r25:r24)
 	ldi r22,lo8(1)	 ; ,
 	ldi r24,lo8(13)	 ; ,
 	jmp digitalWrite	 ; 
@@ -932,15 +807,15 @@ cpu6502_CPY:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
+	call mem_read	 ; data <- mem_read(r25:r24)
 	mov r25,_Y_	 ;  reg_y.229, reg_y
 	ldi r18,lo8(1)	 ;  D.3838,
-	cp r25,r24	 ;  reg_y.229, D.3837
+	cp r25,_data_	 ;  reg_y.229, D.3837
 	brsh .L74	 ; ,
 	ldi r18,0	 ;  D.3838
 .L74:
 	mov _C_,r18	 ;  flag_c, D.3838
-	sub r25,r24	 ;  reg_y.229, D.3837
+	sub r25,_data_	 ;  reg_y.229, D.3837
 	mov _Z_,r25	 ;  flag_z, flag_z.231
 	mov _N_,r25	 ;  flag_n, flag_z.231
 	ret
@@ -952,15 +827,15 @@ cpu6502_CMP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; 
+	call mem_read	 ; data <- mem_read(r25:r24)
 	mov r25,_A_	 ;  reg_a.235, reg_a
 	ldi r18,lo8(1)	 ;  D.3846,
-	cp r25,r24	 ;  reg_a.235, D.3845
+	cp r25,_data_	 ;  reg_a.235, D.3845
 	brsh .L76	 ; ,
 	ldi r18,0	 ;  D.3846
 .L76:
 	mov _C_,r18	 ;  flag_c, D.3846
-	sub r25,r24	 ;  reg_a.235, D.3845
+	sub r25,_data_	 ;  reg_a.235, D.3845
 	mov _Z_,r25	 ;  flag_z, flag_z.231
 	mov _N_,r25	 ;  flag_n, flag_z.231
 	ret
@@ -968,19 +843,12 @@ cpu6502_CMP:
 	.section	.text.cpu6502_DCP,"ax",@progbits
 	.type	cpu6502_DCP, @function
 cpu6502_DCP:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
+/* stack size = 0 */
 .L__stack_usage = 2
-	movw r16,r24	 ;  address, address
-	call cpu6502_DEC	 ; 
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
-	jmp cpu6502_CMP	 ; 
+	call cpu6502_DEC	 ;
+	jmp cpu6502_CMP	 ;
 	.size	cpu6502_DCP, .-cpu6502_DCP
 	.section	.text.addr_zpg,"ax",@progbits
 .global	addr_zpg
@@ -990,10 +858,11 @@ addr_zpg:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	movw r24,_PCL_	 ;  reg_pc.3, reg_pc
-	adiw _PCL_,1	 ;  PC++
-	call mem_read	 ; 
-	ldi r25,0	 ; 
+	movw r24,_PCL_	 ; reg_pc.3, reg_pc
+	adiw _PCL_,1	 ; PC++
+	call mem_read	 ; data <- mem_read(r25:r24)
+	mov r24,_data_	 ;
+	ldi r25,0	 ;
 	ret
 	.size	addr_zpg, .-addr_zpg
 	.section	.text.addr_abs,"ax",@progbits
@@ -1017,10 +886,11 @@ addr_zpx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read_pc	 ; r24 = mem_read(PC)
+	call mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
-	add r24,_X_
-	ldi r25,0	 ; 
+	add _data_,_X_	 ; data += X
+	add r24,_data_	 ;
+	ldi r25,0	 ;
 	ret
 	.size	addr_zpx, .-addr_zpx
 	.section	.text.addr_zpy,"ax",@progbits
@@ -1031,66 +901,49 @@ addr_zpy:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read_pc	 ; r24 = mem_read(PC)
+	call mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
-	add r24,_Y_
-	ldi r25,0	 ; 
+	add _data_,_Y_	 ; data += Y
+	add r24,_data_	 ;
+	ldi r25,0	 ;
 	ret
 	.size	addr_zpy, .-addr_zpy
 	.section	.text.addr_abx,"ax",@progbits
 .global	addr_abx
 	.type	addr_abx, @function
 addr_abx:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r24,_PCL_	 ; , reg_pc
-	call mem_read_16	 ; 
-	mov r18,_X_	 ;  reg_x, reg_x
-	movw r16,r24	 ;  address, base
-	add r16,r18	 ;  address, reg_x
-	adc r17,__zero_reg__	 ;  address
-	adiw _PCL_,2	 ;  PC += 2
-	cp r17,r25	 ;  tmp18, base
-	breq .L84	 ; ,
-	ldi _cycles_,1	 ; ,
-	call clock_advance	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	call mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_X_	 ; r25:r24 += X
+	brcc .L84	 ; branch if same page
+	inc r25	 ;
+	ldi _cycles_,1	 ;
+	jmp clock_advance	 ;
 .L84:
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
 	ret
 	.size	addr_abx, .-addr_abx
 	.section	.text.addr_aby,"ax",@progbits
 .global	addr_aby
 	.type	addr_aby, @function
 addr_aby:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	movw r24,_PCL_	 ; , reg_pc
-	call mem_read_16	 ; 
-	mov r18,_Y_	 ;  reg_y, reg_y
-	movw r16,r24	 ;  address, base
-	add r16,r18	 ;  address, reg_y
-	adc r17,__zero_reg__	 ;  address
-	adiw _PCL_,2	 ;  PC += 2
-	cp r17,r25	 ;  tmp18, base
-	breq .L86	 ; ,
-	ldi _cycles_,1	 ; ,
-	call clock_advance	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	call mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_Y_	 ; r25:r24 += Y
+	brcc .L86	 ; branch if same page
+	inc r25	 ;
+	ldi _cycles_,1	 ;
+	jmp clock_advance	 ;
 .L86:
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
 	ret
 	.size	addr_aby, .-addr_aby
 	.section	.text.addr_inx,"ax",@progbits
@@ -1101,47 +954,34 @@ addr_inx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read_pc	 ; r24 = mem_read(PC)
-	adiw _PCL_,1	 ;  PC++
-	add r24,_X_	 ;  index,
-	ldi r25,0	 ; 
-	jmp mem_read_16	 ; 
+	call mem_read_pc	 ; data <- mem_read(PC)
+	adiw _PCL_,1	 ; PC++
+	add _data_,_X_	 ; data += X
+	mov r24,_data_	 ;
+	ldi r25,0	 ;
+	jmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	.size	addr_inx, .-addr_inx
 	.section	.text.addr_iny,"ax",@progbits
 .global	addr_iny
 	.type	addr_iny, @function
 addr_iny:
-	push r16	 ; 
-	push r17	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	call mem_read_pc	 ; r24 = mem_read(PC)
-	adiw _PCL_,1	 ;  PC++
-	mov r30,r24	 ;  tmp63, index
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram))	 ;  tmp63,
-	sbci r31,hi8(-(ram))	 ;  tmp63,
-	ldd r18,Z+1	 ;  tmp66, ram
-	ldi r19,0	 ;  D.3882
-	mov r19,r18	 ;  D.3885, D.3882
-	clr r18	 ;  D.3885
-	ld r24,Z	 ;  tmp71, ram
-	or r18,r24	 ;  D.3885, tmp71
-	mov r24,_Y_	 ;  reg_y, reg_y
-	movw r16,r18	 ;  address, D.3885
-	add r16,r24	 ;  address, reg_y
-	adc r17,__zero_reg__	 ;  address
-	cp r17,r19	 ;  tmp24, D.3885
-	breq .L89	 ; ,
-	ldi _cycles_,1	 ; ,
-	call clock_advance	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read_pc	 ; data <- mem_read(PC)
+	adiw _PCL_,1	 ; PC++
+	mov ZL,r24	 ;
+	ldi ZH,hi8(-(ram))	 ;
+	ld r24,Z	 ; r24 <- ram[data]
+	inc ZL	 ;
+	ld r25,Z	 ; r25 <- ram[data+1]
+	add r24,_Y_	 ; r25:r24 += Y
+	brcc .L89	 ; branch if same page
+	inc r25	 ;
+	ldi _cycles_,1	 ;
+	jmp clock_advance	 ;
 .L89:
-	movw r24,r16	 ; , address
-/* epilogue start */
-	pop r17	 ; 
-	pop r16	 ; 
 	ret
 	.size	addr_iny, .-addr_iny
 	.section	.text.addr_ind,"ax",@progbits
@@ -1152,10 +992,10 @@ addr_ind:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	movw r24,_PCL_	 ; , reg_pc
-	call mem_read_16	 ; 
-	adiw _PCL_,2	 ;  PC += 2
-	jmp mem_read_16	 ; 
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	call mem_read_16	 ; r25:r24 <- mem_read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	jmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	.size	addr_ind, .-addr_ind
 	.section	.text.cpu_reset,"ax",@progbits
 .global	cpu_reset
@@ -1165,10 +1005,10 @@ cpu_reset:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	ldi r24,lo8(-4)	 ; ,
-	ldi r25,lo8(-1)	 ; ,
-	call mem_read_16	 ; 
-	movw _PCL_,r24	 ;  reg_pc,
+	ldi r24,0xfc	 ;
+	ldi r25,0xff	 ;
+	call mem_read_16	 ; r25:r24 <- mem_read(0xfffc)
+	movw _PCL_,r24	 ; PC <- mem_read(0xfffc)
 	sts reg_pc,_PCL_
 	sts reg_pc+1,_PCH_
 	ldi r24,0xff
@@ -1201,9 +1041,9 @@ cpu_irq:
 	lds r24,reg_p	 ;  reg_p, reg_p
 	sbrc r24,2	 ;  reg_p,
 	rjmp .L92	 ; 
-	ldi r24,lo8(-2)	 ; ,
-	ldi r25,lo8(-1)	 ; ,
-	call mem_read_16	 ; 
+	ldi r24,0xfe	 ;
+	ldi r25,0xff	 ;
+	call mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
 	call cpu6502_JSR	 ; 
 	call cpu6502_PHP	 ; 
 	lds r24,reg_p	 ;  reg_p.57, reg_p
@@ -1929,12 +1769,12 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .take_branch:
-	call mem_read_pc	 ; r24 = mem_read(PC)
+	call mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov r19,_PCH_	 ; temp = PCH
-	add _PCL_,r24	 ; reg_pc += offset
+	add _PCL_,_data_	 ; PC += data
 	adc _PCH_,__zero_reg__	 ;
-	sbrc r24,7	 ; if (offset & 0x80) PCH--
+	sbrc _data_,7	 ; if (data & 0x80) PCH--
 	dec _PCH_	 ;
 	ldi _cycles_,3	 ; 3 cycles for branch to same page
 	cpse _PCH_,r19	 ; skip if same page
@@ -2688,9 +2528,9 @@ cpu_main:
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x95_STA_zpx:
-	call mem_read_pc	 ; r24 <- mem_read(PC)
+	call mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
-	mov ZL,r24	 ;
+	mov ZL,_data_	 ;
 	add ZL,_X_      ;
 	ldi ZH,hi8(ram)	 ;
 	st Z,_A_	 ; ram[r24+X] <- A
@@ -2978,19 +2818,19 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xcb:
-	movw r24,_PCL_	 ;
+	movw r24,_PCL_	 ; r25:r24 <- PC
 	adiw _PCL_,1	 ; PC++
-	call mem_read	 ; 
+	call mem_read	 ; data <- mem_read(r25:r24)
 	mov r25,_X_	 ;  D.4021, reg_x
 	mov r18,_A_	 ;  reg_a, reg_a
 	and r25,r18	 ;  D.4021, reg_a
 	ldi r18,lo8(1)	 ;  D.4025,
-	cp r25,r24	 ;  D.4021, data
+	cp r25,_data_	 ;  D.4021, data
 	brsh .L356	 ; ,
 	ldi r18,0	 ;  D.4025
 .L356:
 	mov _C_,r18	 ;  flag_c, D.4025
-	sub r25,r24	 ;  flag_z.226, data
+	sub r25,_data_	 ;  flag_z.226, data
 	mov _Z_,r25	 ;  flag_z, flag_z.226
 	mov _N_,r25	 ;  flag_n, flag_z.226
 	mov _X_,r25	 ;  reg_x, flag_z.226
@@ -3256,38 +3096,37 @@ input:  return address in XH:XL
 output: data value in _data_, tick count in _cycles_
 */
 .read_imm:
-	call mem_read_pc	 ; r24 <- read(PC)
+	call mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
-	mov _data_,r24	 ; data <- r24
 	ldi _cycles_,2	 ; cycles <- 2
 	movw ZL,XL
 	ijmp
 .read_zpg:
-	call mem_read_pc	 ; r24 <- read(PC)
+	call mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
-	mov ZL,r24	 ;
+	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[r24]
+	ld _data_,Z	 ; data <- ram[data]
 	ldi _cycles_,3	 ; cycles <- 3
 	movw ZL,XL
 	ijmp
 .read_zpx:
-	call mem_read_pc	 ; r24 <- read(PC)
+	call mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
-	add r24,_X_	 ; r24 += X
-	mov ZL,r24	 ;
+	add _data_,_X_	 ; data += X
+	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[r24]
+	ld _data_,Z	 ; data <- ram[data]
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
 .read_zpy:
-	call mem_read_pc	 ; r24 <- read(PC)
+	call mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
-	add r24,_Y_	 ; r24 += Y
-	mov ZL,r24	 ;
+	add _data_,_Y_	 ; r24 += Y
+	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[r24]
+	ld _data_,Z	 ; data <- ram[data]
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
@@ -3295,8 +3134,7 @@ output: data value in _data_, tick count in _cycles_
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	call mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
@@ -3306,15 +3144,13 @@ output: data value in _data_, tick count in _cycles_
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_X_	 ; r24 += X
 	brcs .read_abx_carry	 ; branch if r24+X carries
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
 .read_abx_carry:
 	inc r25	 ; r25++
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
@@ -3324,51 +3160,46 @@ output: data value in _data_, tick count in _cycles_
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_Y_	 ; r24 += Y
 	brcs .read_aby_carry	 ; branch if r24+X carries
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
 .read_aby_carry:
 	inc r25	 ; r25++
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
 .read_inx:
-	call mem_read_pc	 ; r24 <- read(PC)
+	call mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
-	add r24,_X_	 ; r24 += X
-	mov ZL,r24	 ;
+	add _data_,_X_	 ; data += X
+	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
 	ld r24,Z	 ; r24 <- ram[r24]
 	inc ZL	 ; ZL++
 	ld r25,Z	 ; r25 <- ram[r24+1]
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,6	 ; cycles <- 6
 	movw ZL,XL
 	ijmp
 .read_iny:
-	call mem_read_pc	 ; r24 <- read(PC)
+	call mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
-	mov ZL,r24	 ;
+	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
 	ld r24,Z	 ; r24 <- ram[r24]
 	inc ZL	 ; ZL++
 	ld r25,Z	 ; r25 <- ram[r24+1]
 	add r24,_Y_	 ; r24 += Y
 	brcs .read_iny_carry	 ; branch if r24+Y carries
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
 .read_iny_carry:
 	inc r25	 ; r25++
-	call mem_read	 ; r24 <- read(r25:r24)
-	mov _data_,r24	 ; data <- r24
+	call mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,6	 ; cycles <- 6
 	movw ZL,XL
 	ijmp
