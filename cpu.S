@@ -227,7 +227,7 @@ clock_advance:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	sub _time0_,r24	 ;  time_left.20, D.3675
+	sub _time0_,_cycles_	 ;  time_left.20, D.3675
 	sbc _time1_,__zero_reg__	 ;  time_left.20, D.3675
 	sbc _time2_,__zero_reg__	 ;  time_left.20, D.3675
 	sbc _time3_,__zero_reg__	 ;  time_left.20, D.3675
@@ -1066,7 +1066,7 @@ addr_abx:
 	adiw _PCL_,2	 ;  PC += 2
 	cp r17,r25	 ;  tmp18, base
 	breq .L84	 ; ,
-	ldi r24,lo8(1)	 ; ,
+	ldi _cycles_,1	 ; ,
 	call clock_advance	 ; 
 .L84:
 	movw r24,r16	 ; , address
@@ -1094,7 +1094,7 @@ addr_aby:
 	adiw _PCL_,2	 ;  PC += 2
 	cp r17,r25	 ;  tmp18, base
 	breq .L86	 ; ,
-	ldi r24,lo8(1)	 ; ,
+	ldi _cycles_,1	 ; ,
 	call clock_advance	 ; 
 .L86:
 	movw r24,r16	 ; , address
@@ -1145,7 +1145,7 @@ addr_iny:
 	adc r17,__zero_reg__	 ;  address
 	cp r17,r19	 ;  tmp24, D.3885
 	breq .L89	 ; ,
-	ldi r24,lo8(1)	 ; ,
+	ldi _cycles_,1	 ; ,
 	call clock_advance	 ; 
 .L89:
 	movw r24,r16	 ; , address
@@ -1219,7 +1219,7 @@ cpu_irq:
 	lds r24,reg_p	 ;  reg_p.57, reg_p
 	ori r24,lo8(4)	 ;  reg_p.57,
 	sts reg_p,r24	 ;  reg_p, reg_p.57
-	ldi r24,7	 ; 7 cycles
+	ldi _cycles_,7	 ; 7 cycles
 	jmp clock_advance	 ; 
 .L92:
 	ret
