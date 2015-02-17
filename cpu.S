@@ -474,16 +474,13 @@ cpu6502_CPX:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; data <- mem_read(r25:r24)
-	mov r25,_X_	 ;  reg_x.243, reg_x
-	ldi r18,lo8(1)	 ;  D.3747,
-	cp r25,_data_	 ;  reg_x.243, D.3746
-	brsh .L28	 ; ,
-	ldi r18,0	 ;  D.3747
+	mov _Z_,_X_	 ;
+	sub _Z_,_data_	 ; Z <- X - data
+	mov _N_,_Z_	 ; N <- X - data
+	clr _C_	 ;
+	brlo .L28	 ; branch if X < data
+	inc _C_	 ; set C if X >= data
 .L28:
-	mov _C_,r18	 ;  flag_c, D.3747
-	sub r25,_data_	 ;  reg_x.243, D.3746
-	mov _Z_,r25	 ;  flag_z, flag_z.231
-	mov _N_,r25	 ;  flag_n, flag_z.231
 	ret
 	.size	cpu6502_CPX, .-cpu6502_CPX
 	.section	.text.cpu6502_SBC,"ax",@progbits
@@ -803,16 +800,13 @@ cpu6502_CPY:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; data <- mem_read(r25:r24)
-	mov r25,_Y_	 ;  reg_y.229, reg_y
-	ldi r18,lo8(1)	 ;  D.3838,
-	cp r25,_data_	 ;  reg_y.229, D.3837
-	brsh .L74	 ; ,
-	ldi r18,0	 ;  D.3838
+	mov _Z_,_Y_	 ;
+	sub _Z_,_data_	 ; Z <- Y - data
+	mov _N_,_Z_	 ; N <- Y - data
+	clr _C_	 ;
+	brlo .L74	 ; branch if Y < data
+	inc _C_	 ; set C if Y >= data
 .L74:
-	mov _C_,r18	 ;  flag_c, D.3838
-	sub r25,_data_	 ;  reg_y.229, D.3837
-	mov _Z_,r25	 ;  flag_z, flag_z.231
-	mov _N_,r25	 ;  flag_n, flag_z.231
 	ret
 	.size	cpu6502_CPY, .-cpu6502_CPY
 	.section	.text.cpu6502_CMP,"ax",@progbits
@@ -823,16 +817,13 @@ cpu6502_CMP:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; data <- mem_read(r25:r24)
-	mov r25,_A_	 ;  reg_a.235, reg_a
-	ldi r18,lo8(1)	 ;  D.3846,
-	cp r25,_data_	 ;  reg_a.235, D.3845
-	brsh .L76	 ; ,
-	ldi r18,0	 ;  D.3846
+	mov _Z_,_A_	 ;
+	sub _Z_,_data_	 ; Z <- A - data
+	mov _N_,_Z_	 ; N <- A - data
+	clr _C_	 ;
+	brlo .L76	 ; branch if A < data
+	inc _C_	 ; set C if A >= data
 .L76:
-	mov _C_,r18	 ;  flag_c, D.3846
-	sub r25,_data_	 ;  reg_a.235, D.3845
-	mov _Z_,r25	 ;  flag_z, flag_z.231
-	mov _N_,r25	 ;  flag_n, flag_z.231
 	ret
 	.size	cpu6502_CMP, .-cpu6502_CMP
 	.section	.text.cpu6502_DCP,"ax",@progbits
