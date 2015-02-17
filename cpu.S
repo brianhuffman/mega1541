@@ -346,71 +346,58 @@ cpu6502_ADC:
 	mov _N_,_A_	 ;
 	brvs .ADC_bin_overflow	 ; branch on overflow
 	rol _C_	 ; C <- carry <- 0
-	ldi r22,~0x40	 ;
-	and _P_,r22	 ; P &= ~V_FLAG
+	ldi _data_,~0x40	 ;
+	and _P_,_data_	 ; P &= ~V_FLAG
 	ret
 .ADC_bin_overflow:
 	rol _C_	 ; C <- carry <- 0
-	ldi r22,0x40	 ;
-	or _P_,r22	 ; P |= V_FLAG
+	ldi _data_,0x40	 ;
+	or _P_,_data_	 ; P |= V_FLAG
 	ret
 .ADC_dec:
-	mov r25,_P_	 ; r25 <- P
 	mov r30,_A_	 ; r30 <- A
-	mov r26,_C_	 ; r26 <- C
-	mov r22,_data_	 ; r22 <- data
-	ldi r23,0	 ; r23 <- 0
-	mov r31,_P_	 ; r31 <- P
-	andi r31,~0x40	 ; r31 &= ~V_FLAG
-	mov r18,r30	 ;  total, reg_a.157
-	ldi r19,0	 ;  total
-	add r18,r26	 ;  total, flag_c
-	adc r19,__zero_reg__	 ;  total
-	add r18,r22	 ;  total, D.3729
-	adc r19,r23	 ;  total, D.3729
-	mov _Z_,r18	 ;  flag_z, total
-	mov r25,r30	 ;  temp, reg_a.157
-	andi r25,lo8(15)	 ;  temp,
-	add r25,r26	 ;  temp, flag_c
-	mov r20,_data_	 ;  D.3728, D.3728
-	andi r20,lo8(15)	 ;  D.3728,
-	add r25,r20	 ;  temp, D.3728
-	cpi r25,lo8(10)	 ;  temp,
-	brlo .L12	 ; ,
-	cpi r25,lo8(26)	 ;  temp,
-	brsh .L13	 ; ,
-	subi r18,-6	 ;  total,
-	sbci r19,-1	 ;  total,
-	rjmp .L12	 ; 
+	mov r18,_A_	 ; total <- A
+	ldi r19,0	 ;
+	add r18,_C_	 ; total += C
+	adc r19,__zero_reg__	 ;
+	add r18,_data_	 ; total += data
+	adc r19,__zero_reg__	 ;
+	mov _Z_,r18	 ; Z <- lo8(total)
+	mov r25,_A_	 ; temp25 <- A
+	andi r25,0x0f	 ; temp25 <- A & 0x0f
+	add r25,_C_	 ; temp25 += C
+	mov r20,_data_	 ; temp20 <- data
+	andi r20,0x0f	 ; temp20 <- data & 0x0f
+	add r25,r20	 ; temp25 += temp20
+	cpi r25,10	 ;
+	brlo .L12	 ; branch if temp25 < 10
+	cpi r25,26	 ;
+	brsh .L13	 ; branch if temp25 < 26
+	subi r18,-6	 ; total += 6
+	sbci r19,-1	 ;
+	rjmp .L12	 ;
 .L13:
-	subi r18,10	 ;  total,
-	sbc r19,__zero_reg__	 ;  total
+	subi r18,10	 ; total -= 10
+	sbc r19,__zero_reg__	 ;
 .L12:
-	mov _N_,r18	 ;  flag_n, total
-	eor r24,r18	 ;  D.3728, total
-	eor r30,r18	 ;  D.3728, total
-	and r24,r30	 ;  D.3728, D.3728
-	sbrc r24,7	 ;  D.3728,
-	ori r31,lo8(64)	 ;  reg_p.161,
-.L20:
-	mov _P_,r31	 ;  reg_p, reg_p.161
-	cpi r18,-96	 ;  total,
+	/* set N, V after low nybble fixup */
+	mov _N_,r18	 ; N <- lo8(total)
+	eor _data_,r18	 ; data <- (data ^ total) & (A ^ total)
+	eor r30,r18	 ;
+	and _data_,r30	 ;
+	bst _data_,7	 ; t <- (data ^ total) & (A ^ total) bit 7
+	bld _P_,6	 ; P.overflow <- t
+	/* high nybble fixup */
+	cpi r18,0xa0	 ; total,
 	cpc r19,__zero_reg__	 ;  total
-	brlo .L16	 ; ,
-	subi r18,-96	 ;  total,
-	sbci r19,-1	 ;  total,
+	brlo .L16	 ; branch if total < 0xa0
+	subi r18,-96	 ; total += 0x60
+	sbci r19,-1	 ;
 .L16:
-	ldi r24,lo8(1)	 ;  D.3731,
-	cpse r19,__zero_reg__	 ;  total,
-	rjmp .L17	 ; 
-	ldi r24,0	 ;  D.3731
-.L17:
-	mov _C_,r24	 ;  flag_c, D.3731
-	rjmp .L18	 ; 
-.L21:
-	mov _P_,r31	 ;  reg_p, reg_p.161
-.L18:
-	mov _A_,r18	 ;  reg_a, result
+	clr _C_	 ; C <- 0
+	cpse r19,__zero_reg__	 ;
+	inc _C_	 ; C <- 1 if r19 > 0
+	mov _A_,r18	 ; A <- lo8(total)
 	ret
 	.size	cpu6502_ADC, .-cpu6502_ADC
 	.section	.text.cpu6502_LDY,"ax",@progbits
