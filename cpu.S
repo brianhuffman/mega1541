@@ -1181,7 +1181,7 @@ cpu_main:
 	rjmp .x15_ORA_zpx
 	rjmp .x16
 	rjmp .x17
-	rjmp .x18
+	rjmp .x18_CLC
 	rjmp .x19_ORA_aby
 	rjmp .x1a
 	rjmp .x1b
@@ -1213,7 +1213,7 @@ cpu_main:
 	rjmp .x35_AND_zpx
 	rjmp .x36
 	rjmp .x37
-	rjmp .x38
+	rjmp .x38_SEC
 	rjmp .x39_AND_aby
 	rjmp .x3a
 	rjmp .x3b
@@ -1245,7 +1245,7 @@ cpu_main:
 	rjmp .x55_EOR_zpx
 	rjmp .x56
 	rjmp .x57
-	rjmp .x58
+	rjmp .x58_CLI
 	rjmp .x59_EOR_aby
 	rjmp .x5a
 	rjmp .x5b
@@ -1277,7 +1277,7 @@ cpu_main:
 	rjmp .x75
 	rjmp .x76
 	rjmp .x77
-	rjmp .x78
+	rjmp .x78_SEI
 	rjmp .x79
 	rjmp .x7a
 	rjmp .x7b
@@ -1309,7 +1309,7 @@ cpu_main:
 	rjmp .x95_STA_zpx
 	rjmp .x96
 	rjmp .x97
-	rjmp .x98
+	rjmp .x98_TYA
 	rjmp .x99
 	rjmp .x9a
 	rjmp .x9b
@@ -1341,7 +1341,7 @@ cpu_main:
 	rjmp .xb5_LDA_zpx
 	rjmp .xb6_LDX_zpy
 	rjmp .xb7
-	rjmp .xb8
+	rjmp .xb8_CLV
 	rjmp .xb9_LDA_aby
 	rjmp .xba
 	rjmp .xbb
@@ -1373,7 +1373,7 @@ cpu_main:
 	rjmp .xd5_CMP_zpx
 	rjmp .xd6
 	rjmp .xd7
-	rjmp .xd8
+	rjmp .xd8_CLD
 	rjmp .xd9_CMP_aby
 	rjmp .xda
 	rjmp .xdb
@@ -1405,7 +1405,7 @@ cpu_main:
 	rjmp .xf5
 	rjmp .xf6
 	rjmp .xf7
-	rjmp .xf8
+	rjmp .xf8_SED
 	rjmp .xf9
 	rjmp .xfa
 	rjmp .xfb
@@ -1933,8 +1933,7 @@ cpu_main:
 	call cpu6502_SLO	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-/* CLC */
-.x18:
+.x18_CLC:
 	clr _C_	 ; C <- 0
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2085,9 +2084,9 @@ cpu_main:
 	call cpu6502_RLA	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-/* CLC */
-.x38:
-	mov _C_,r16	 ;  flag_c, D.4025
+.x38_SEC:
+	clr _C_	 ;
+	inc _C_	 ; C <- 1
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x39:
@@ -2236,10 +2235,9 @@ cpu_main:
 	call cpu6502_SRE	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-/* CLI */
-.x58:
-	ldi r24,0xfa	 ; P &= ~I_FLAG
-	and _P_,r24	 ;
+.x58_CLI:
+	ldi _data_,0xfa	 ; P &= ~I_FLAG
+	and _P_,_data_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x59:
@@ -2386,10 +2384,9 @@ cpu_main:
 	call cpu6502_RRA	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-/* SEI */
-.x78:
-	ldi r24,0x04	 ;
-	or _P_,r24	 ; P |= 0x04
+.x78_SEI:
+	ldi _data_,0x04	 ;
+	or _P_,_data_	 ; P |= FLAG_I
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x79:
@@ -2547,8 +2544,7 @@ cpu_main:
 	call cpu6502_SAX	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-/* TYA */
-.x98:
+.x98_TYA:
 	mov _A_,_Y_	 ; A <- Y
 	mov _Z_,_Y_	 ;
 	mov _N_,_Y_	 ;
@@ -2714,10 +2710,9 @@ cpu_main:
 	call cpu6502_LAX	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-/* CLV */
-.xb8:
-	ldi r24,0xaf	 ; P &= ~V_FLAG
-	and _P_,r24	 ;
+.xb8_CLV:
+	ldi _data_,0xaf	 ; P &= ~V_FLAG
+	and _P_,_data_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xb9:
@@ -2885,10 +2880,9 @@ cpu_main:
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-/* CLD */
-.xd8:
-	ldi r24,0xf7	 ; P &= ~D_FLAG
-	and _P_,r24	 ;
+.xd8_CLD:
+	ldi _data_,0xf7	 ; P &= ~D_FLAG
+	and _P_,_data_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xd9:
@@ -3036,10 +3030,9 @@ cpu_main:
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-/* SED */
-.xf8:
-	ldi r24,0x08	 ; P |= D_FLAG
-	or _P_,r24	 ;
+.xf8_SED:
+	ldi _data_,0x08	 ; P |= D_FLAG
+	or _P_,_data_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xf9:
