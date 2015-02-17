@@ -296,16 +296,11 @@ cpu6502_BIT:
 /* stack size = 0 */
 .L__stack_usage = 0
 	call mem_read	 ; data <- mem_read(r25:r24)
-	mov r25,_data_	 ;  D.3706, data
-	andi r25,lo8(64)	 ;  D.3706,
-	mov r18,_P_	 ;  reg_p.101, reg_p
-	andi r18,lo8(-65)	 ;  reg_p.101,
-	or r25,r18	 ;  D.3706, reg_p.101
-	mov _P_,r25	 ;  reg_p, D.3706
-	mov _N_,_data_	 ;  flag_n, data
-	mov r25,_A_	 ;  flag_z.106, reg_a
-	and r25,_data_	 ;  flag_z.106, data
-	mov _Z_,r25	 ;  flag_z, flag_z.106
+	bst _data_,6	 ;
+	bld _P_,6	 ; V <- data.6
+	mov _N_,_data_	 ; N <- data.7
+	and _data_,_A_	 ;
+	mov _Z_,_data_	 ; Z <- data & A
 	ret
 	.size	cpu6502_BIT, .-cpu6502_BIT
 	.section	.text.cpu6502_AND,"ax",@progbits
