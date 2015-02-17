@@ -1292,7 +1292,7 @@ cpu_main:
 	adc _time1_,r23	 ;
 	adc _time2_,r24	 ;
 	adc _time3_,r25	 ;
-	brpl .L97	 ; continue if time >= 0
+	brpl .load_opcode	 ; continue if time >= 0
 .L98:
 	jmp .L366	 ; save state and exit
 .tick:			 ;
@@ -1301,14 +1301,31 @@ cpu_main:
 	sbc _time2_,__zero_reg__	 ;
 	sbc _time3_,__zero_reg__	 ;
 	brmi .L98	 ; quit if time < 0
-.L97:
-	call mem_read_pc	 ; r24 = mem_read(PC)
+.load_opcode:
+	movw ZL,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	mov ZL,r24	 ;
+	cpi ZH,0xc0	 ;
+	brsh .pc_in_rom	 ; branch if PC >= 0xc000
+	cpi ZH,0x04	 ;
+	brsh .pc_between	 ; branch if PC >= 0x0400
+.pc_in_ram:
+	subi ZH,hi8(-(ram))	 ;
+	ld ZL,Z	 ; ZL <- ram[addr]
 	ldi ZH,0	 ;
 	subi ZL,lo8(-(gs(.opcode_table)))	 ;
 	sbci ZH,hi8(-(gs(.opcode_table)))	 ;
 	ijmp	 ; jmp (.opcode_table + opcode)
+.pc_in_rom:
+	subi ZH,hi8(-(dos1541-0xc000))	 ;
+	lpm ZL,Z	 ; ZL <- rom[PC - 0xc0000]
+.load_opcode_done:
+	ldi ZH,0	 ;
+	subi ZL,lo8(-(gs(.opcode_table)))	 ;
+	sbci ZH,hi8(-(gs(.opcode_table)))	 ;
+	ijmp	 ; jmp (.opcode_table + opcode)
+.pc_between:
+	ldi ZL,0xff	 ; other addresses return 0xff
+	rjmp .load_opcode_done
 .opcode_table:
 	rjmp .x00
 	rjmp .x01_ORA_inx
