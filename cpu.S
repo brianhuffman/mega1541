@@ -339,37 +339,27 @@ cpu6502_BIT:
 	.section	.text.cpu6502_AND,"ax",@progbits
 	.type	cpu6502_AND, @function
 cpu6502_AND:
-	push r16	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 1 */
-.L__stack_usage = 1
-	mov r16,_A_	 ;  reg_a.107, reg_a
-	call mem_read	 ; 
-	and r24,r16	 ;  flag_z.108, reg_a.107
-	mov _Z_,r24	 ;  flag_z, flag_z.108
-	mov _N_,r24	 ;  flag_n, flag_z.108
-	mov _A_,r24	 ;  reg_a, flag_z.108
-/* epilogue start */
-	pop r16	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; r24 <- read_mem(r25:r24)
+	and _A_,r24	 ; A &= r24
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ret
 	.size	cpu6502_AND, .-cpu6502_AND
 	.section	.text.cpu6502_EOR,"ax",@progbits
 	.type	cpu6502_EOR, @function
 cpu6502_EOR:
-	push r16	 ; 
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 1 */
-.L__stack_usage = 1
-	mov r16,_A_	 ;  reg_a.128, reg_a
-	call mem_read	 ; 
-	eor r24,r16	 ;  flag_z.129, reg_a.128
-	mov _Z_,r24	 ;  flag_z, flag_z.129
-	mov _N_,r24	 ;  flag_n, flag_z.129
-	mov _A_,r24	 ;  reg_a, flag_z.129
-/* epilogue start */
-	pop r16	 ; 
+/* stack size = 0 */
+.L__stack_usage = 0
+	call mem_read	 ; r24 <- read_mem(r25:r24)
+	eor _A_,r24	 ; A ^= r24
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	ret
 	.size	cpu6502_EOR, .-cpu6502_EOR
 	.section	.text.cpu6502_ADC,"ax",@progbits
