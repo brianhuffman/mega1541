@@ -833,6 +833,7 @@ cpu_main:
 	rjmp .L366	 ; save state and exit
 .tick:			 ;
 	sub _time0_,_cycles_	 ; time_left -= cycles
+	brcc .load_opcode	 ; abort early if no carry
 	sbc _time1_,__zero_reg__	 ;
 	sbc _time2_,__zero_reg__	 ;
 	sbc _time3_,__zero_reg__	 ;
