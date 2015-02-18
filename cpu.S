@@ -459,31 +459,13 @@ update_p:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	mov r24,_P_	 ;  reg_p.48, reg_p
-	andi r24,lo8(108)	 ;  reg_p.48,
-	mov r25,r24	 ;  reg_p.49, reg_p.48
-	ori r25,lo8(32)	 ;  reg_p.49,
-	mov _P_,r25	 ;  reg_p, reg_p.49
-	mov r25,_N_	 ;  flag_n, flag_n
-	sbrs r25,7	 ;  flag_n,
-	rjmp .L55	 ; 
-	ori r24,lo8(-96)	 ;  reg_p.50,
-	mov _P_,r24	 ;  reg_p, reg_p.50
-.L55:
-	mov r24,_Z_	 ;  flag_z, flag_z
-	cpse r24,__zero_reg__	 ;  flag_z,
-	rjmp .L56	 ; 
-	mov r24,_P_	 ;  reg_p.51, reg_p
-	ori r24,lo8(2)	 ;  reg_p.51,
-	mov _P_,r24	 ;  reg_p, reg_p.51
-.L56:
-	mov r24,_C_	 ;  flag_c, flag_c
-	tst r24	 ;  flag_c
-	breq .L54	 ; ,
-	mov r24,_P_	 ;  reg_p.53, reg_p
-	ori r24,lo8(1)	 ;  reg_p.53,
-	mov _P_,r24	 ;  reg_p, reg_p.53
-.L54:
+	bst _N_,7	 ;
+	bld _P_,7	 ; P.7 <- N.7
+	bst _C_,0	 ;
+	bld _P_,0	 ; P.0 <- C.0
+	ori _P_,Z_FLAG	 ; set Z flag
+	cpse _Z_,__zero_reg__	 ; skip if Z = 0
+	andi _P_,~Z_FLAG	 ; clear Z flag if Z != 0
 	ret
 	.size	update_p, .-update_p
 	.section	.text.cpu6502_PHP,"ax",@progbits
