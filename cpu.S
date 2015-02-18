@@ -4,11 +4,13 @@ __SP_L__ = 0x3d
 __SREG__ = 0x3f
 __tmp_reg__ = 0
 __zero_reg__ = 1
+
+/* Register variables */
 _A_ = 4
 _X_ = 5
 _Y_ = 6
 _S_ = 7
-_P_ = 8
+_P_ = 17
 _N_ = 9
 _Z_ = 10
 _C_ = 11
@@ -26,6 +28,16 @@ YL = 28
 YH = 29
 ZL = 30
 ZH = 31
+
+/* Status flags */
+C_FLAG = 0x01
+Z_FLAG = 0x02
+I_FLAG = 0x04
+D_FLAG = 0x08
+B_FLAG = 0x10
+/* bit 5 is always 1 */
+V_FLAG = 0x40
+N_FLAG = 0x80
 
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
@@ -346,13 +358,11 @@ cpu6502_ADC:
 	mov _N_,_A_	 ;
 	brvs .ADC_bin_overflow	 ; branch on overflow
 	rol _C_	 ; C <- carry <- 0
-	ldi _data_,~0x40	 ;
-	and _P_,_data_	 ; P &= ~V_FLAG
+	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
 	ret
 .ADC_bin_overflow:
 	rol _C_	 ; C <- carry <- 0
-	ldi _data_,0x40	 ;
-	or _P_,_data_	 ; P |= V_FLAG
+	ori _P_,V_FLAG	 ; P |= V_FLAG
 	ret
 .ADC_dec:
 	mov r30,_A_	 ; r30 <- A
@@ -1785,13 +1795,12 @@ cpu_main:
 	call cpu6502_JSR	 ;
 	call update_p	 ;
 	mov r25,_P_	 ; temp = P
-	ori r25,0x10	 ; temp |= B_FLAG
+	ori r25,B_FLAG	 ; temp |= B_FLAG
 	mov ZL,_S_	 ;
 	ldi ZH,hi8(ram+256)	 ;
 	st Z,r25	 ; stack[S] <- temp
 	dec _S_	 ; S --
-	ldi r25,0x04	 ; temp = I_FLAG
-	or _P_,r25	 ; P |= I_FLAG (disable interrupts)
+	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp .tick	 ;
 .x01:
@@ -2206,8 +2215,7 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
 .x58_CLI:
-	ldi _data_,~0x04	 ; P &= ~I_FLAG
-	and _P_,_data_	 ;
+	andi _P_,~I_FLAG	 ; P &= ~I_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x59:
@@ -2355,8 +2363,7 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
 .x78_SEI:
-	ldi _data_,0x04	 ;
-	or _P_,_data_	 ; P |= FLAG_I
+	ori _P_,I_FLAG	 ; P |= I_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x79:
@@ -2681,8 +2688,7 @@ cpu_main:
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xb8_CLV:
-	ldi _data_,~0x40	 ; P &= ~V_FLAG
-	and _P_,_data_	 ;
+	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xb9:
@@ -2851,8 +2857,7 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
 .xd8_CLD:
-	ldi _data_,~0x08	 ; P &= ~D_FLAG
-	and _P_,_data_	 ;
+	andi _P_,~D_FLAG	 ; P &= ~D_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xd9:
@@ -3001,8 +3006,7 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
 .xf8_SED:
-	ldi _data_,0x08	 ; P |= D_FLAG
-	or _P_,_data_	 ;
+	ori _P_,D_FLAG	 ; P |= D_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xf9:
