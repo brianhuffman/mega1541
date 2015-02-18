@@ -1398,11 +1398,6 @@ cpu_main:
 
 /***************************** READ INSTRUCTIONS ******************************/
 
-.ORA:
-	or _A_,_data_	 ; A |= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick	 ;
 .x01_ORA_inx:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
@@ -1412,9 +1407,14 @@ cpu_main:
 	ldi XH,hi8(gs(.ORA))
 	rjmp .read_zpg
 .x09_ORA_imm:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
-	rjmp .read_imm
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
+.ORA:
+	or _A_,_data_	 ; A |= data
+	mov _Z_,_A_
+	mov _N_,_A_
+	rjmp .tick
 .x0d_ORA_abs:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
@@ -1435,11 +1435,6 @@ cpu_main:
 	ldi XL,lo8(gs(.ORA))
 	ldi XH,hi8(gs(.ORA))
 	rjmp .read_abx
-.AND:
-	and _A_,_data_	 ; A &= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick	 ;
 .x21_AND_inx:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
@@ -1449,9 +1444,14 @@ cpu_main:
 	ldi XH,hi8(gs(.AND))
 	rjmp .read_zpg
 .x29_AND_imm:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
-	rjmp .read_imm
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
+.AND:
+	and _A_,_data_	 ; A &= data
+	mov _Z_,_A_
+	mov _N_,_A_
+	rjmp .tick
 .x2d_AND_abs:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
@@ -1472,11 +1472,6 @@ cpu_main:
 	ldi XL,lo8(gs(.AND))
 	ldi XH,hi8(gs(.AND))
 	rjmp .read_abx
-.EOR:
-	eor _A_,_data_	 ; A ^= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick	 ;
 .x41_EOR_inx:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
@@ -1486,9 +1481,14 @@ cpu_main:
 	ldi XH,hi8(gs(.EOR))
 	rjmp .read_zpg
 .x49_EOR_imm:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
-	rjmp .read_imm
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
+.EOR:
+	eor _A_,_data_	 ; A ^= data
+	mov _Z_,_A_
+	mov _N_,_A_
+	rjmp .tick
 .x4d_EOR_abs:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
@@ -1542,11 +1542,6 @@ cpu_main:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
 	rjmp .read_abx
-.LDA:
-	mov _A_,_data_	 ; A <- data
-	sub _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp .tick	 ;
 .xa1_LDA_inx:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
@@ -1556,9 +1551,14 @@ cpu_main:
 	ldi XH,hi8(gs(.LDA))
 	rjmp .read_zpg
 .xa9_LDA_imm:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
-	rjmp .read_imm
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
+.LDA:
+	mov _A_,_data_	 ; A <- data
+	sub _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	rjmp .tick
 .xad_LDA_abs:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
@@ -1579,15 +1579,6 @@ cpu_main:
 	ldi XL,lo8(gs(.LDA))
 	ldi XH,hi8(gs(.LDA))
 	rjmp .read_abx
-.CMP:
-	mov _Z_,_A_	 ; Z <- A
-	sub _Z_,_data_	 ; Z <- A - data
-	mov _N_,_Z_	 ; N <- A - data
-	clr _C_	 ;
-	brlo .CMP_carry	 ; branch if A < data
-	inc _C_	 ; C <- 1 if A >= data
-.CMP_carry:
-	rjmp .tick	 ;
 .xc1_CMP_inx:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
@@ -1597,9 +1588,18 @@ cpu_main:
 	ldi XH,hi8(gs(.CMP))
 	rjmp .read_zpg
 .xc9_CMP_imm:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
-	rjmp .read_imm
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
+.CMP:
+	mov _Z_,_A_	 ; Z <- A
+	sub _Z_,_data_	 ; Z <- A - data
+	mov _N_,_Z_	 ; N <- A - data
+	clr _C_	 ;
+	brlo .CMP_carry	 ; branch if A < data
+	inc _C_	 ; C <- 1 if A >= data
+.CMP_carry:
+	rjmp .tick
 .xcd_CMP_abs:
 	ldi XL,lo8(gs(.CMP))
 	ldi XH,hi8(gs(.CMP))
@@ -1629,9 +1629,10 @@ cpu_main:
 	ldi XH,hi8(gs(.SBC))
 	rjmp .read_zpg
 .xe9_SBC_imm:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
-	rjmp .read_imm
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
+	rjmp .SBC
 .xed_SBC_abs:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
@@ -1652,15 +1653,15 @@ cpu_main:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
 	rjmp .read_abx
+.xa2_LDX_imm:
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
 .LDX:
 	mov _X_,_data_	 ; X <- data
 	sub _Z_,_data_	 ;
 	mov _N_,_data_	 ;
 	rjmp .tick	 ;
-.xa2_LDX_imm:
-	ldi XL,lo8(gs(.LDX))
-	ldi XH,hi8(gs(.LDX))
-	rjmp .read_imm
 .xa6_LDX_zpg:
 	ldi XL,lo8(gs(.LDX))
 	ldi XH,hi8(gs(.LDX))
@@ -1677,15 +1678,15 @@ cpu_main:
 	ldi XL,lo8(gs(.LDX))
 	ldi XH,hi8(gs(.LDX))
 	rjmp .read_aby
+.xa0_LDY_imm:
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
 .LDY:
 	mov _Y_,_data_	 ; Y <- data
 	sub _Z_,_data_	 ;
 	mov _N_,_data_	 ;
 	rjmp .tick	 ;
-.xa0_LDY_imm:
-	ldi XL,lo8(gs(.LDY))
-	ldi XH,hi8(gs(.LDY))
-	rjmp .read_imm
 .xa4_LDY_zpg:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
@@ -1702,21 +1703,19 @@ cpu_main:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
 	rjmp .read_abx
+.xe0_CPX_imm:
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
 .CPX:
 	mov _Z_,_X_	 ; Z <- X
 	sub _Z_,_data_	 ; Z <- X - data
 	mov _N_,_Z_	 ; N <- X - data
-	brsh .CPX_carry	 ; branch if X >= data
-	clr _C_	 ; C <- 0 if X < data
-	rjmp .tick	 ;
-.CPX_carry:
-	clr _C_	 ;
+	clr _C_	 ; C <- 0
+	brlo .CPX_carry	 ; branch if X < data
 	inc _C_	 ; C <- 1 if X >= data
-	rjmp .tick	 ;
-.xe0_CPX_imm:
-	ldi XL,lo8(gs(.CPX))
-	ldi XH,hi8(gs(.CPX))
-	rjmp .read_imm
+.CPX_carry:
+	rjmp .tick
 .xe4_CPX_zpg:
 	ldi XL,lo8(gs(.CPX))
 	ldi XH,hi8(gs(.CPX))
@@ -1725,21 +1724,19 @@ cpu_main:
 	ldi XL,lo8(gs(.CPX))
 	ldi XH,hi8(gs(.CPX))
 	rjmp .read_abs
+.xc0_CPY_imm:
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
 .CPY:
 	mov _Z_,_Y_	 ; Z <- Y
 	sub _Z_,_data_	 ; Z <- Y - data
 	mov _N_,_Z_	 ; N <- Y - data
-	brsh .CPY_carry	 ; branch if Y >= data
-	clr _C_	 ; C <- 0 if Y < data
-	rjmp .tick	 ;
-.CPY_carry:
-	clr _C_	 ;
+	clr _C_	 ; C <- 0
+	brlo .CPY_carry	 ; branch if Y < data
 	inc _C_	 ; C <- 1 if Y >= data
-	rjmp .tick	 ;
-.xc0_CPY_imm:
-	ldi XL,lo8(gs(.CPY))
-	ldi XH,hi8(gs(.CPY))
-	rjmp .read_imm
+.CPY_carry:
+	rjmp .tick
 .xc4_CPY_zpg:
 	ldi XL,lo8(gs(.CPY))
 	ldi XH,hi8(gs(.CPY))
