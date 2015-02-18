@@ -1374,7 +1374,7 @@ cpu_main:
 	rjmp .xe8
 	rjmp .xe9_SBC_imm
 	rjmp .xea
-	rjmp .xeb
+	rjmp .xeb_SBC_imm_undocumented
 	rjmp .xec_CPX_abs
 	rjmp .xed_SBC_abs
 	rjmp .xee
@@ -1629,6 +1629,7 @@ cpu_main:
 	ldi XH,hi8(gs(.SBC))
 	rjmp .read_zpg
 .xe9_SBC_imm:
+.xeb_SBC_imm_undocumented:
 	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; cycles <- 2
@@ -2595,11 +2596,6 @@ cpu_main:
 .xea:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-.xeb:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp cpu6502_SBC
 .xee:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
