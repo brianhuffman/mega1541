@@ -287,19 +287,6 @@ cpu6502_LSR_a:
 	mov _N_,_A_
 	ret
 	.size	cpu6502_LSR_a, .-cpu6502_LSR_a
-	.section	.text.cpu6502_ORA,"ax",@progbits
-	.type	cpu6502_ORA, @function
-cpu6502_ORA:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	or _A_,_data_	 ; A |= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick
-	.size	cpu6502_ORA, .-cpu6502_ORA
 	.section	.text.cpu6502_BIT,"ax",@progbits
 	.type	cpu6502_BIT, @function
 cpu6502_BIT:
@@ -328,19 +315,6 @@ cpu6502_AND:
 	mov _N_,_A_	 ;
 	ret
 	.size	cpu6502_AND, .-cpu6502_AND
-	.section	.text.cpu6502_EOR,"ax",@progbits
-	.type	cpu6502_EOR, @function
-cpu6502_EOR:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	eor _A_,_data_	 ; A ^= data
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	rjmp .tick
-	.size	cpu6502_EOR, .-cpu6502_EOR
 	.section	.text.cpu6502_ADC,"ax",@progbits
 	.type	cpu6502_ADC, @function
 cpu6502_ADC:
@@ -411,45 +385,6 @@ cpu6502_ADC:
 	mov _A_,r18	 ; A <- lo8(total)
 	rjmp .tick
 	.size	cpu6502_ADC, .-cpu6502_ADC
-	.section	.text.cpu6502_LDY,"ax",@progbits
-	.type	cpu6502_LDY, @function
-cpu6502_LDY:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	mov _Y_,_data_	 ;
-	ret
-	.size	cpu6502_LDY, .-cpu6502_LDY
-	.section	.text.cpu6502_LDA,"ax",@progbits
-	.type	cpu6502_LDA, @function
-cpu6502_LDA:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	mov _A_,_data_	 ;
-	ret
-	.size	cpu6502_LDA, .-cpu6502_LDA
-	.section	.text.cpu6502_LDX,"ax",@progbits
-	.type	cpu6502_LDX, @function
-cpu6502_LDX:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	mov _X_,_data_	 ;
-	ret
-	.size	cpu6502_LDX, .-cpu6502_LDX
 	.section	.text.cpu6502_LAX,"ax",@progbits
 	.type	cpu6502_LAX, @function
 cpu6502_LAX:
@@ -464,23 +399,6 @@ cpu6502_LAX:
 	mov _A_,_data_	 ;
 	ret
 	.size	cpu6502_LAX, .-cpu6502_LAX
-	.section	.text.cpu6502_CPX,"ax",@progbits
-	.type	cpu6502_CPX, @function
-cpu6502_CPX:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov _Z_,_X_	 ;
-	sub _Z_,_data_	 ; Z <- X - data
-	mov _N_,_Z_	 ; N <- X - data
-	clr _C_	 ;
-	brlo .L28	 ; branch if X < data
-	inc _C_	 ; set C if X >= data
-.L28:
-	ret
-	.size	cpu6502_CPX, .-cpu6502_CPX
 	.section	.text.cpu6502_SBC,"ax",@progbits
 	.type	cpu6502_SBC, @function
 cpu6502_SBC:
@@ -726,23 +644,6 @@ cpu6502_ISB:
 	rcall cpu6502_INC	 ;
 	rjmp .SBC	 ;
 	.size	cpu6502_ISB, .-cpu6502_ISB
-	.section	.text.cpu6502_JAM,"ax",@progbits
-	.type	cpu6502_JAM, @function
-cpu6502_JAM:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	mov r24,_PCL_	 ;  reg_pc.245, reg_pc
-	mov r25,_PCH_	 ;  reg_pc.245, reg_pc
-	sbiw r24,1	 ;  reg_pc.245,
-	mov _PCH_,r25	 ;  reg_pc, reg_pc.245
-	mov _PCL_,r24	 ;  reg_pc, reg_pc.245
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	ldi r22,lo8(1)	 ; ,
-	ldi r24,lo8(13)	 ; ,
-	rjmp digitalWrite	 ; 
-	.size	cpu6502_JAM, .-cpu6502_JAM
 	.section	.text.update_p,"ax",@progbits
 	.type	update_p, @function
 update_p:
@@ -791,40 +692,6 @@ cpu6502_PHP:
 	st Z,_P_	 ; stack[S] <- P
 	ret
 	.size	cpu6502_PHP, .-cpu6502_PHP
-	.section	.text.cpu6502_CPY,"ax",@progbits
-	.type	cpu6502_CPY, @function
-cpu6502_CPY:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov _Z_,_Y_	 ;
-	sub _Z_,_data_	 ; Z <- Y - data
-	mov _N_,_Z_	 ; N <- Y - data
-	clr _C_	 ;
-	brlo .L74	 ; branch if Y < data
-	inc _C_	 ; set C if Y >= data
-.L74:
-	ret
-	.size	cpu6502_CPY, .-cpu6502_CPY
-	.section	.text.cpu6502_CMP,"ax",@progbits
-	.type	cpu6502_CMP, @function
-cpu6502_CMP:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov _Z_,_A_	 ;
-	sub _Z_,_data_	 ; Z <- A - data
-	mov _N_,_Z_	 ; N <- A - data
-	clr _C_	 ;
-	brlo .L76	 ; branch if A < data
-	inc _C_	 ; set C if A >= data
-.L76:
-	rjmp .tick
-	.size	cpu6502_CMP, .-cpu6502_CMP
 	.section	.text.cpu6502_DCP,"ax",@progbits
 	.type	cpu6502_DCP, @function
 cpu6502_DCP:
