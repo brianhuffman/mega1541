@@ -177,10 +177,10 @@ mem_read_16:
 	ldi r25,0xff	 ; other addresses return 0xff
 	ret
 .mem_L11:
-	call mem_read	 ; data <- mem_read(addr)
+	rcall mem_read	 ; data <- mem_read(addr)
 	mov r18,_data_	 ; temp <- data
 	adiw r24,1	 ; addr++
-	call mem_read	 ; data <- mem_read(addr+1)
+	rcall mem_read	 ; data <- mem_read(addr+1)
 	mov r24,r18	 ;
 	mov r25,_data_	 ;
 	ret
@@ -294,7 +294,7 @@ cpu6502_ORA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	or _A_,_data_	 ; A |= data
 	mov _Z_,_A_
 	mov _N_,_A_
@@ -307,7 +307,7 @@ cpu6502_BIT:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	bst _data_,6	 ;
 	bld _P_,6	 ; V <- data.6
 	mov _N_,_data_	 ; N <- data.7
@@ -322,7 +322,7 @@ cpu6502_AND:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	and _A_,_data_	 ; A &= data
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
@@ -335,7 +335,7 @@ cpu6502_EOR:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	eor _A_,_data_	 ; A ^= data
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
@@ -348,7 +348,7 @@ cpu6502_ADC:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	sbrc _P_,3	 ; skip if decimal mode is set
 	rjmp .ADC_dec	 ; jump if decimal mode is clear
 .ADC_bin:
@@ -417,7 +417,7 @@ cpu6502_LDY:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
 	mov _Y_,_data_	 ;
@@ -430,7 +430,7 @@ cpu6502_LDA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
 	mov _A_,_data_	 ;
@@ -443,7 +443,7 @@ cpu6502_LDX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
 	mov _X_,_data_	 ;
@@ -456,7 +456,7 @@ cpu6502_LAX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
 	mov _X_,_data_	 ;
@@ -470,7 +470,7 @@ cpu6502_CPX:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov _Z_,_X_	 ;
 	sub _Z_,_data_	 ; Z <- X - data
 	mov _N_,_Z_	 ; N <- X - data
@@ -487,7 +487,7 @@ cpu6502_SBC:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov r21,_P_	 ;  reg_p.249, reg_p
 	mov r20,_A_	 ;  reg_a.250, reg_a
 	mov r18,_C_	 ;  flag_c, flag_c
@@ -559,13 +559,13 @@ cpu6502_ASL:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	lsr _C_	 ; carry <- C <- 0
 	lsl _data_	 ; carry <- data.7 <- ... <- data.0 <- 0
 	rol _C_	 ; C <- carry <- 0
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
-	jmp mem_write	 ;
+	rjmp mem_write	 ;
 	.size	cpu6502_ASL, .-cpu6502_ASL
 	.section	.text.cpu6502_SLO,"ax",@progbits
 	.type	cpu6502_SLO, @function
@@ -574,8 +574,8 @@ cpu6502_SLO:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call cpu6502_ASL	 ;
-	jmp cpu6502_ORA	 ;
+	rcall cpu6502_ASL	 ;
+	rjmp cpu6502_ORA	 ;
 	.size	cpu6502_SLO, .-cpu6502_SLO
 	.section	.text.cpu6502_ROL,"ax",@progbits
 	.type	cpu6502_ROL, @function
@@ -584,13 +584,13 @@ cpu6502_ROL:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	lsr _C_	 ; carry <- C <- 0
 	rol _data_	 ; carry <- data.7 <- ... <- data.0 <- carry
 	rol _C_	 ; C <- carry <- 0
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
-	jmp mem_write	 ;
+	rjmp mem_write	 ;
 	.size	cpu6502_ROL, .-cpu6502_ROL
 	.section	.text.cpu6502_RLA,"ax",@progbits
 	.type	cpu6502_RLA, @function
@@ -599,8 +599,8 @@ cpu6502_RLA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call cpu6502_ROL	 ;
-	jmp cpu6502_AND	 ;
+	rcall cpu6502_ROL	 ;
+	rjmp cpu6502_AND	 ;
 	.size	cpu6502_RLA, .-cpu6502_RLA
 	.section	.text.cpu6502_LSR,"ax",@progbits
 	.type	cpu6502_LSR, @function
@@ -609,13 +609,13 @@ cpu6502_LSR:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	lsr _C_	 ; carry <- C <- 0
 	lsr _data_	 ; carry <- data.0 <- ... <- data.7 <- 0
 	rol _C_	 ; C <- carry <- 0
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
-	jmp mem_write	 ;
+	rjmp mem_write	 ;
 	.size	cpu6502_LSR, .-cpu6502_LSR
 	.section	.text.cpu6502_SRE,"ax",@progbits
 	.type	cpu6502_SRE, @function
@@ -624,8 +624,8 @@ cpu6502_SRE:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call cpu6502_LSR	 ;
-	jmp cpu6502_EOR	 ;
+	rcall cpu6502_LSR	 ;
+	rjmp cpu6502_EOR	 ;
 	.size	cpu6502_SRE, .-cpu6502_SRE
 	.section	.text.cpu6502_ROR,"ax",@progbits
 	.type	cpu6502_ROR, @function
@@ -634,13 +634,13 @@ cpu6502_ROR:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	lsr _C_	 ; carry <- C <- 0
 	ror _data_	 ; carry <- data.0 <- ... <- data.7 <- carry
 	rol _C_	 ; C <- carry <- 0
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
-	jmp mem_write	 ;
+	rjmp mem_write	 ;
 	.size	cpu6502_ROR, .-cpu6502_ROR
 	.section	.text.cpu6502_RRA,"ax",@progbits
 	.type	cpu6502_RRA, @function
@@ -649,8 +649,8 @@ cpu6502_RRA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call cpu6502_ROR	 ;
-	jmp cpu6502_ADC	 ;
+	rcall cpu6502_ROR	 ;
+	rjmp cpu6502_ADC	 ;
 	.size	cpu6502_RRA, .-cpu6502_RRA
 	.section	.text.cpu6502_SAX,"ax",@progbits
 	.type	cpu6502_SAX, @function
@@ -661,7 +661,7 @@ cpu6502_SAX:
 .L__stack_usage = 0
 	mov _data_,_X_	 ;  D.3787, reg_x
 	and _data_,_A_	 ;  D.3787, reg_a
-	jmp mem_write	 ; 
+	rjmp mem_write	 ; 
 	.size	cpu6502_SAX, .-cpu6502_SAX
 	.section	.text.cpu6502_STA,"ax",@progbits
 	.type	cpu6502_STA, @function
@@ -671,7 +671,7 @@ cpu6502_STA:
 /* stack size = 0 */
 .L__stack_usage = 0
 	mov _data_,_A_	 ; , reg_a
-	jmp mem_write	 ; 
+	rjmp mem_write	 ; 
 	.size	cpu6502_STA, .-cpu6502_STA
 	.section	.text.cpu6502_SHA,"ax",@progbits
 	.type	cpu6502_SHA, @function
@@ -686,7 +686,7 @@ cpu6502_SHA:
 	ldi r18,lo8(1)	 ;  D.3792,
 	add r18,r25	 ;  D.3792, address
 	and r22,r18	 ;  D.3792, D.3792
-	jmp mem_write	 ; 
+	rjmp mem_write	 ; 
 	.size	cpu6502_SHA, .-cpu6502_SHA
 	.section	.text.cpu6502_DEC,"ax",@progbits
 	.type	cpu6502_DEC, @function
@@ -695,11 +695,11 @@ cpu6502_DEC:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	dec _data_	 ; data--
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
-	jmp mem_write	 ;
+	rjmp mem_write	 ;
 	.size	cpu6502_DEC, .-cpu6502_DEC
 	.section	.text.cpu6502_INC,"ax",@progbits
 	.type	cpu6502_INC, @function
@@ -708,11 +708,11 @@ cpu6502_INC:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	inc _data_	 ; data++
 	mov _Z_,_data_	 ;
 	mov _N_,_data_	 ;
-	jmp mem_write	 ;
+	rjmp mem_write	 ;
 	.size	cpu6502_INC, .-cpu6502_INC
 	.section	.text.cpu6502_ISB,"ax",@progbits
 	.type	cpu6502_ISB, @function
@@ -721,8 +721,8 @@ cpu6502_ISB:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call cpu6502_INC	 ;
-	jmp cpu6502_SBC	 ;
+	rcall cpu6502_INC	 ;
+	rjmp cpu6502_SBC	 ;
 	.size	cpu6502_ISB, .-cpu6502_ISB
 	.section	.text.cpu6502_JAM,"ax",@progbits
 	.type	cpu6502_JAM, @function
@@ -736,10 +736,10 @@ cpu6502_JAM:
 	sbiw r24,1	 ;  reg_pc.245,
 	mov _PCH_,r25	 ;  reg_pc, reg_pc.245
 	mov _PCL_,r24	 ;  reg_pc, reg_pc.245
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	ldi r22,lo8(1)	 ; ,
 	ldi r24,lo8(13)	 ; ,
-	jmp digitalWrite	 ; 
+	rjmp digitalWrite	 ; 
 	.size	cpu6502_JAM, .-cpu6502_JAM
 	.section	.text.update_p,"ax",@progbits
 	.type	update_p, @function
@@ -782,7 +782,7 @@ cpu6502_PHP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call update_p	 ;
+	rcall update_p	 ;
 	inc _S_	 ; S ++
 	mov ZL,_S_	 ;
 	ldi ZH,hi8(ram+256)	 ;
@@ -796,7 +796,7 @@ cpu6502_CPY:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov _Z_,_Y_	 ;
 	sub _Z_,_data_	 ; Z <- Y - data
 	mov _N_,_Z_	 ; N <- Y - data
@@ -813,7 +813,7 @@ cpu6502_CMP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov _Z_,_A_	 ;
 	sub _Z_,_data_	 ; Z <- A - data
 	mov _N_,_Z_	 ; N <- A - data
@@ -830,8 +830,8 @@ cpu6502_DCP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 2
-	call cpu6502_DEC	 ;
-	jmp cpu6502_CMP	 ;
+	rcall cpu6502_DEC	 ;
+	rjmp cpu6502_CMP	 ;
 	.size	cpu6502_DCP, .-cpu6502_DCP
 	.section	.text.addr_zpg,"ax",@progbits
 .global	addr_zpg
@@ -843,7 +843,7 @@ addr_zpg:
 .L__stack_usage = 0
 	movw r24,_PCL_	 ; reg_pc.3, reg_pc
 	adiw _PCL_,1	 ; PC++
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov r24,_data_	 ;
 	ldi r25,0	 ;
 	ret
@@ -857,7 +857,7 @@ addr_abs:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,_PCL_	 ; , reg_pc
-	call mem_read_16	 ; 
+	rcall mem_read_16	 ; 
 	adiw _PCL_,2	 ;  PC += 2
 	ret
 	.size	addr_abs, .-addr_abs
@@ -869,7 +869,7 @@ addr_zpx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read_pc	 ; data <- mem_read(PC)
+	rcall mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
 	add _data_,_X_	 ; data += X
 	add r24,_data_	 ;
@@ -884,7 +884,7 @@ addr_zpy:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read_pc	 ; data <- mem_read(PC)
+	rcall mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
 	add _data_,_Y_	 ; data += Y
 	add r24,_data_	 ;
@@ -900,13 +900,13 @@ addr_abx:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,_PCL_	 ; r25:r24 <- PC
-	call mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
+	rcall mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_X_	 ; r25:r24 += X
 	brcc .L84	 ; branch if same page
 	inc r25	 ;
 	ldi _cycles_,1	 ;
-	jmp clock_advance	 ;
+	rjmp clock_advance	 ;
 .L84:
 	ret
 	.size	addr_abx, .-addr_abx
@@ -919,13 +919,13 @@ addr_aby:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,_PCL_	 ; r25:r24 <- PC
-	call mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
+	rcall mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_Y_	 ; r25:r24 += Y
 	brcc .L86	 ; branch if same page
 	inc r25	 ;
 	ldi _cycles_,1	 ;
-	jmp clock_advance	 ;
+	rjmp clock_advance	 ;
 .L86:
 	ret
 	.size	addr_aby, .-addr_aby
@@ -937,12 +937,12 @@ addr_inx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read_pc	 ; data <- mem_read(PC)
+	rcall mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
 	add _data_,_X_	 ; data += X
 	mov r24,_data_	 ;
 	ldi r25,0	 ;
-	jmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
+	rjmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	.size	addr_inx, .-addr_inx
 	.section	.text.addr_iny,"ax",@progbits
 .global	addr_iny
@@ -952,7 +952,7 @@ addr_iny:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	call mem_read_pc	 ; data <- mem_read(PC)
+	rcall mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov ZL,r24	 ;
 	ldi ZH,hi8(-(ram))	 ;
@@ -963,7 +963,7 @@ addr_iny:
 	brcc .L89	 ; branch if same page
 	inc r25	 ;
 	ldi _cycles_,1	 ;
-	jmp clock_advance	 ;
+	rjmp clock_advance	 ;
 .L89:
 	ret
 	.size	addr_iny, .-addr_iny
@@ -976,9 +976,9 @@ addr_ind:
 /* stack size = 0 */
 .L__stack_usage = 0
 	movw r24,_PCL_	 ; r25:r24 <- PC
-	call mem_read_16	 ; r25:r24 <- mem_read(PC)
+	rcall mem_read_16	 ; r25:r24 <- mem_read(PC)
 	adiw _PCL_,2	 ; PC += 2
-	jmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
+	rjmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	.size	addr_ind, .-addr_ind
 	.section	.text.cpu_reset,"ax",@progbits
 .global	cpu_reset
@@ -990,7 +990,7 @@ cpu_reset:
 .L__stack_usage = 0
 	ldi r24,0xfc	 ;
 	ldi r25,0xff	 ;
-	call mem_read_16	 ; r25:r24 <- mem_read(0xfffc)
+	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffc)
 	movw _PCL_,r24	 ; PC <- mem_read(0xfffc)
 	sts reg_pc,_PCL_
 	sts reg_pc+1,_PCH_
@@ -1026,14 +1026,14 @@ cpu_irq:
 	rjmp .L92	 ; 
 	ldi r24,0xfe	 ;
 	ldi r25,0xff	 ;
-	call mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
-	call cpu6502_JSR	 ; 
-	call cpu6502_PHP	 ; 
+	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
+	rcall cpu6502_JSR	 ; 
+	rcall cpu6502_PHP	 ; 
 	lds r24,reg_p	 ;  reg_p.57, reg_p
 	ori r24,lo8(4)	 ;  reg_p.57,
 	sts reg_p,r24	 ;  reg_p, reg_p.57
 	ldi _cycles_,7	 ; 7 cycles
-	jmp clock_advance	 ; 
+	rjmp clock_advance	 ; 
 .L92:
 	ret
 	.size	cpu_irq, .-cpu_irq
@@ -1047,9 +1047,9 @@ cpu_nmi:
 .L__stack_usage = 0
 	ldi r24,lo8(-6)	 ; ,
 	ldi r25,lo8(-1)	 ; ,
-	call mem_read_16	 ; 
-	call cpu6502_JSR	 ; 
-	call update_p	 ; 
+	rcall mem_read_16	 ; 
+	rcall cpu6502_JSR	 ; 
+	rcall update_p	 ; 
 	lds r24,reg_p	 ;  D.3900, reg_p
 	andi r24,lo8(-17)	 ;  D.3900,
 	mov r30,_S_	 ;  reg_s.59, reg_s
@@ -1104,7 +1104,7 @@ cpu_main:
 	adc _time3_,r25	 ;
 	brpl .load_opcode	 ; continue if time >= 0
 .L98:
-	jmp .L366	 ; save state and exit
+	rjmp .L366	 ; save state and exit
 .tick:			 ;
 	sub _time0_,_cycles_	 ; time_left -= cycles
 	sbc _time1_,__zero_reg__	 ;
@@ -1795,7 +1795,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .take_branch:
-	call mem_read_pc	 ; data <- mem_read(PC)
+	rcall mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov r19,_PCH_	 ; temp = PCH
 	add _PCL_,_data_	 ; PC += data
@@ -1837,9 +1837,9 @@ cpu_main:
 .x00:
 	ldi r24,0xfe	 ;
 	ldi r25,0xff	 ;
-	call mem_read_16	 ;
-	call cpu6502_JSR	 ;
-	call update_p	 ;
+	rcall mem_read_16	 ;
+	rcall cpu6502_JSR	 ;
+	rcall update_p	 ;
 	mov r25,_P_	 ; temp = P
 	ori r25,B_FLAG	 ; temp |= B_FLAG
 	mov ZL,_S_	 ;
@@ -1850,27 +1850,27 @@ cpu_main:
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp .tick	 ;
 .x03:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_SLO	 ; 
+	rcall cpu6502_SLO	 ; 
 	rjmp .tick	 ;
 .x04:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
 .x06:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_ASL	 ; 
+	rcall cpu6502_ASL	 ; 
 	rjmp .tick	 ;
 .x07:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_SLO	 ; 
+	rcall cpu6502_SLO	 ; 
 	rjmp .tick	 ;
 .x08:
 	ldi _cycles_,3	 ; 3 cycles
-	call cpu6502_PHP	 ; 
+	rcall cpu6502_PHP	 ; 
 	rjmp .tick	 ;
 /* ASL accumulator */
 .x0a:
@@ -1884,7 +1884,7 @@ cpu_main:
 .x0b:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	call cpu6502_AND	 ; 
+	rcall cpu6502_AND	 ; 
 	mov r24,_A_	 ;  D.4025, reg_a
 	com r24	 ;  D.4025
 	rol r24	 ;  D.4025
@@ -1894,37 +1894,37 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x0c:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x0e:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ASL	 ; 
+	rcall cpu6502_ASL	 ; 
 	rjmp .tick	 ;
 .x0f:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_SLO	 ; 
+	rcall cpu6502_SLO	 ; 
 	rjmp .tick	 ;
 .x13:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_SLO	 ; 
+	rcall cpu6502_SLO	 ; 
 	rjmp .tick	 ;
 .x14:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x16:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ASL	 ; 
+	rcall cpu6502_ASL	 ; 
 	rjmp .tick	 ;
 .x17:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_SLO	 ; 
+	rcall cpu6502_SLO	 ; 
 	rjmp .tick	 ;
 .x18_CLC:
 	clr _C_	 ; C <- 0
@@ -1934,52 +1934,52 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x1b:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_SLO	 ; 
+	rcall cpu6502_SLO	 ; 
 	rjmp .tick	 ;
 .x1c:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x1e:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_ASL	 ; 
+	rcall cpu6502_ASL	 ; 
 	rjmp .tick	 ;
 .x1f:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_SLO	 ; 
+	rcall cpu6502_SLO	 ; 
 	rjmp .tick	 ;
 .x20:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_JSR	 ; 
+	rcall cpu6502_JSR	 ; 
 	rjmp .tick	 ;
 .x23:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_RLA	 ; 
+	rcall cpu6502_RLA	 ; 
 	rjmp .tick	 ;
 .x24:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	call cpu6502_BIT	 ; 
+	rcall cpu6502_BIT	 ; 
 	rjmp .tick	 ;
 .x26:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_ROL	 ; 
+	rcall cpu6502_ROL	 ; 
 	rjmp .tick	 ;
 .x27:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_RLA	 ; 
+	rcall cpu6502_RLA	 ; 
 	rjmp .tick	 ;
 .x28:
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_PLP	 ; 
+	rcall cpu6502_PLP	 ; 
 	rjmp .tick	 ;
 /* ROL accumulator */
 .x2a:
@@ -1993,7 +1993,7 @@ cpu_main:
 .x2b:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	call cpu6502_AND	 ; 
+	rcall cpu6502_AND	 ; 
 	mov r24,_A_	 ;  D.4025, reg_a
 	com r24	 ;  D.4025
 	rol r24	 ;  D.4025
@@ -2003,38 +2003,38 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x2c:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_BIT	 ; 
+	rcall cpu6502_BIT	 ; 
 	rjmp .tick	 ;
 .x2e:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ROL	 ; 
+	rcall cpu6502_ROL	 ; 
 	rjmp .tick	 ;
 .x2f:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_RLA	 ; 
+	rcall cpu6502_RLA	 ; 
 	rjmp .tick	 ;
 .x33:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_RLA	 ; 
+	rcall cpu6502_RLA	 ; 
 	rjmp .tick	 ;
 .x34:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x36:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ROL	 ; 
+	rcall cpu6502_ROL	 ; 
 	rjmp .tick	 ;
 .x37:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_RLA	 ; 
+	rcall cpu6502_RLA	 ; 
 	rjmp .tick	 ;
 .x38_SEC:
 	clr _C_	 ;
@@ -2045,47 +2045,47 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x3b:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_RLA	 ; 
+	rcall cpu6502_RLA	 ; 
 	rjmp .tick	 ;
 .x3c:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x3e:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_ROL	 ; 
+	rcall cpu6502_ROL	 ; 
 	rjmp .tick	 ;
 .x3f:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_RLA	 ; 
+	rcall cpu6502_RLA	 ; 
 	rjmp .tick	 ;
 .x40:
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_PLP	 ; 
-	call cpu6502_RTS	 ; 
+	rcall cpu6502_PLP	 ; 
+	rcall cpu6502_RTS	 ; 
 	rjmp .tick	 ;
 .x43:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_SRE	 ; 
+	rcall cpu6502_SRE	 ; 
 	rjmp .tick	 ;
 .x44:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
 .x46:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_LSR	 ; 
+	rcall cpu6502_LSR	 ; 
 	rjmp .tick	 ;
 .x47:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_SRE	 ; 
+	rcall cpu6502_SRE	 ; 
 	rjmp .tick	 ;
 /* PHA */
 .x48:
@@ -2108,43 +2108,43 @@ cpu_main:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
-	call cpu6502_AND	 ; 
-	call cpu6502_LSR_a	 ; 
+	rcall cpu6502_AND	 ; 
+	rcall cpu6502_LSR_a	 ; 
 	rjmp .tick	 ;
 .x4c:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	mov _PCH_,r25	 ;  reg_pc,
 	mov _PCL_,r24	 ;  reg_pc,
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
 .x4e:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_LSR	 ; 
+	rcall cpu6502_LSR	 ; 
 	rjmp .tick	 ;
 .x4f:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_SRE	 ; 
+	rcall cpu6502_SRE	 ; 
 	rjmp .tick	 ;
 .x53:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_SRE	 ; 
+	rcall cpu6502_SRE	 ; 
 	rjmp .tick	 ;
 .x54:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x56:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_LSR	 ; 
+	rcall cpu6502_LSR	 ; 
 	rjmp .tick	 ;
 .x57:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_SRE	 ; 
+	rcall cpu6502_SRE	 ; 
 	rjmp .tick	 ;
 .x58_CLI:
 	andi _P_,~I_FLAG	 ; P &= ~I_FLAG
@@ -2154,56 +2154,56 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x5b:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_SRE	 ; 
+	rcall cpu6502_SRE	 ; 
 	rjmp .tick	 ;
 .x5c:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x5e:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_LSR	 ; 
+	rcall cpu6502_LSR	 ; 
 	rjmp .tick	 ;
 .x5f:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_SRE	 ; 
+	rcall cpu6502_SRE	 ; 
 	rjmp .tick	 ;
 .x60:
-	call cpu6502_RTS	 ; 
+	rcall cpu6502_RTS	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
 .x61:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 .x63:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_RRA	 ; 
+	rcall cpu6502_RRA	 ; 
 	rjmp .tick	 ;
 .x64:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
 .x65:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 .x66:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_ROR	 ; 
+	rcall cpu6502_ROR	 ; 
 	rjmp .tick	 ;
 .x67:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_RRA	 ; 
+	rcall cpu6502_RRA	 ; 
 	rjmp .tick	 ;
 /* PLA */
 .x68:
@@ -2219,7 +2219,7 @@ cpu_main:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 /* ROR accumulator */
 .x6a:
@@ -2235,90 +2235,90 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x6c:
-	call addr_ind	 ; 
+	rcall addr_ind	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	mov _PCH_,r25	 ;  reg_pc,
 	mov _PCL_,r24	 ;  reg_pc,
 	rjmp .tick	 ;
 .x6d:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 .x6e:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ROR	 ; 
+	rcall cpu6502_ROR	 ; 
 	rjmp .tick	 ;
 .x6f:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_RRA	 ; 
+	rcall cpu6502_RRA	 ; 
 	rjmp .tick	 ;
 .x71:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 .x73:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_RRA	 ; 
+	rcall cpu6502_RRA	 ; 
 	rjmp .tick	 ;
 .x74:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x75:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 .x76:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ROR	 ; 
+	rcall cpu6502_ROR	 ; 
 	rjmp .tick	 ;
 .x77:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_RRA	 ; 
+	rcall cpu6502_RRA	 ; 
 	rjmp .tick	 ;
 .x78_SEI:
 	ori _P_,I_FLAG	 ; P |= I_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x79:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 .x7a:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x7b:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_RRA	 ; 
+	rcall cpu6502_RRA	 ; 
 	rjmp .tick	 ;
 .x7c:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x7d:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_ADC	 ; 
+	rcall cpu6502_ADC	 ; 
 	rjmp .tick	 ;
 .x7e:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_ROR	 ; 
+	rcall cpu6502_ROR	 ; 
 	rjmp .tick	 ;
 .x7f:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_RRA	 ; 
+	rcall cpu6502_RRA	 ; 
 	rjmp .tick	 ;
 .x80:
 	movw r24,_PCL_	 ;
@@ -2326,9 +2326,9 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x81:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_STA	 ; 
+	rcall cpu6502_STA	 ; 
 	rjmp .tick	 ;
 .x82:
 	movw r24,_PCL_	 ;
@@ -2336,31 +2336,31 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x83:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_SAX	 ; 
+	rcall cpu6502_SAX	 ; 
 	rjmp .tick	 ;
 .x84:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	mov r22,_Y_	 ; , reg_y
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x85:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	call cpu6502_STA	 ; 
+	rcall cpu6502_STA	 ; 
 	rjmp .tick	 ;
 .x86:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	mov r22,_X_	 ; , reg_x
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x87:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	call cpu6502_SAX	 ; 
+	rcall cpu6502_SAX	 ; 
 	rjmp .tick	 ;
 /* DEY */
 .x88:
@@ -2386,45 +2386,45 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x8c:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	mov r22,_Y_	 ; , reg_y
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x8d:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_STA	 ; 
+	rcall cpu6502_STA	 ; 
 	rjmp .tick	 ;
 .x8e:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	mov r22,_X_	 ; , reg_x
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x8f:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_SAX	 ; 
+	rcall cpu6502_SAX	 ; 
 	rjmp .tick	 ;
 .x91:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_STA	 ; 
+	rcall cpu6502_STA	 ; 
 	rjmp .tick	 ;
 .x93:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_SHA	 ; 
+	rcall cpu6502_SHA	 ; 
 	rjmp .tick	 ;
 .x94:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	mov r22,_Y_	 ; , reg_y
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x95_STA_zpx:
-	call mem_read_pc	 ; data <- mem_read(PC)
+	rcall mem_read_pc	 ; data <- mem_read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov ZL,_data_	 ;
 	add ZL,_X_      ;
@@ -2433,15 +2433,15 @@ cpu_main:
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .x96:
-	call addr_zpy	 ; 
+	rcall addr_zpy	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	mov r22,_X_	 ; , reg_x
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x97:
-	call addr_zpy	 ; 
+	rcall addr_zpy	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_SAX	 ; 
+	rcall cpu6502_SAX	 ; 
 	rjmp .tick	 ;
 .x98_TYA:
 	mov _A_,_Y_	 ; A <- Y
@@ -2450,9 +2450,9 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x99:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_STA	 ; 
+	rcall cpu6502_STA	 ; 
 	rjmp .tick	 ;
 /* TXS */
 .x9a:
@@ -2466,42 +2466,42 @@ cpu_main:
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
 .x9c:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	ldi r22,lo8(1)	 ;  D.4021,
 	add r22,r25	 ;  D.4021, D.4020
 	mov r18,_Y_	 ;  reg_y, reg_y
 	and r22,r18	 ;  D.4021, reg_y
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x9d:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_STA	 ; 
+	rcall cpu6502_STA	 ; 
 	rjmp .tick	 ;
 .x9e:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	ldi r22,lo8(1)	 ;  D.4021,
 	add r22,r25	 ;  D.4021, D.4020
 	mov r18,_X_	 ;  reg_x, reg_x
 	and r22,r18	 ;  D.4021, reg_x
-	call mem_write	 ; 
+	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x9f:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_SHA	 ; 
+	rcall cpu6502_SHA	 ; 
 	rjmp .tick	 ;
 .xa3:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_LAX	 ; 
+	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 .xa7:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	call cpu6502_LAX	 ; 
+	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 /* TAY */
 .xa8:
@@ -2522,19 +2522,19 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xaf:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_LAX	 ; 
+	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 .xb3:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_LAX	 ; 
+	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 .xb7:
-	call addr_zpy	 ; 
+	rcall addr_zpy	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_LAX	 ; 
+	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 .xb8_CLV:
 	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
@@ -2552,9 +2552,9 @@ cpu_main:
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xbf:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_LAX	 ; 
+	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 .xc2:
 	movw r24,_PCL_	 ;
@@ -2562,19 +2562,19 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xc3:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_DCP	 ; 
+	rcall cpu6502_DCP	 ; 
 	rjmp .tick	 ;
 .xc6:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_DEC	 ; 
+	rcall cpu6502_DEC	 ; 
 	rjmp .tick	 ;
 .xc7:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_DCP	 ; 
+	rcall cpu6502_DCP	 ; 
 	rjmp .tick	 ;
 /* INY */
 .xc8:
@@ -2593,7 +2593,7 @@ cpu_main:
 .xcb:
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	adiw _PCL_,1	 ; PC++
-	call mem_read	 ; data <- mem_read(r25:r24)
+	rcall mem_read	 ; data <- mem_read(r25:r24)
 	mov r25,_X_	 ;  D.4021, reg_x
 	mov r18,_A_	 ;  reg_a, reg_a
 	and r25,r18	 ;  D.4021, reg_a
@@ -2610,33 +2610,33 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xce:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_DEC	 ; 
+	rcall cpu6502_DEC	 ; 
 	rjmp .tick	 ;
 .xcf:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_DCP	 ; 
+	rcall cpu6502_DCP	 ; 
 	rjmp .tick	 ;
 .xd3:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_DCP	 ; 
+	rcall cpu6502_DCP	 ; 
 	rjmp .tick	 ;
 .xd4:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xd6:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_DEC	 ; 
+	rcall cpu6502_DEC	 ; 
 	rjmp .tick	 ;
 .xd7:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_DCP	 ; 
+	rcall cpu6502_DCP	 ; 
 	rjmp .tick	 ;
 .xd8_CLD:
 	andi _P_,~D_FLAG	 ; P &= ~D_FLAG
@@ -2646,28 +2646,28 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xdb:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_DCP	 ; 
+	rcall cpu6502_DCP	 ; 
 	rjmp .tick	 ;
 .xdc:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xde:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_DEC	 ; 
+	rcall cpu6502_DEC	 ; 
 	rjmp .tick	 ;
 .xdf:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_DCP	 ; 
+	rcall cpu6502_DCP	 ; 
 	rjmp .tick	 ;
 .xe1:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xe2:
 	movw r24,_PCL_	 ;
@@ -2675,24 +2675,24 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xe3:
-	call addr_inx	 ; 
+	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_ISB	 ; 
+	rcall cpu6502_ISB	 ; 
 	rjmp .tick	 ;
 .xe5:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xe6:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_INC	 ; 
+	rcall cpu6502_INC	 ; 
 	rjmp .tick	 ;
 .xe7:
-	call addr_zpg	 ; 
+	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_ISB	 ; 
+	rcall cpu6502_ISB	 ; 
 	rjmp .tick	 ;
 /* INX */
 .xe8:
@@ -2705,7 +2705,7 @@ cpu_main:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 /* NOP */
 .xea:
@@ -2715,87 +2715,87 @@ cpu_main:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xed:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xee:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_INC	 ; 
+	rcall cpu6502_INC	 ; 
 	rjmp .tick	 ;
 .xef:
-	call addr_abs	 ; 
+	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ISB	 ; 
+	rcall cpu6502_ISB	 ; 
 	rjmp .tick	 ;
 .xf1:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,5	 ; 5 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xf3:
-	call addr_iny	 ; 
+	rcall addr_iny	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	call cpu6502_ISB	 ; 
+	rcall cpu6502_ISB	 ; 
 	rjmp .tick	 ;
 .xf4:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xf5:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xf6:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_INC	 ; 
+	rcall cpu6502_INC	 ; 
 	rjmp .tick	 ;
 .xf7:
-	call addr_zpx	 ; 
+	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
-	call cpu6502_ISB	 ; 
+	rcall cpu6502_ISB	 ; 
 	rjmp .tick	 ;
 .xf8_SED:
 	ori _P_,D_FLAG	 ; P |= D_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xf9:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xfa:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xfb:
-	call addr_aby	 ; 
+	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_ISB	 ; 
+	rcall cpu6502_ISB	 ; 
 	rjmp .tick	 ;
 .xfc:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xfd:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
-	call cpu6502_SBC	 ; 
+	rcall cpu6502_SBC	 ; 
 	rjmp .tick	 ;
 .xfe:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_INC	 ; 
+	rcall cpu6502_INC	 ; 
 	rjmp .tick	 ;
 .xff:
-	call addr_abx	 ; 
+	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
-	call cpu6502_ISB	 ; 
+	rcall cpu6502_ISB	 ; 
 	rjmp .tick	 ;
 .x02:
 .x12:
@@ -2819,13 +2819,13 @@ input:  return address in XH:XL
 output: data value in _data_, tick count in _cycles_
 */
 .read_imm:
-	call mem_read_pc	 ; data <- read(PC)
+	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; cycles <- 2
 	movw ZL,XL
 	ijmp
 .read_zpg:
-	call mem_read_pc	 ; data <- read(PC)
+	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
@@ -2834,7 +2834,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_zpx:
-	call mem_read_pc	 ; data <- read(PC)
+	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	add _data_,_X_	 ; data += X
 	mov ZL,_data_	 ;
@@ -2844,7 +2844,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_zpy:
-	call mem_read_pc	 ; data <- read(PC)
+	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	add _data_,_Y_	 ; r24 += Y
 	mov ZL,_data_	 ;
@@ -2855,46 +2855,46 @@ output: data value in _data_, tick count in _cycles_
 	ijmp
 .read_abs:
 	movw r24,_PCL_	 ; r25:r24 <- PC
-	call mem_read_16	 ; r25:r24 <- read(PC)
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
 .read_abx:
 	movw r24,_PCL_	 ; r25:r24 <- PC
-	call mem_read_16	 ; r25:r24 <- read(PC)
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_X_	 ; r24 += X
 	brcs .read_abx_carry	 ; branch if r24+X carries
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
 .read_abx_carry:
 	inc r25	 ; r25++
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
 .read_aby:
 	movw r24,_PCL_	 ; r25:r24 <- PC
-	call mem_read_16	 ; r25:r24 <- read(PC)
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_Y_	 ; r24 += Y
 	brcs .read_aby_carry	 ; branch if r24+X carries
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
 .read_aby_carry:
 	inc r25	 ; r25++
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
 .read_inx:
-	call mem_read_pc	 ; data <- read(PC)
+	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	add _data_,_X_	 ; data += X
 	mov ZL,_data_	 ;
@@ -2902,12 +2902,12 @@ output: data value in _data_, tick count in _cycles_
 	ld r24,Z	 ; r24 <- ram[r24]
 	inc ZL	 ; ZL++
 	ld r25,Z	 ; r25 <- ram[r24+1]
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,6	 ; cycles <- 6
 	movw ZL,XL
 	ijmp
 .read_iny:
-	call mem_read_pc	 ; data <- read(PC)
+	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
@@ -2916,13 +2916,13 @@ output: data value in _data_, tick count in _cycles_
 	ld r25,Z	 ; r25 <- ram[r24+1]
 	add r24,_Y_	 ; r24 += Y
 	brcs .read_iny_carry	 ; branch if r24+Y carries
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
 	movw ZL,XL
 	ijmp
 .read_iny_carry:
 	inc r25	 ; r25++
-	call mem_read	 ; data <- read(r25:r24)
+	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,6	 ; cycles <- 6
 	movw ZL,XL
 	ijmp
