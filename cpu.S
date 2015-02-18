@@ -273,20 +273,6 @@ cpu6502_RTS:
 	adiw _PCL_,1	 ; PC ++
 	ret
 	.size	cpu6502_RTS, .-cpu6502_RTS
-	.section	.text.cpu6502_LSR_a,"ax",@progbits
-	.type	cpu6502_LSR_a, @function
-cpu6502_LSR_a:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	bst _A_,0
-	bld _C_,0
-	lsr _A_
-	mov _Z_,_A_
-	mov _N_,_A_
-	ret
-	.size	cpu6502_LSR_a, .-cpu6502_LSR_a
 	.section	.text.cpu6502_BIT,"ax",@progbits
 	.type	cpu6502_BIT, @function
 cpu6502_BIT:
@@ -1920,7 +1906,11 @@ cpu_main:
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rcall cpu6502_AND	 ; 
-	rcall cpu6502_LSR_a	 ; 
+	clr _C_	 ; C <- 0
+	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
 	rjmp .tick	 ;
 .x4c:
 	rcall addr_abs	 ; 
