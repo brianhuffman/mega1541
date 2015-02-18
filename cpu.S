@@ -315,76 +315,6 @@ cpu6502_AND:
 	mov _N_,_A_	 ;
 	ret
 	.size	cpu6502_AND, .-cpu6502_AND
-	.section	.text.cpu6502_ADC,"ax",@progbits
-	.type	cpu6502_ADC, @function
-cpu6502_ADC:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-.ADC:
-	sbrc _P_,3	 ; skip if decimal mode is set
-	rjmp .ADC_dec	 ; jump if decimal mode is clear
-.ADC_bin:
-	lsr _C_	 ; carry <- C <- 0
-	adc _A_,_data_	 ; (carry, A) <- A + data + carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	brvs .ADC_bin_overflow	 ; branch on overflow
-	rol _C_	 ; C <- carry <- 0
-	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
-	rjmp .tick
-.ADC_bin_overflow:
-	rol _C_	 ; C <- carry <- 0
-	ori _P_,V_FLAG	 ; P |= V_FLAG
-	rjmp .tick
-.ADC_dec:
-	mov r30,_A_	 ; r30 <- A
-	mov r18,_A_	 ; total <- A
-	ldi r19,0	 ;
-	add r18,_C_	 ; total += C
-	adc r19,__zero_reg__	 ;
-	add r18,_data_	 ; total += data
-	adc r19,__zero_reg__	 ;
-	mov _Z_,r18	 ; Z <- lo8(total)
-	mov r25,_A_	 ; temp25 <- A
-	andi r25,0x0f	 ; temp25 <- A & 0x0f
-	add r25,_C_	 ; temp25 += C
-	mov r20,_data_	 ; temp20 <- data
-	andi r20,0x0f	 ; temp20 <- data & 0x0f
-	add r25,r20	 ; temp25 += temp20
-	cpi r25,10	 ;
-	brlo .L12	 ; branch if temp25 < 10
-	cpi r25,26	 ;
-	brsh .L13	 ; branch if temp25 < 26
-	subi r18,-6	 ; total += 6
-	sbci r19,-1	 ;
-	rjmp .L12	 ;
-.L13:
-	subi r18,10	 ; total -= 10
-	sbc r19,__zero_reg__	 ;
-.L12:
-	/* set N, V after low nybble fixup */
-	mov _N_,r18	 ; N <- lo8(total)
-	eor _data_,r18	 ; data <- (data ^ total) & (A ^ total)
-	eor r30,r18	 ;
-	and _data_,r30	 ;
-	bst _data_,7	 ; t <- (data ^ total) & (A ^ total) bit 7
-	bld _P_,6	 ; P.overflow <- t
-	/* high nybble fixup */
-	cpi r18,0xa0	 ; total,
-	cpc r19,__zero_reg__	 ;  total
-	brlo .L16	 ; branch if total < 0xa0
-	subi r18,-96	 ; total += 0x60
-	sbci r19,-1	 ;
-.L16:
-	clr _C_	 ; C <- 0
-	cpse r19,__zero_reg__	 ;
-	inc _C_	 ; C <- 1 if r19 > 0
-	mov _A_,r18	 ; A <- lo8(total)
-	rjmp .tick
-	.size	cpu6502_ADC, .-cpu6502_ADC
 	.section	.text.cpu6502_LAX,"ax",@progbits
 	.type	cpu6502_LAX, @function
 cpu6502_LAX:
@@ -399,79 +329,6 @@ cpu6502_LAX:
 	mov _A_,_data_	 ;
 	ret
 	.size	cpu6502_LAX, .-cpu6502_LAX
-	.section	.text.cpu6502_SBC,"ax",@progbits
-	.type	cpu6502_SBC, @function
-cpu6502_SBC:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-.SBC:
-	mov r21,_P_	 ;  reg_p.249, reg_p
-	mov r20,_A_	 ;  reg_a.250, reg_a
-	mov r18,_C_	 ;  flag_c, flag_c
-	sbrs r21,3	 ;  reg_p.249,
-	rjmp .L30	 ; 
-	mov r25,r20	 ;  D.3761, reg_a.250
-	andi r25,lo8(15)	 ;  D.3761,
-	add r25,r18	 ;  D.3761, flag_c
-	mov r18,_data_	 ;  D.3761, D.3761
-	andi r18,lo8(15)	 ;  D.3761,
-	sub r25,r18	 ;  D.3761, D.3761
-	ldi r18,lo8(-7)	 ;  result,
-	add r18,r25	 ;  result, D.3761
-	cpi r18,lo8(-16)	 ;  result,
-	brsh .L31	 ; ,
-	ldi r18,lo8(9)	 ;  result,
-	add r18,r25	 ;  result, D.3761
-.L31:
-	mov r25,r20	 ;  result, reg_a.250
-	andi r25,lo8(-16)	 ;  result,
-	mov r19,_data_	 ;  D.3761, D.3761
-	andi r19,lo8(-16)	 ;  D.3761,
-	sub r25,r19	 ;  result, D.3761
-	add r25,r18	 ;  result, result
-	mov _Z_,r25	 ;  flag_z, result
-	mov _N_,r25	 ;  flag_n, result
-	andi r21,lo8(-66)	 ;  reg_p.253,
-	mov r18,r25	 ;  D.3761, result
-	eor r18,r20	 ;  D.3761, reg_a.250
-	eor r20,_data_	 ;  D.3761, D.3761
-	and r18,r20	 ;  D.3761, D.3761
-	sbrc r18,7	 ;  D.3761,
-	ori r21,lo8(64)	 ;  reg_p.254,
-.L37:
-	mov _P_,r21	 ;  reg_p, reg_p.254
-	mov _C_,__zero_reg__	 ;  flag_c,
-	subi r25,lo8(-(-96))	 ;  result,
-	rjmp .L34	 ; 
-.L30:
-	ldi r19,0	 ;  total
-	add r18,r20	 ;  total, reg_a.250
-	adc r19,__zero_reg__	 ;  total
-	subi r18,1	 ;  total,
-	sbc r19,__zero_reg__	 ;  total
-	sub r18,_data_	 ;  total, D.3761
-	sbc r19,__zero_reg__	 ;  total
-	mov _C_,r19	 ;  flag_c, total
-	mov r25,r18	 ;  result, total
-	mov r22,r21	 ;  reg_p.257, reg_p.249
-	andi r22,lo8(-65)	 ;  reg_p.257,
-	mov r21,r20	 ;  D.3761, reg_a.250
-	eor r21,r18	 ;  D.3761, total
-	eor r20,_data_	 ;  D.3761, D.3761
-	and r21,r20	 ;  D.3761, D.3761
-	sbrc r21,7	 ;  D.3761,
-	ori r22,lo8(64)	 ;  reg_p.254,
-.L38:
-	mov _P_,r22	 ;  reg_p, reg_p.254
-	mov _Z_,r18	 ;  flag_z, total
-	mov _N_,r18	 ;  flag_n, total
-.L34:
-	mov _A_,r25	 ;  reg_a, result
-	rjmp .tick
-	.size	cpu6502_SBC, .-cpu6502_SBC
 	.section	.text.cpu6502_ASL,"ax",@progbits
 	.type	cpu6502_ASL, @function
 cpu6502_ASL:
@@ -1388,7 +1245,67 @@ cpu_main:
 	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; cycles <- 2
-	rjmp .ADC
+.ADC:
+	sbrc _P_,3	 ; skip if decimal mode is set
+	rjmp .ADC_dec	 ; jump if decimal mode is clear
+.ADC_bin:
+	lsr _C_	 ; carry <- C <- 0
+	adc _A_,_data_	 ; (carry, A) <- A + data + carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	brvs .ADC_bin_overflow	 ; branch on overflow
+	rol _C_	 ; C <- carry <- 0
+	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
+	rjmp .tick
+.ADC_bin_overflow:
+	rol _C_	 ; C <- carry <- 0
+	ori _P_,V_FLAG	 ; P |= V_FLAG
+	rjmp .tick
+.ADC_dec:
+	mov r30,_A_	 ; r30 <- A
+	mov r18,_A_	 ; total <- A
+	ldi r19,0	 ;
+	add r18,_C_	 ; total += C
+	adc r19,__zero_reg__	 ;
+	add r18,_data_	 ; total += data
+	adc r19,__zero_reg__	 ;
+	mov _Z_,r18	 ; Z <- lo8(total)
+	mov r25,_A_	 ; temp25 <- A
+	andi r25,0x0f	 ; temp25 <- A & 0x0f
+	add r25,_C_	 ; temp25 += C
+	mov r20,_data_	 ; temp20 <- data
+	andi r20,0x0f	 ; temp20 <- data & 0x0f
+	add r25,r20	 ; temp25 += temp20
+	cpi r25,10	 ;
+	brlo .L12	 ; branch if temp25 < 10
+	cpi r25,26	 ;
+	brsh .L13	 ; branch if temp25 < 26
+	subi r18,-6	 ; total += 6
+	sbci r19,-1	 ;
+	rjmp .L12	 ;
+.L13:
+	subi r18,10	 ; total -= 10
+	sbc r19,__zero_reg__	 ;
+.L12:
+	/* set N, V after low nybble fixup */
+	mov _N_,r18	 ; N <- lo8(total)
+	eor _data_,r18	 ; data <- (data ^ total) & (A ^ total)
+	eor r30,r18	 ;
+	and _data_,r30	 ;
+	bst _data_,7	 ; t <- (data ^ total) & (A ^ total) bit 7
+	bld _P_,6	 ; P.overflow <- t
+	/* high nybble fixup */
+	cpi r18,0xa0	 ; total,
+	cpc r19,__zero_reg__	 ;  total
+	brlo .L16	 ; branch if total < 0xa0
+	subi r18,-96	 ; total += 0x60
+	sbci r19,-1	 ;
+.L16:
+	clr _C_	 ; C <- 0
+	cpse r19,__zero_reg__	 ;
+	inc _C_	 ; C <- 1 if r19 > 0
+	mov _A_,r18	 ; A <- lo8(total)
+	rjmp .tick
 .x6d_ADC_abs:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
@@ -1500,7 +1417,70 @@ cpu_main:
 	rcall mem_read_pc	 ; data <- read(PC)
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; cycles <- 2
-	rjmp .SBC
+.SBC:
+	mov r21,_P_	 ;  reg_p.249, reg_p
+	mov r20,_A_	 ;  reg_a.250, reg_a
+	mov r18,_C_	 ;  flag_c, flag_c
+	sbrs r21,3	 ;  reg_p.249,
+	rjmp .L30	 ; 
+	mov r25,r20	 ;  D.3761, reg_a.250
+	andi r25,lo8(15)	 ;  D.3761,
+	add r25,r18	 ;  D.3761, flag_c
+	mov r18,_data_	 ;  D.3761, D.3761
+	andi r18,lo8(15)	 ;  D.3761,
+	sub r25,r18	 ;  D.3761, D.3761
+	ldi r18,lo8(-7)	 ;  result,
+	add r18,r25	 ;  result, D.3761
+	cpi r18,lo8(-16)	 ;  result,
+	brsh .L31	 ; ,
+	ldi r18,lo8(9)	 ;  result,
+	add r18,r25	 ;  result, D.3761
+.L31:
+	mov r25,r20	 ;  result, reg_a.250
+	andi r25,lo8(-16)	 ;  result,
+	mov r19,_data_	 ;  D.3761, D.3761
+	andi r19,lo8(-16)	 ;  D.3761,
+	sub r25,r19	 ;  result, D.3761
+	add r25,r18	 ;  result, result
+	mov _Z_,r25	 ;  flag_z, result
+	mov _N_,r25	 ;  flag_n, result
+	andi r21,lo8(-66)	 ;  reg_p.253,
+	mov r18,r25	 ;  D.3761, result
+	eor r18,r20	 ;  D.3761, reg_a.250
+	eor r20,_data_	 ;  D.3761, D.3761
+	and r18,r20	 ;  D.3761, D.3761
+	sbrc r18,7	 ;  D.3761,
+	ori r21,lo8(64)	 ;  reg_p.254,
+.L37:
+	mov _P_,r21	 ;  reg_p, reg_p.254
+	mov _C_,__zero_reg__	 ;  flag_c,
+	subi r25,lo8(-(-96))	 ;  result,
+	rjmp .L34	 ; 
+.L30:
+	ldi r19,0	 ;  total
+	add r18,r20	 ;  total, reg_a.250
+	adc r19,__zero_reg__	 ;  total
+	subi r18,1	 ;  total,
+	sbc r19,__zero_reg__	 ;  total
+	sub r18,_data_	 ;  total, D.3761
+	sbc r19,__zero_reg__	 ;  total
+	mov _C_,r19	 ;  flag_c, total
+	mov r25,r18	 ;  result, total
+	mov r22,r21	 ;  reg_p.257, reg_p.249
+	andi r22,lo8(-65)	 ;  reg_p.257,
+	mov r21,r20	 ;  D.3761, reg_a.250
+	eor r21,r18	 ;  D.3761, total
+	eor r20,_data_	 ;  D.3761, D.3761
+	and r21,r20	 ;  D.3761, D.3761
+	sbrc r21,7	 ;  D.3761,
+	ori r22,lo8(64)	 ;  reg_p.254,
+.L38:
+	mov _P_,r22	 ;  reg_p, reg_p.254
+	mov _Z_,r18	 ;  flag_z, total
+	mov _N_,r18	 ;  flag_n, total
+.L34:
+	mov _A_,r25	 ;  reg_a, result
+	rjmp .tick
 .xed_SBC_abs:
 	ldi XL,lo8(gs(.SBC))
 	ldi XH,hi8(gs(.SBC))
