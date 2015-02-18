@@ -41,7 +41,21 @@ B_FLAG = 0x10
 V_FLAG = 0x40
 N_FLAG = 0x80
 
-#define TICK(n) ldi _cycles_,(n) $ rjmp .tick
+#define TICK(n) \
+	ldi _cycles_,(n) $ \
+	rjmp .tick
+
+#define PUSH(reg) \
+	mov ZL, _S_ $ \
+	ldi ZH, hi8(ram+256) $ \
+	st Z, (reg) $ \
+	dec _S_
+
+#define PULL(reg) \
+	inc _S_ $ \
+	mov ZL, _S_ $ \
+	ldi ZH, hi8(ram+256) $ \
+	ld (reg), Z
 
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
@@ -201,10 +215,7 @@ cpu6502_PLP:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	inc _S_	 ; S ++
-	mov ZL,_S_	 ;
-	ldi ZH,hi8(ram+256)	 ;
-	ld _P_,Z	 ; P <- stack[S]
+	PULL(_P_)	 ; P <- stack[++S]
 	mov _N_,_P_	 ; N <- P
 	bst _P_,1	 ; b <- P bit 1
 	clr _Z_	 ; Z <- 0
@@ -223,13 +234,8 @@ cpu6502_JSR:
 /* stack size = 0 */
 .L__stack_usage = 0
 	sbiw _PCL_,1	 ; PC -= 1
-	mov XL,_S_	 ;
-	ldi XH,hi8(ram+256)	 ;
-	st X,_PCH_	 ; stack[S] = PCH
-	dec XL	 ;
-	st X,_PCL_	 ; stack[S-1] = PCL
-	dec _S_	 ;  S -= 2
-	dec _S_	 ; (FIXME: save 1 instr if _S_ >= 16)
+	PUSH(_PCH_)
+	PUSH(_PCL_)
 	movw _PCL_,r24	 ; PC <- address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
@@ -240,13 +246,8 @@ cpu6502_RTS:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	inc _S_	 ; S += 1
-	ldi XH,hi8(ram+256)	 ;
-	mov XL,_S_	 ;
-	ld _PCL_,X	 ; PCL <- stack[S]
-	inc _S_	 ; S += 1
-	mov XL,_S_	 ;
-	ld _PCH_,X	 ; PCH <- stack[S]
+	PULL(_PCL_)	 ; PCL <- stack[++S]
+	PULL(_PCH_)	 ; PCH <- stack[++S]
 	adiw _PCL_,1	 ; PC ++
 	ret
 	.size	cpu6502_RTS, .-cpu6502_RTS
@@ -506,10 +507,7 @@ cpu6502_PHP:
 /* stack size = 0 */
 .L__stack_usage = 0
 	rcall update_p	 ;
-	inc _S_	 ; S ++
-	mov ZL,_S_	 ;
-	ldi ZH,hi8(ram+256)	 ;
-	st Z,_P_	 ; stack[S] <- P
+	PUSH(_P_)	 ; stack[S--] <- P
 	ret
 	.size	cpu6502_PHP, .-cpu6502_PHP
 	.section	.text.cpu6502_DCP,"ax",@progbits
@@ -798,6 +796,7 @@ cpu_main:
 	rjmp .L366	 ; save state and exit
 .tick:			 ;
 	sub _time0_,_cycles_	 ; time_left -= cycles
+.ticked:			 ;
 	brcc .load_opcode	 ; abort early if no carry
 	sbc _time1_,__zero_reg__	 ;
 	sbc _time2_,__zero_reg__	 ;
@@ -1712,10 +1711,7 @@ cpu_main:
 	rcall update_p	 ;
 	mov r25,_P_	 ; temp = P
 	ori r25,B_FLAG	 ; temp |= B_FLAG
-	mov ZL,_S_	 ;
-	ldi ZH,hi8(ram+256)	 ;
-	st Z,r25	 ; stack[S] <- temp
-	dec _S_	 ; S --
+	PUSH(r25)	 ; stack[S--] <- temp
 	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
 	TICK(7)
 .x20_JSR:
@@ -1751,17 +1747,11 @@ cpu_main:
 	TICK(4)
 .x48_PHA:
 	adiw _PCL_,1	 ; PC++
-	mov ZL,_S_	 ;
-	ldi ZH,hi8(ram+256)	 ;
-	st Z,_A_	 ; stack[S] <- A
-	dec _S_	 ; S --
+	PUSH(_A_)	 ; stack[S--] <- A
 	TICK(3)
 .x68_PLA:
 	adiw _PCL_,1	 ; PC++
-	inc _S_	 ; S ++
-	mov ZL,_S_	 ;
-	ldi ZH,hi8(ram+256)	 ;
-	ld _A_,Z	 ; A <- stack[S]
+	PULL(_A_)	 ; A <- stack[++S]
 	mov _Z_,_A_	 ; Z <- A
 	mov _N_,_A_	 ; N <- A
 	TICK(4)
