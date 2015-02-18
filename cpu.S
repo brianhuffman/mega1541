@@ -1575,14 +1575,20 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .take_branch:
-	mov r19,_PCH_	 ; temp = PCH
 	add _PCL_,_data_	 ; PC += data
-	adc _PCH_,__zero_reg__	 ;
-	sbrc _data_,7	 ; if (data & 0x80) PCH--
-	dec _PCH_	 ;
+        tst _data_
+        brcs .branch_carry
+        brpl .branch_same_page	 ; branch if offset is positive
+	dec _PCH_
+	ldi _cycles_,4	 ; 4 cycles for branch to previous page
+	rjmp .tick	 ;
+.branch_carry:
+        brmi .branch_same_page	 ; branch if offset is negative
+	inc _PCH_	 ;
+	ldi _cycles_,4	 ; 4 cycles for branch to next page
+	rjmp .tick	 ;
+.branch_same_page:
 	ldi _cycles_,3	 ; 3 cycles for branch to same page
-	cpse _PCH_,r19	 ; skip if same page
-	ldi _cycles_,4	 ; 4 cycles for branch to different page
 	rjmp .tick	 ;
 .x90_BCC:
 	adiw _PCL_,2	 ; PC += 2
