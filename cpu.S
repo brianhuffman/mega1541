@@ -636,7 +636,7 @@ addr_iny:
 /* stack size = 0 */
 .L__stack_usage = 0
 	adiw _PCL_,1	 ; PC++
-	mov ZL,r24	 ;
+	mov ZL,_data_	 ;
 	ldi ZH,hi8(-(ram))	 ;
 	ld r24,Z	 ; r24 <- ram[data]
 	inc ZL	 ;
