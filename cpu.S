@@ -410,13 +410,11 @@ cpu6502_SHA:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	mov r22,_X_	 ;  D.3792, reg_x
-	mov r18,_A_	 ;  reg_a, reg_a
-	and r22,r18	 ;  D.3792, reg_a
-	ldi r18,lo8(1)	 ;  D.3792,
-	add r18,r25	 ;  D.3792, address
-	and r22,r18	 ;  D.3792, D.3792
-	rjmp mem_write	 ; 
+	mov _data_,r25	 ; data <- addr_hi
+	inc _data_	 ; data += 1
+	and _data_,_X_	 ; data &= X
+	and _data_,_A_	 ; data &= A
+	rjmp mem_write	 ; mem_write(addr, A & X & (addr_hi + 1))
 	.size	cpu6502_SHA, .-cpu6502_SHA
 	.section	.text.cpu6502_DEC,"ax",@progbits
 	.type	cpu6502_DEC, @function
