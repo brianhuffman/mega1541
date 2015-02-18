@@ -41,6 +41,8 @@ B_FLAG = 0x10
 V_FLAG = 0x40
 N_FLAG = 0x80
 
+#define TICK(n) ldi _cycles_,(n) $ rjmp .tick
+
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
  ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -1554,105 +1556,87 @@ cpu_main:
 	adiw _PCL_,2	 ; PC += 2
 	tst _N_	 ; branch on N >= 0
 	brpl .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x30_BMI:
 	adiw _PCL_,2	 ; PC += 2
 	tst _N_	 ; branch on N < 0
 	brmi .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x50_BVC:
 	adiw _PCL_,2	 ; PC += 2
 	bst _P_,6	 ; branch on P bit 6 = 0
 	brtc .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x70_BVS:
 	adiw _PCL_,2	 ; PC += 2
 	bst _P_,6	 ; branch on P bit 6 = 1
 	brts .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .take_branch:
 	add _PCL_,_data_	 ; PC += data
         tst _data_
         brcs .branch_carry
         brpl .branch_same_page	 ; branch if offset is positive
 	dec _PCH_
-	ldi _cycles_,4	 ; 4 cycles for branch to previous page
-	rjmp .tick	 ;
+	TICK(4)	 ; 4 cycles for branch to previous page
 .branch_carry:
         brmi .branch_same_page	 ; branch if offset is negative
 	inc _PCH_	 ;
-	ldi _cycles_,4	 ; 4 cycles for branch to next page
-	rjmp .tick	 ;
+	TICK(4)	 ; 4 cycles for branch to next page
 .branch_same_page:
-	ldi _cycles_,3	 ; 3 cycles for branch to same page
-	rjmp .tick	 ;
+	TICK(3)	 ; 3 cycles for branch to same page
 .x90_BCC:
 	adiw _PCL_,2	 ; PC += 2
 	tst _C_	 ; branch on C = 0
 	breq .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xb0_BCS:
 	adiw _PCL_,2	 ; PC += 2
 	tst _C_	 ; branch on C != 0
 	brne .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xd0_BNE:
 	adiw _PCL_,2	 ; PC += 2
 	tst _Z_	 ; branch on Z != 0
 	brne .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xf0_BEQ:
 	adiw _PCL_,2	 ; PC += 2
 	tst _Z_	 ; branch on Z = 0
 	breq .take_branch	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 
 /***************************** FLAG INSTRUCTIONS ******************************/
 
 .x18_CLC:
 	adiw _PCL_,1	 ; PC++
 	clr _C_	 ; C <- 0
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x38_SEC:
 	adiw _PCL_,1	 ; PC++
 	clr _C_	 ;
 	inc _C_	 ; C <- 1
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x58_CLI:
 	adiw _PCL_,1	 ; PC++
 	andi _P_,~I_FLAG	 ; P &= ~I_FLAG
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x78_SEI:
 	adiw _PCL_,1	 ; PC++
 	ori _P_,I_FLAG	 ; P |= I_FLAG
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xb8_CLV:
 	adiw _PCL_,1	 ; PC++
 	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xd8_CLD:
 	adiw _PCL_,1	 ; PC++
 	andi _P_,~D_FLAG	 ; P &= ~D_FLAG
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xf8_SED:
 	adiw _PCL_,1	 ; PC++
 	ori _P_,D_FLAG	 ; P |= D_FLAG
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 
 /*************************** REGISTER INSTRUCTIONS ****************************/
 
@@ -1661,71 +1645,61 @@ cpu_main:
 	dec _X_	 ; X--
 	mov _Z_,_X_	 ;
 	mov _N_,_X_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xe8_INX:
 	adiw _PCL_,1	 ; PC++
 	inc _X_	 ; X++
 	mov _Z_,_X_	 ;
 	mov _N_,_X_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x88_DEY:
 	adiw _PCL_,1	 ; PC++
 	dec _Y_	 ; Y--
 	mov _Z_,_Y_	 ;
 	mov _N_,_Y_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xc8_INY:
 	adiw _PCL_,1	 ; PC++
 	inc _Y_	 ; Y++
 	mov _Z_,_Y_	 ;
 	mov _N_,_Y_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x8a_TXA:
 	adiw _PCL_,1	 ; PC++
 	mov _A_,_X_	 ; A <- X
 	mov _Z_,_X_	 ;
 	mov _N_,_X_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xaa_TAX:
 	adiw _PCL_,1	 ; PC++
 	mov _X_,_A_	 ; X <- A
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x98_TYA:
 	adiw _PCL_,1	 ; PC++
 	mov _A_,_Y_	 ; A <- Y
 	mov _Z_,_Y_	 ;
 	mov _N_,_Y_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xa8_TAY:
 	adiw _PCL_,1	 ; PC++
 	mov _Y_,_A_	 ; Y <- A
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x9a_TXS:
 	adiw _PCL_,1	 ; PC++
 	mov _S_,_X_	 ; S <- X
 	mov _Z_,_X_	 ;
 	mov _N_,_X_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xba_TSX:
 	adiw _PCL_,1	 ; PC++
 	mov _X_,_S_	 ; X <- S
 	mov _Z_,_S_	 ;
 	mov _N_,_S_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 
 /*************************** STACK/PC INSTRUCTIONS ****************************/
 
@@ -1743,54 +1717,45 @@ cpu_main:
 	st Z,r25	 ; stack[S] <- temp
 	dec _S_	 ; S --
 	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp .tick	 ;
+	TICK(7)
 .x20_JSR:
 	rcall addr_abs	 ;
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_JSR	 ;
-	rjmp .tick	 ;
+	TICK(6)
 .x40_RTI:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_PLP	 ;
 	rcall cpu6502_RTS	 ;
-	rjmp .tick	 ;
+	TICK(6)
 .x60_RTS:
 	adiw _PCL_,1	 ; PC++
 	rcall cpu6502_RTS	 ;
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp .tick	 ;
+	TICK(6)
 .x4c_JMP_abs:
 	rcall addr_abs	 ;
 	mov _PCH_,r25	 ;  reg_pc,
 	mov _PCL_,r24	 ;  reg_pc,
-	ldi _cycles_,3	 ; 3 cycles
-	rjmp .tick	 ;
+	TICK(3)
 .x6c_JMP_ind:
 	rcall addr_ind	 ;
-	ldi _cycles_,5	 ; 5 cycles
 	mov _PCH_,r25	 ;  reg_pc,
 	mov _PCL_,r24	 ;  reg_pc,
-	rjmp .tick	 ;
+	TICK(5)
 .x08_PHP:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,3	 ; 3 cycles
 	rcall cpu6502_PHP	 ;
-	rjmp .tick	 ;
+	TICK(3)
 .x28_PLP:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_PLP	 ;
-	rjmp .tick	 ;
+	TICK(4)
 .x48_PHA:
 	adiw _PCL_,1	 ; PC++
 	mov ZL,_S_	 ;
 	ldi ZH,hi8(ram+256)	 ;
 	st Z,_A_	 ; stack[S] <- A
 	dec _S_	 ; S --
-	ldi _cycles_,3	 ; 3 cycles
-	rjmp .tick	 ;
+	TICK(3)
 .x68_PLA:
 	adiw _PCL_,1	 ; PC++
 	inc _S_	 ; S ++
@@ -1799,8 +1764,7 @@ cpu_main:
 	ld _A_,Z	 ; A <- stack[S]
 	mov _Z_,_A_	 ; Z <- A
 	mov _N_,_A_	 ; N <- A
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 
 /******************************************************************************/
 
@@ -1810,13 +1774,11 @@ cpu_main:
 	rjmp cpu6502_SLO
 .x04:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
-	rjmp .tick	 ;
+	TICK(3)
 .x06:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_ASL	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .x07:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
@@ -1829,8 +1791,7 @@ cpu_main:
 	rol _C_	 ; C <- carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x0b:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
@@ -1842,17 +1803,14 @@ cpu_main:
 	clr r24	 ;  D.4025
 	rol r24	 ;  D.4025
 	mov _C_,r24	 ;  flag_c, D.4025
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x0c:
 	rcall addr_abs	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .x0e:
 	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_ASL	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x0f:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -1863,21 +1821,18 @@ cpu_main:
 	rjmp cpu6502_SLO
 .x14:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x16:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_ASL	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x17:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_SLO
 .x1a:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x1b:
 	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
@@ -1888,9 +1843,8 @@ cpu_main:
 	rjmp .tick	 ;
 .x1e:
 	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
 	rcall cpu6502_ASL	 ; 
-	rjmp .tick	 ;
+	TICK(7)
 .x1f:
 	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
@@ -1901,14 +1855,12 @@ cpu_main:
 	rjmp cpu6502_RLA
 .x24:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	rcall cpu6502_BIT	 ; 
-	rjmp .tick	 ;
+	TICK(3)
 .x26:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_ROL	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .x27:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
@@ -1921,8 +1873,7 @@ cpu_main:
 	rol _C_	 ; C <- carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x2b:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
@@ -1934,18 +1885,15 @@ cpu_main:
 	clr r24	 ;  D.4025
 	rol r24	 ;  D.4025
 	mov _C_,r24	 ;  flag_c, D.4025
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x2c:
 	rcall addr_abs	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_BIT	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x2e:
 	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_ROL	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x2f:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -1960,30 +1908,26 @@ cpu_main:
 	rjmp .tick	 ;
 .x36:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_ROL	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x37:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_RLA
 .x3a:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x3b:
 	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_RLA
 .x3c:
 	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .x3e:
 	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
 	rcall cpu6502_ROL	 ; 
-	rjmp .tick	 ;
+	TICK(7)
 .x3f:
 	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
@@ -1994,13 +1938,11 @@ cpu_main:
 	rjmp cpu6502_SRE
 .x44:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
-	rjmp .tick	 ;
+	TICK(3)
 .x46:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_LSR	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .x47:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
@@ -2013,25 +1955,22 @@ cpu_main:
 	rol _C_	 ; C <- carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x4b:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
 	rcall cpu6502_AND	 ; 
 	clr _C_	 ; C <- 0
 	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
 	rol _C_	 ; C <- carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	rjmp .tick	 ;
+	TICK(2)
 .x4e:
 	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_LSR	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x4f:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -2042,34 +1981,29 @@ cpu_main:
 	rjmp cpu6502_SRE
 .x54:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .x56:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_LSR	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x57:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_SRE
 .x5a:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x5b:
 	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_SRE
 .x5c:
 	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .x5e:
 	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
 	rcall cpu6502_LSR	 ; 
-	rjmp .tick	 ;
+	TICK(7)
 .x5f:
 	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
@@ -2080,13 +2014,11 @@ cpu_main:
 	rjmp cpu6502_RRA
 .x64:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
-	rjmp .tick	 ;
+	TICK(3)
 .x66:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_ROR	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .x67:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
@@ -2099,18 +2031,15 @@ cpu_main:
 	rol _C_	 ; C <- carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x6b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x6e:
 	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_ROR	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x6f:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -2125,30 +2054,26 @@ cpu_main:
 	rjmp .tick	 ;
 .x76:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_ROR	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x77:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_RRA
 .x7a:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x7b:
 	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_RRA
 .x7c:
 	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .x7e:
 	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
 	rcall cpu6502_ROR	 ; 
-	rjmp .tick	 ;
+	TICK(7)
 .x7f:
 	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
@@ -2157,207 +2082,171 @@ cpu_main:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x81:
 	rcall addr_inx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_STA	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x82:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x83:
 	rcall addr_inx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_SAX	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x84:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	mov r22,_Y_	 ; , reg_y
 	rcall mem_write	 ; 
-	rjmp .tick	 ;
+	TICK(3)
 .x85:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	rcall cpu6502_STA	 ; 
-	rjmp .tick	 ;
+	TICK(3)
 .x86:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	mov r22,_X_	 ; , reg_x
 	rcall mem_write	 ; 
-	rjmp .tick	 ;
+	TICK(3)
 .x87:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	rcall cpu6502_SAX	 ; 
-	rjmp .tick	 ;
+	TICK(3)
 .x89:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x8b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .x8c:
 	rcall addr_abs	 ; 
 	mov r22,_Y_	 ; , reg_y
 	rcall mem_write	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .x8d:
 	rcall addr_abs	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_STA	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x8e:
 	rcall addr_abs	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	mov r22,_X_	 ; , reg_x
 	rcall mem_write	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x8f:
 	rcall addr_abs	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_SAX	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x91:
 	rcall addr_iny	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_STA	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .x93:
 	rcall addr_iny	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_SHA	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .x94:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	mov r22,_Y_	 ; , reg_y
 	rcall mem_write	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x95_STA_zpx:
 	adiw _PCL_,2	 ; PC += 2
 	mov ZL,_data_	 ;
 	add ZL,_X_      ;
 	ldi ZH,hi8(ram)	 ;
 	st Z,_A_	 ; ram[r24+X] <- A
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .x96:
 	rcall addr_zpy	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	mov r22,_X_	 ; , reg_x
 	rcall mem_write	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x97:
 	rcall addr_zpy	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_SAX	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x99:
 	rcall addr_aby	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_STA	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x9b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp .tick	 ;
+	TICK(5)
 .x9c:
 	rcall addr_abx	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	ldi r22,lo8(1)	 ;  D.4021,
 	add r22,r25	 ;  D.4021, D.4020
 	mov r18,_Y_	 ;  reg_y, reg_y
 	and r22,r18	 ;  D.4021, reg_y
 	rcall mem_write	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .x9d:
 	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_STA	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .x9e:
 	rcall addr_aby	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	ldi r22,lo8(1)	 ;  D.4021,
 	add r22,r25	 ;  D.4021, D.4020
 	mov r18,_X_	 ;  reg_x, reg_x
 	and r22,r18	 ;  D.4021, reg_x
 	rcall mem_write	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .x9f:
 	rcall addr_aby	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_SHA	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .xa3:
 	rcall addr_inx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_LAX	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .xa7:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	rcall cpu6502_LAX	 ; 
-	rjmp .tick	 ;
+	TICK(3)
 .xab:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xaf:
 	rcall addr_abs	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_LAX	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .xb3:
 	rcall addr_iny	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_LAX	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .xb7:
 	rcall addr_zpy	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_LAX	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .xbb:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .xbf:
 	rcall addr_aby	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_LAX	 ; 
-	rjmp .tick	 ;
+	TICK(4)
 .xc2:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xc3:
 	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
 	rjmp cpu6502_DCP
 .xc6:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_DEC	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .xc7:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
@@ -2380,13 +2269,11 @@ cpu_main:
 	mov _Z_,r25	 ;  flag_z, flag_z.226
 	mov _N_,r25	 ;  flag_n, flag_z.226
 	mov _X_,r25	 ;  reg_x, flag_z.226
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xce:
 	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_DEC	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .xcf:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -2401,30 +2288,26 @@ cpu_main:
 	rjmp .tick	 ;
 .xd6:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_DEC	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .xd7:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_DCP
 .xda:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xdb:
 	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_DCP
 .xdc:
 	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .xde:
 	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
 	rcall cpu6502_DEC	 ; 
-	rjmp .tick	 ;
+	TICK(7)
 .xdf:
 	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
@@ -2433,17 +2316,15 @@ cpu_main:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xe3:
 	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
 	rjmp cpu6502_ISB
 .xe6:
 	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
 	rcall cpu6502_INC	 ; 
-	rjmp .tick	 ;
+	TICK(5)
 .xe7:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
@@ -2451,13 +2332,11 @@ cpu_main:
 /* NOP */
 .xea:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xee:
 	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_INC	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .xef:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -2472,30 +2351,26 @@ cpu_main:
 	rjmp .tick	 ;
 .xf6:
 	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_INC	 ; 
-	rjmp .tick	 ;
+	TICK(6)
 .xf7:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_ISB
 .xfa:
 	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
+	TICK(2)
 .xfb:
 	rcall addr_aby	 ; 
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_ISB
 .xfc:
 	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
+	TICK(4)
 .xfe:
 	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
 	rcall cpu6502_INC	 ; 
-	rjmp .tick	 ;
+	TICK(7)
 .xff:
 	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
@@ -2512,8 +2387,7 @@ cpu_main:
 .xb2:
 .xd2:
 .xf2:
-	ldi _cycles_,128	 ; loop in place, very slowly
-	rjmp .tick	 ;
+	TICK(128)	 ; loop in place, very slowly
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
