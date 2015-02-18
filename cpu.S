@@ -1518,6 +1518,117 @@ cpu_main:
 	ldi XH,hi8(gs(.CPY))
 	rjmp .read_abs
 
+/******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
+/*
+input:  return address in XH:XL
+output: data value in _data_, tick count in _cycles_
+*/
+.read_imm:
+	adiw _PCL_,2	 ; PC += 2
+	ldi _cycles_,2	 ; cycles <- 2
+	movw ZL,XL
+	ijmp
+.read_zpg:
+	adiw _PCL_,2	 ; PC += 2
+	mov ZL,_data_	 ;
+	ldi ZH,hi8(ram)	 ;
+	ld _data_,Z	 ; data <- ram[data]
+	ldi _cycles_,3	 ; cycles <- 3
+	movw ZL,XL
+	ijmp
+.read_zpx:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_X_	 ; data += X
+	mov ZL,_data_	 ;
+	ldi ZH,hi8(ram)	 ;
+	ld _data_,Z	 ; data <- ram[data]
+	ldi _cycles_,4	 ; cycles <- 4
+	movw ZL,XL
+	ijmp
+.read_zpy:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_Y_	 ; r24 += Y
+	mov ZL,_data_	 ;
+	ldi ZH,hi8(ram)	 ;
+	ld _data_,Z	 ; data <- ram[data]
+	ldi _cycles_,4	 ; cycles <- 4
+	movw ZL,XL
+	ijmp
+.read_abs:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,4	 ; cycles <- 4
+	movw ZL,XL
+	ijmp
+.read_abx:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_X_	 ; r24 += X
+	brcs .read_abx_carry	 ; branch if r24+X carries
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,4	 ; cycles <- 4
+	movw ZL,XL
+	ijmp
+.read_abx_carry:
+	inc r25	 ; r25++
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,5	 ; cycles <- 5
+	movw ZL,XL
+	ijmp
+.read_aby:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_Y_	 ; r24 += Y
+	brcs .read_aby_carry	 ; branch if r24+X carries
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,4	 ; cycles <- 4
+	movw ZL,XL
+	ijmp
+.read_aby_carry:
+	inc r25	 ; r25++
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,5	 ; cycles <- 5
+	movw ZL,XL
+	ijmp
+.read_inx:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_X_	 ; data += X
+	mov ZL,_data_	 ;
+	ldi ZH,hi8(ram)	 ;
+	ld r24,Z	 ; r24 <- ram[r24]
+	inc ZL	 ; ZL++
+	ld r25,Z	 ; r25 <- ram[r24+1]
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,6	 ; cycles <- 6
+	movw ZL,XL
+	ijmp
+.read_iny:
+	adiw _PCL_,2	 ; PC += 2
+	mov ZL,_data_	 ;
+	ldi ZH,hi8(ram)	 ;
+	ld r24,Z	 ; r24 <- ram[r24]
+	inc ZL	 ; ZL++
+	ld r25,Z	 ; r25 <- ram[r24+1]
+	add r24,_Y_	 ; r24 += Y
+	brcs .read_iny_carry	 ; branch if r24+Y carries
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,5	 ; cycles <- 5
+	movw ZL,XL
+	ijmp
+.read_iny_carry:
+	inc r25	 ; r25++
+	rcall mem_read	 ; data <- read(r25:r24)
+	ldi _cycles_,6	 ; cycles <- 6
+	movw ZL,XL
+	ijmp
+
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
 .x10_BPL:
@@ -2350,116 +2461,7 @@ cpu_main:
 .xf2:
 	TICK(128)	 ; loop in place, very slowly
 
-/******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
-/*
-input:  return address in XH:XL
-output: data value in _data_, tick count in _cycles_
-*/
-.read_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
-	movw ZL,XL
-	ijmp
-.read_zpg:
-	adiw _PCL_,2	 ; PC += 2
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[data]
-	ldi _cycles_,3	 ; cycles <- 3
-	movw ZL,XL
-	ijmp
-.read_zpx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[data]
-	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
-.read_zpy:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_Y_	 ; r24 += Y
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[data]
-	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
-.read_abs:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
-.read_abx:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
-	add r24,_X_	 ; r24 += X
-	brcs .read_abx_carry	 ; branch if r24+X carries
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
-.read_abx_carry:
-	inc r25	 ; r25++
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,5	 ; cycles <- 5
-	movw ZL,XL
-	ijmp
-.read_aby:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
-	add r24,_Y_	 ; r24 += Y
-	brcs .read_aby_carry	 ; branch if r24+X carries
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
-.read_aby_carry:
-	inc r25	 ; r25++
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,5	 ; cycles <- 5
-	movw ZL,XL
-	ijmp
-.read_inx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld r24,Z	 ; r24 <- ram[r24]
-	inc ZL	 ; ZL++
-	ld r25,Z	 ; r25 <- ram[r24+1]
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,6	 ; cycles <- 6
-	movw ZL,XL
-	ijmp
-.read_iny:
-	adiw _PCL_,2	 ; PC += 2
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld r24,Z	 ; r24 <- ram[r24]
-	inc ZL	 ; ZL++
-	ld r25,Z	 ; r25 <- ram[r24+1]
-	add r24,_Y_	 ; r24 += Y
-	brcs .read_iny_carry	 ; branch if r24+Y carries
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,5	 ; cycles <- 5
-	movw ZL,XL
-	ijmp
-.read_iny_carry:
-	inc r25	 ; r25++
-	rcall mem_read	 ; data <- read(r25:r24)
-	ldi _cycles_,6	 ; cycles <- 6
-	movw ZL,XL
-	ijmp
+/******************************************************************************/
 
 .L366:
 /* epilogue start */
