@@ -527,6 +527,7 @@ addr_zpg:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; reg_pc.3, reg_pc
 	adiw _PCL_,1	 ; PC++
 	rcall mem_read	 ; data <- mem_read(r25:r24)
@@ -542,6 +543,7 @@ addr_abs:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; , reg_pc
 	rcall mem_read_16	 ; 
 	adiw _PCL_,2	 ;  PC += 2
@@ -555,7 +557,7 @@ addr_zpx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
 	add r24,_data_	 ;
 	ldi r25,0	 ;
@@ -569,7 +571,7 @@ addr_zpy:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	add _data_,_Y_	 ; data += Y
 	add r24,_data_	 ;
 	ldi r25,0	 ;
@@ -583,6 +585,7 @@ addr_abx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	adiw _PCL_,2	 ; PC += 2
@@ -602,6 +605,7 @@ addr_aby:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	adiw _PCL_,2	 ; PC += 2
@@ -621,7 +625,7 @@ addr_inx:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
 	mov r24,_data_	 ;
 	ldi r25,0	 ;
@@ -635,7 +639,7 @@ addr_iny:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(-(ram))	 ;
 	ld r24,Z	 ; r24 <- ram[data]
@@ -657,6 +661,7 @@ addr_ind:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- mem_read(PC)
 	adiw _PCL_,2	 ; PC += 2
@@ -797,7 +802,6 @@ cpu_main:
 	brmi .L98	 ; quit if time < 0
 .load_opcode:
 	movw ZL,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
 	cpi ZH,0xc0	 ;
 	brlo .pc_no_rom	 ; branch if PC < 0xc000 */
 .pc_in_rom:
@@ -1092,7 +1096,7 @@ cpu_main:
 	ldi XH,hi8(gs(.ORA))
 	rjmp .read_zpg
 .x09_ORA_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .ORA:
 	or _A_,_data_	 ; A |= data
@@ -1128,7 +1132,7 @@ cpu_main:
 	ldi XH,hi8(gs(.AND))
 	rjmp .read_zpg
 .x29_AND_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .AND:
 	and _A_,_data_	 ; A &= data
@@ -1164,7 +1168,7 @@ cpu_main:
 	ldi XH,hi8(gs(.EOR))
 	rjmp .read_zpg
 .x49_EOR_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .EOR:
 	eor _A_,_data_	 ; A ^= data
@@ -1200,7 +1204,7 @@ cpu_main:
 	ldi XH,hi8(gs(.ADC))
 	rjmp .read_zpg
 .x69_ADC_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .ADC:
 	sbrc _P_,3	 ; skip if decimal mode is set
@@ -1292,7 +1296,7 @@ cpu_main:
 	ldi XH,hi8(gs(.LDA))
 	rjmp .read_zpg
 .xa9_LDA_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .LDA:
 	mov _A_,_data_	 ; A <- data
@@ -1328,7 +1332,7 @@ cpu_main:
 	ldi XH,hi8(gs(.CMP))
 	rjmp .read_zpg
 .xc9_CMP_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .CMP:
 	mov _Z_,_A_	 ; Z <- A
@@ -1369,7 +1373,7 @@ cpu_main:
 	rjmp .read_zpg
 .xe9_SBC_imm:
 .xeb_SBC_imm_undocumented:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .SBC:
 	mov r21,_P_	 ;  reg_p.249, reg_p
@@ -1456,7 +1460,7 @@ cpu_main:
 	ldi XH,hi8(gs(.SBC))
 	rjmp .read_abx
 .xa2_LDX_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .LDX:
 	mov _X_,_data_	 ; X <- data
@@ -1480,7 +1484,7 @@ cpu_main:
 	ldi XH,hi8(gs(.LDX))
 	rjmp .read_aby
 .xa0_LDY_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .LDY:
 	mov _Y_,_data_	 ; Y <- data
@@ -1504,7 +1508,7 @@ cpu_main:
 	ldi XH,hi8(gs(.LDY))
 	rjmp .read_abx
 .xe0_CPX_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .CPX:
 	mov _Z_,_X_	 ; Z <- X
@@ -1524,7 +1528,7 @@ cpu_main:
 	ldi XH,hi8(gs(.CPX))
 	rjmp .read_abs
 .xc0_CPY_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .CPY:
 	mov _Z_,_Y_	 ; Z <- Y
@@ -1547,31 +1551,30 @@ cpu_main:
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
 .x10_BPL:
+	adiw _PCL_,2	 ; PC += 2
 	tst _N_	 ; branch on N >= 0
 	brpl .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x30_BMI:
+	adiw _PCL_,2	 ; PC += 2
 	tst _N_	 ; branch on N < 0
 	brmi .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x50_BVC:
+	adiw _PCL_,2	 ; PC += 2
 	bst _P_,6	 ; branch on P bit 6 = 0
 	brtc .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x70_BVS:
+	adiw _PCL_,2	 ; PC += 2
 	bst _P_,6	 ; branch on P bit 6 = 1
 	brts .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .take_branch:
-	adiw _PCL_,1	 ; PC++
 	mov r19,_PCH_	 ; temp = PCH
 	add _PCL_,_data_	 ; PC += data
 	adc _PCH_,__zero_reg__	 ;
@@ -1582,27 +1585,27 @@ cpu_main:
 	ldi _cycles_,4	 ; 4 cycles for branch to different page
 	rjmp .tick	 ;
 .x90_BCC:
+	adiw _PCL_,2	 ; PC += 2
 	tst _C_	 ; branch on C = 0
 	breq .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xb0_BCS:
+	adiw _PCL_,2	 ; PC += 2
 	tst _C_	 ; branch on C != 0
 	brne .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xd0_BNE:
+	adiw _PCL_,2	 ; PC += 2
 	tst _Z_	 ; branch on Z != 0
 	brne .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xf0_BEQ:
+	adiw _PCL_,2	 ; PC += 2
 	tst _Z_	 ; branch on Z = 0
 	breq .take_branch	 ;
-	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 
@@ -1610,6 +1613,7 @@ cpu_main:
 
 /* BRK */
 .x00:
+	adiw _PCL_,1	 ; PC++
 	ldi r24,0xfe	 ;
 	ldi r25,0xff	 ;
 	rcall mem_read_16	 ;
@@ -1642,11 +1646,13 @@ cpu_main:
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp cpu6502_SLO
 .x08:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,3	 ; 3 cycles
 	rcall cpu6502_PHP	 ; 
 	rjmp .tick	 ;
 /* ASL accumulator */
 .x0a:
+	adiw _PCL_,1	 ; PC++
 	clr _C_	 ; C <- 0
 	lsl _A_	 ; A <- A << 1, carry <- A bit 7
 	rol _C_	 ; C <- carry
@@ -1655,6 +1661,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x0b:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	rcall cpu6502_AND	 ; 
@@ -1697,10 +1704,12 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_SLO
 .x18_CLC:
+	adiw _PCL_,1	 ; PC++
 	clr _C_	 ; C <- 0
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x1a:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x1b:
@@ -1744,11 +1753,13 @@ cpu_main:
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp cpu6502_RLA
 .x28:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,4	 ; 4 cycles
 	rcall cpu6502_PLP	 ; 
 	rjmp .tick	 ;
 /* ROL accumulator */
 .x2a:
+	adiw _PCL_,1	 ; PC++
 	lsr _C_	 ; carry <- C, C <- 0
 	rol _A_	 ; carry <- A7, A <- [A6, A5 .. A1, carry]
 	rol _C_	 ; C <- carry
@@ -1757,6 +1768,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x2b:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	rcall cpu6502_AND	 ; 
@@ -1800,11 +1812,13 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_RLA
 .x38_SEC:
+	adiw _PCL_,1	 ; PC++
 	clr _C_	 ;
 	inc _C_	 ; C <- 1
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x3a:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x3b:
@@ -1825,6 +1839,7 @@ cpu_main:
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_RLA
 .x40:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,6	 ; 6 cycles
 	rcall cpu6502_PLP	 ; 
 	rcall cpu6502_RTS	 ; 
@@ -1848,6 +1863,7 @@ cpu_main:
 	rjmp cpu6502_SRE
 /* PHA */
 .x48:
+	adiw _PCL_,1	 ; PC++
 	mov ZL,_S_	 ;
 	ldi ZH,hi8(ram+256)	 ;
 	st Z,_A_	 ; stack[S] <- A
@@ -1856,6 +1872,7 @@ cpu_main:
 	rjmp .tick	 ;
 /* LSR accumulator */
 .x4a:
+	adiw _PCL_,1	 ; PC++
 	clr _C_	 ; C <- 0
 	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
 	rol _C_	 ; C <- carry
@@ -1864,6 +1881,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x4b:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
@@ -1907,10 +1925,12 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_SRE
 .x58_CLI:
+	adiw _PCL_,1	 ; PC++
 	andi _P_,~I_FLAG	 ; P &= ~I_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x5a:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x5b:
@@ -1931,6 +1951,7 @@ cpu_main:
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_SRE
 .x60:
+	adiw _PCL_,1	 ; PC++
 	rcall cpu6502_RTS	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
@@ -1953,6 +1974,7 @@ cpu_main:
 	rjmp cpu6502_RRA
 /* PLA */
 .x68:
+	adiw _PCL_,1	 ; PC++
 	inc _S_	 ; S ++
 	mov ZL,_S_	 ;
 	ldi ZH,hi8(ram+256)	 ;
@@ -1963,6 +1985,7 @@ cpu_main:
 	rjmp .tick	 ;
 /* ROR accumulator */
 .x6a:
+	adiw _PCL_,1	 ; PC++
 	lsr _C_	 ; carry <- C, C <- 0
 	ror _A_	 ; A <- [carry, A7 .. A2, A1], carry <- A0
 	rol _C_	 ; C <- carry
@@ -1971,6 +1994,7 @@ cpu_main:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x6b:
+	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2007,10 +2031,12 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_RRA
 .x78_SEI:
+	adiw _PCL_,1	 ; PC++
 	ori _P_,I_FLAG	 ; P |= I_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x7a:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x7b:
@@ -2031,6 +2057,7 @@ cpu_main:
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_RRA
 .x80:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
@@ -2041,6 +2068,7 @@ cpu_main:
 	rcall cpu6502_STA	 ; 
 	rjmp .tick	 ;
 .x82:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
@@ -2074,24 +2102,28 @@ cpu_main:
 	rjmp .tick	 ;
 /* DEY */
 .x88:
+	adiw _PCL_,1	 ; PC++
 	dec _Y_	 ; Y--
 	mov _Z_,_Y_	 ;
 	mov _N_,_Y_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x89:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* TXA */
 .x8a:
+	adiw _PCL_,1	 ; PC++
 	mov _A_,_X_	 ; A <- X
 	mov _Z_,_X_	 ;
 	mov _N_,_X_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x8b:
+	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2134,7 +2166,7 @@ cpu_main:
 	rcall mem_write	 ; 
 	rjmp .tick	 ;
 .x95_STA_zpx:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	mov ZL,_data_	 ;
 	add ZL,_X_      ;
 	ldi ZH,hi8(ram)	 ;
@@ -2153,6 +2185,7 @@ cpu_main:
 	rcall cpu6502_SAX	 ; 
 	rjmp .tick	 ;
 .x98_TYA:
+	adiw _PCL_,1	 ; PC++
 	mov _A_,_Y_	 ; A <- Y
 	mov _Z_,_Y_	 ;
 	mov _N_,_Y_	 ;
@@ -2165,12 +2198,14 @@ cpu_main:
 	rjmp .tick	 ;
 /* TXS */
 .x9a:
+	adiw _PCL_,1	 ; PC++
 	mov _S_,_X_	 ; S <- X
 	mov _Z_,_X_	 ;
 	mov _N_,_X_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .x9b:
+	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp .tick	 ;
@@ -2214,6 +2249,7 @@ cpu_main:
 	rjmp .tick	 ;
 /* TAY */
 .xa8:
+	adiw _PCL_,1	 ; PC++
 	mov _Y_,_A_	 ; Y <- A
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
@@ -2221,12 +2257,14 @@ cpu_main:
 	rjmp .tick	 ;
 /* TAX */
 .xaa:
+	adiw _PCL_,1	 ; PC++
 	mov _X_,_A_	 ; X <- A
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xab:
+	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2246,17 +2284,20 @@ cpu_main:
 	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 .xb8_CLV:
+	adiw _PCL_,1	 ; PC++
 	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 /* TSX */
 .xba:
+	adiw _PCL_,1	 ; PC++
 	mov _X_,_S_	 ; X <- S
 	mov _Z_,_S_	 ;  flag_z, reg_s.199
 	mov _N_,_S_	 ;  flag_n, reg_s.199
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xbb:
+	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
@@ -2266,6 +2307,7 @@ cpu_main:
 	rcall cpu6502_LAX	 ; 
 	rjmp .tick	 ;
 .xc2:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
@@ -2285,6 +2327,7 @@ cpu_main:
 	rjmp cpu6502_DCP
 /* INY */
 .xc8:
+	adiw _PCL_,1	 ; PC++
 	inc _Y_	 ; Y++
 	mov _Z_,_Y_	 ;
 	mov _N_,_Y_	 ;
@@ -2292,12 +2335,14 @@ cpu_main:
 	rjmp .tick	 ;
 /* DEX */
 .xca:
+	adiw _PCL_,1	 ; PC++
 	dec _X_	 ; X--
 	mov _Z_,_X_	 ;  flag_z, flag_z.220
 	mov _N_,_X_	 ;  flag_n, flag_z.220
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xcb:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	adiw _PCL_,1	 ; PC++
 	rcall mem_read	 ; data <- mem_read(r25:r24)
@@ -2343,10 +2388,12 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_DCP
 .xd8_CLD:
+	adiw _PCL_,1	 ; PC++
 	andi _P_,~D_FLAG	 ; P &= ~D_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xda:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xdb:
@@ -2367,6 +2414,7 @@ cpu_main:
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp cpu6502_DCP
 .xe2:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
@@ -2386,6 +2434,7 @@ cpu_main:
 	rjmp cpu6502_ISB
 /* INX */
 .xe8:
+	adiw _PCL_,1	 ; PC++
 	inc _X_	 ; X++
 	mov _Z_,_X_	 ;
 	mov _N_,_X_	 ;
@@ -2393,6 +2442,7 @@ cpu_main:
 	rjmp .tick	 ;
 /* NOP */
 .xea:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xee:
@@ -2422,10 +2472,12 @@ cpu_main:
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_ISB
 .xf8_SED:
+	adiw _PCL_,1	 ; PC++
 	ori _P_,D_FLAG	 ; P |= D_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xfa:
+	adiw _PCL_,1	 ; PC++
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
 .xfb:
@@ -2457,7 +2509,6 @@ cpu_main:
 .xb2:
 .xd2:
 .xf2:
-	sbiw _PCL_,1	 ;  PC--
 	ldi _cycles_,128	 ; loop in place, very slowly
 	rjmp .tick	 ;
 
@@ -2467,12 +2518,12 @@ input:  return address in XH:XL
 output: data value in _data_, tick count in _cycles_
 */
 .read_imm:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 	movw ZL,XL
 	ijmp
 .read_zpg:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
 	ld _data_,Z	 ; data <- ram[data]
@@ -2480,7 +2531,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_zpx:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
@@ -2489,7 +2540,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_zpy:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	add _data_,_Y_	 ; r24 += Y
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
@@ -2498,6 +2549,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_abs:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
@@ -2506,6 +2558,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_abx:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
@@ -2522,6 +2575,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_aby:
+	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
@@ -2538,7 +2592,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_inx:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
@@ -2550,7 +2604,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_iny:
-	adiw _PCL_,1	 ; PC++
+	adiw _PCL_,2	 ; PC += 2
 	mov ZL,_data_	 ;
 	ldi ZH,hi8(ram)	 ;
 	ld r24,Z	 ; r24 <- ram[r24]
