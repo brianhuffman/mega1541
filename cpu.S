@@ -1329,11 +1329,11 @@ cpu_main:
 	rjmp .xbd_LDA_abx
 	rjmp .xbe_LDX_aby
 	rjmp .xbf
-	rjmp .xc0
+	rjmp .xc0_CPY_imm
 	rjmp .xc1_CMP_inx
 	rjmp .xc2
 	rjmp .xc3
-	rjmp .xc4
+	rjmp .xc4_CPY_zpg
 	rjmp .xc5_CMP_zpg
 	rjmp .xc6
 	rjmp .xc7
@@ -1341,7 +1341,7 @@ cpu_main:
 	rjmp .xc9_CMP_imm
 	rjmp .xca
 	rjmp .xcb
-	rjmp .xcc
+	rjmp .xcc_CPY_abs
 	rjmp .xcd_CMP_abs
 	rjmp .xce
 	rjmp .xcf
@@ -1361,11 +1361,11 @@ cpu_main:
 	rjmp .xdd_CMP_abx
 	rjmp .xde
 	rjmp .xdf
-	rjmp .xe0
+	rjmp .xe0_CPX_imm
 	rjmp .xe1
 	rjmp .xe2
 	rjmp .xe3
-	rjmp .xe4
+	rjmp .xe4_CPX_zpg
 	rjmp .xe5
 	rjmp .xe6
 	rjmp .xe7
@@ -1373,7 +1373,7 @@ cpu_main:
 	rjmp .xe9
 	rjmp .xea
 	rjmp .xeb
-	rjmp .xec
+	rjmp .xec_CPX_abs
 	rjmp .xed
 	rjmp .xee
 	rjmp .xef
@@ -1721,6 +1721,52 @@ cpu_main:
 	ldi XL,lo8(gs(.LDY))
 	ldi XH,hi8(gs(.LDY))
 	rjmp .read_abx
+.CPX:
+	mov _Z_,_X_	 ; Z <- X
+	sub _Z_,_data_	 ; Z <- X - data
+	mov _N_,_Z_	 ; N <- X - data
+	brsh .CPX_carry	 ; branch if X >= data
+	clr _C_	 ; C <- 0 if X < data
+	rjmp .tick	 ;
+.CPX_carry:
+	clr _C_	 ;
+	inc _C_	 ; C <- 1 if X >= data
+	rjmp .tick	 ;
+.xe0_CPX_imm:
+	ldi XL,lo8(gs(.CPX))
+	ldi XH,hi8(gs(.CPX))
+	rjmp .read_imm
+.xe4_CPX_zpg:
+	ldi XL,lo8(gs(.CPX))
+	ldi XH,hi8(gs(.CPX))
+	rjmp .read_zpg
+.xec_CPX_abs:
+	ldi XL,lo8(gs(.CPX))
+	ldi XH,hi8(gs(.CPX))
+	rjmp .read_abs
+.CPY:
+	mov _Z_,_Y_	 ; Z <- Y
+	sub _Z_,_data_	 ; Z <- Y - data
+	mov _N_,_Z_	 ; N <- Y - data
+	brsh .CPY_carry	 ; branch if Y >= data
+	clr _C_	 ; C <- 0 if Y < data
+	rjmp .tick	 ;
+.CPY_carry:
+	clr _C_	 ;
+	inc _C_	 ; C <- 1 if Y >= data
+	rjmp .tick	 ;
+.xc0_CPY_imm:
+	ldi XL,lo8(gs(.CPY))
+	ldi XH,hi8(gs(.CPY))
+	rjmp .read_imm
+.xc4_CPY_zpg:
+	ldi XL,lo8(gs(.CPY))
+	ldi XH,hi8(gs(.CPY))
+	rjmp .read_zpg
+.xcc_CPY_abs:
+	ldi XL,lo8(gs(.CPY))
+	ldi XH,hi8(gs(.CPY))
+	rjmp .read_abs
 
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
@@ -2510,12 +2556,6 @@ cpu_main:
 	call cpu6502_LAX	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.xc0:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	call cpu6502_CPY	 ; 
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
 .xc2:
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
@@ -2525,11 +2565,6 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	rjmp .tick	 ;
-.xc4:
-	call addr_zpg	 ; 
-	call cpu6502_CPY	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
 .xc6:
 	call addr_zpg	 ; 
@@ -2573,11 +2608,6 @@ cpu_main:
 	mov _N_,r25	 ;  flag_n, flag_z.226
 	mov _X_,r25	 ;  reg_x, flag_z.226
 	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
-.xcc:
-	call addr_abs	 ; 
-	call cpu6502_CPY	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xce:
 	call addr_abs	 ; 
@@ -2634,12 +2664,6 @@ cpu_main:
 	call cpu6502_DCP	 ; 
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp .tick	 ;
-.xe0:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	call cpu6502_CPX	 ; 
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
 .xe1:
 	call addr_inx	 ; 
 	call cpu6502_SBC	 ; 
@@ -2654,11 +2678,6 @@ cpu_main:
 	call addr_inx	 ; 
 	call cpu6502_ISB	 ; 
 	ldi _cycles_,8	 ; 8 cycles
-	rjmp .tick	 ;
-.xe4:
-	call addr_zpg	 ; 
-	call cpu6502_CPX	 ; 
-	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
 .xe5:
 	call addr_zpg	 ; 
@@ -2697,11 +2716,6 @@ cpu_main:
 	adiw _PCL_,1	 ; PC++
 	call cpu6502_SBC	 ; 
 	ldi _cycles_,2	 ; 2 cycles
-	rjmp .tick	 ;
-.xec:
-	call addr_abs	 ; 
-	call cpu6502_CPX	 ; 
-	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
 .xed:
 	call addr_abs	 ; 
