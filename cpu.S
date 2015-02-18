@@ -577,7 +577,7 @@ cpu6502_SLO:
 /* stack size = 0 */
 .L__stack_usage = 0
 	rcall cpu6502_ASL	 ;
-	rjmp cpu6502_ORA	 ;
+	rjmp .ORA	 ;
 	.size	cpu6502_SLO, .-cpu6502_SLO
 	.section	.text.cpu6502_ROL,"ax",@progbits
 	.type	cpu6502_ROL, @function
@@ -602,8 +602,7 @@ cpu6502_RLA:
 /* stack size = 0 */
 .L__stack_usage = 0
 	rcall cpu6502_ROL	 ;
-	rcall cpu6502_AND	 ;
-	rjmp .tick
+	rjmp .AND	 ;
 	.size	cpu6502_RLA, .-cpu6502_RLA
 	.section	.text.cpu6502_LSR,"ax",@progbits
 	.type	cpu6502_LSR, @function
@@ -628,7 +627,7 @@ cpu6502_SRE:
 /* stack size = 0 */
 .L__stack_usage = 0
 	rcall cpu6502_LSR	 ;
-	rjmp cpu6502_EOR	 ;
+	rjmp .EOR	 ;
 	.size	cpu6502_SRE, .-cpu6502_SRE
 	.section	.text.cpu6502_ROR,"ax",@progbits
 	.type	cpu6502_ROR, @function
@@ -653,7 +652,7 @@ cpu6502_RRA:
 /* stack size = 0 */
 .L__stack_usage = 0
 	rcall cpu6502_ROR	 ;
-	rjmp cpu6502_ADC	 ;
+	rjmp .ADC	 ;
 	.size	cpu6502_RRA, .-cpu6502_RRA
 	.section	.text.cpu6502_SAX,"ax",@progbits
 	.type	cpu6502_SAX, @function
@@ -725,7 +724,7 @@ cpu6502_ISB:
 /* stack size = 0 */
 .L__stack_usage = 0
 	rcall cpu6502_INC	 ;
-	rjmp cpu6502_SBC	 ;
+	rjmp .SBC	 ;
 	.size	cpu6502_ISB, .-cpu6502_ISB
 	.section	.text.cpu6502_JAM,"ax",@progbits
 	.type	cpu6502_JAM, @function
@@ -834,7 +833,7 @@ cpu6502_DCP:
 /* stack size = 0 */
 .L__stack_usage = 2
 	rcall cpu6502_DEC	 ;
-	rjmp cpu6502_CMP	 ;
+	rjmp .CMP	 ;
 	.size	cpu6502_DCP, .-cpu6502_DCP
 	.section	.text.addr_zpg,"ax",@progbits
 .global	addr_zpg
@@ -1584,12 +1583,10 @@ cpu_main:
 	mov _Z_,_A_	 ; Z <- A
 	sub _Z_,_data_	 ; Z <- A - data
 	mov _N_,_Z_	 ; N <- A - data
-	brsh .CMP_carry	 ; branch if A >= data
-	clr _C_	 ; C <- 0 if A < data
-	rjmp .tick	 ;
-.CMP_carry:
 	clr _C_	 ;
+	brlo .CMP_carry	 ; branch if A < data
 	inc _C_	 ; C <- 1 if A >= data
+.CMP_carry:
 	rjmp .tick	 ;
 .xc1_CMP_inx:
 	ldi XL,lo8(gs(.CMP))
