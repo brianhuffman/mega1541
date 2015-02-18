@@ -349,6 +349,7 @@ cpu6502_ADC:
 /* stack size = 0 */
 .L__stack_usage = 0
 	rcall mem_read	 ; data <- mem_read(r25:r24)
+.ADC:
 	sbrc _P_,3	 ; skip if decimal mode is set
 	rjmp .ADC_dec	 ; jump if decimal mode is clear
 .ADC_bin:
@@ -1235,11 +1236,11 @@ cpu_main:
 	rjmp .x5e
 	rjmp .x5f
 	rjmp .x60
-	rjmp .x61
+	rjmp .x61_ADC_inx
 	rjmp .x62
 	rjmp .x63
 	rjmp .x64
-	rjmp .x65
+	rjmp .x65_ADC_zpg
 	rjmp .x66
 	rjmp .x67
 	rjmp .x68
@@ -1247,23 +1248,23 @@ cpu_main:
 	rjmp .x6a
 	rjmp .x6b
 	rjmp .x6c
-	rjmp .x6d
+	rjmp .x6d_ADC_abs
 	rjmp .x6e
 	rjmp .x6f
 	rjmp .x70_BVS
-	rjmp .x71
+	rjmp .x71_ADC_iny
 	rjmp .x72
 	rjmp .x73
 	rjmp .x74
-	rjmp .x75
+	rjmp .x75_ADC_zpx
 	rjmp .x76
 	rjmp .x77
 	rjmp .x78_SEI
-	rjmp .x79
+	rjmp .x79_ADC_aby
 	rjmp .x7a
 	rjmp .x7b
 	rjmp .x7c
-	rjmp .x7d
+	rjmp .x7d_ADC_abx
 	rjmp .x7e
 	rjmp .x7f
 	rjmp .x80
@@ -1508,12 +1509,6 @@ cpu_main:
 	ldi XL,lo8(gs(.EOR))
 	ldi XH,hi8(gs(.EOR))
 	rjmp .read_abx
-/*
-.ADC:
-	and _A_,_data_	 ;  A &= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick	 ;
 .x61_ADC_inx:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
@@ -1523,9 +1518,10 @@ cpu_main:
 	ldi XH,hi8(gs(.ADC))
 	rjmp .read_zpg
 .x69_ADC_imm:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
-	rjmp .read_imm
+	rcall mem_read_pc	 ; data <- read(PC)
+	adiw _PCL_,1	 ; PC++
+	ldi _cycles_,2	 ; cycles <- 2
+	rjmp .ADC
 .x6d_ADC_abs:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
@@ -1546,7 +1542,6 @@ cpu_main:
 	ldi XL,lo8(gs(.ADC))
 	ldi XH,hi8(gs(.ADC))
 	rjmp .read_abx
-*/
 .LDA:
 	mov _A_,_data_	 ; A <- data
 	sub _Z_,_data_	 ;
@@ -2156,10 +2151,6 @@ cpu_main:
 	rcall cpu6502_RTS	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp .tick	 ;
-.x61:
-	rcall addr_inx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_ADC
 .x63:
 	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
@@ -2168,10 +2159,6 @@ cpu_main:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,3	 ; 3 cycles
 	rjmp .tick	 ;
-.x65:
-	rcall addr_zpg	 ; 
-	ldi _cycles_,3	 ; 3 cycles
-	rjmp cpu6502_ADC
 .x66:
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
@@ -2191,11 +2178,6 @@ cpu_main:
 	mov _N_,_A_	 ; N <- A
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x69_ADC_imm:
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	ldi _cycles_,2	 ; 2 cycles
-	rjmp cpu6502_ADC
 /* ROR accumulator */
 .x6a:
 	lsr _C_	 ; carry <- C, C <- 0
@@ -2215,10 +2197,6 @@ cpu_main:
 	mov _PCH_,r25	 ;  reg_pc,
 	mov _PCL_,r24	 ;  reg_pc,
 	rjmp .tick	 ;
-.x6d:
-	rcall addr_abs	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp cpu6502_ADC
 .x6e:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -2228,10 +2206,6 @@ cpu_main:
 	rcall addr_abs	 ; 
 	ldi _cycles_,6	 ; 6 cycles
 	rjmp cpu6502_RRA
-.x71:
-	rcall addr_iny	 ; 
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp cpu6502_ADC
 .x73:
 	rcall addr_iny	 ; 
 	ldi _cycles_,8	 ; 8 cycles
@@ -2240,10 +2214,6 @@ cpu_main:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x75:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp cpu6502_ADC
 .x76:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,6	 ; 6 cycles
@@ -2257,10 +2227,6 @@ cpu_main:
 	ori _P_,I_FLAG	 ; P |= I_FLAG
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
-.x79:
-	rcall addr_aby	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp cpu6502_ADC
 .x7a:
 	ldi _cycles_,2	 ; 2 cycles
 	rjmp .tick	 ;
@@ -2272,10 +2238,6 @@ cpu_main:
 	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x7d:
-	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp cpu6502_ADC
 .x7e:
 	rcall addr_abx	 ; 
 	ldi _cycles_,7	 ; 7 cycles
