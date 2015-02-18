@@ -41,6 +41,7 @@ B_FLAG = 0x10
 V_FLAG = 0x40
 N_FLAG = 0x80
 
+/* define TICK(n) subi _time0_,(n) $ rjmp .ticked */
 #define TICK(n) \
 	ldi _cycles_,(n) $ \
 	rjmp .tick
@@ -239,18 +240,6 @@ cpu6502_JSR:
 	movw _PCL_,r24	 ; PC <- address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
-	.section	.text.cpu6502_RTS,"ax",@progbits
-	.type	cpu6502_RTS, @function
-cpu6502_RTS:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	PULL(_PCL_)	 ; PCL <- stack[++S]
-	PULL(_PCH_)	 ; PCH <- stack[++S]
-	adiw _PCL_,1	 ; PC ++
-	ret
-	.size	cpu6502_RTS, .-cpu6502_RTS
 	.section	.text.cpu6502_BIT,"ax",@progbits
 	.type	cpu6502_BIT, @function
 cpu6502_BIT:
@@ -1711,7 +1700,7 @@ cpu_main:
 	rcall update_p	 ;
 	mov r25,_P_	 ; temp = P
 	ori r25,B_FLAG	 ; temp |= B_FLAG
-	PUSH(r25)	 ; stack[S--] <- temp
+	PUSH(25)	 ; stack[S--] <- temp
 	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
 	TICK(7)
 .x20_JSR:
@@ -1719,13 +1708,15 @@ cpu_main:
 	rcall cpu6502_JSR	 ;
 	TICK(6)
 .x40_RTI:
-	adiw _PCL_,1	 ; PC++
 	rcall cpu6502_PLP	 ;
-	rcall cpu6502_RTS	 ;
+	PULL(_PCL_)	 ; PCL <- stack[++S]
+	PULL(_PCH_)	 ; PCH <- stack[++S]
+	adiw _PCL_,1	 ; PC ++
 	TICK(6)
 .x60_RTS:
-	adiw _PCL_,1	 ; PC++
-	rcall cpu6502_RTS	 ;
+	PULL(_PCL_)	 ; PCL <- stack[++S]
+	PULL(_PCH_)	 ; PCH <- stack[++S]
+	adiw _PCL_,1	 ; PC ++
 	TICK(6)
 .x4c_JMP_abs:
 	rcall addr_abs	 ;
