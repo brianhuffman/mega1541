@@ -22,6 +22,7 @@ _time2_ = 14
 _time3_ = 15
 _cycles_ = 16
 _opcode_ = 20
+_opcode_pointer_ = 21
 _data_ = 22
 XL = 26
 XH = 27
@@ -785,7 +786,7 @@ cpu_main:
 /* frame size = 0 */
 /* stack size = 14 */
 .L__stack_usage = 14
-	clr _opcode_+1	 ;
+	ldi _opcode_pointer_,hi8(gs(.opcode_table))	 ;
 	add _time0_,r22	 ; time_left += cycles
 	adc _time1_,r23	 ;
 	adc _time2_,r24	 ;
@@ -808,9 +809,7 @@ cpu_main:
 	subi ZH,hi8(-(dos1541-0xc000))	 ;
 	lpm _opcode_,Z+	 ; opcode <- rom[PC - 0xc0000]
 	lpm _data_,Z+	 ; data <- rom[PC+1 - 0xc0000]
-	movw ZL,_opcode_	 ;
-	subi ZL,lo8(-(gs(.opcode_table)))	 ;
-	sbci ZH,hi8(-(gs(.opcode_table)))	 ;
+	movw ZL,_opcode_	 ; ZH:ZL <- _opcode_pointer_:_opcode_
 	ijmp	 ; jmp (.opcode_table + opcode)
 .pc_no_rom:
 	cpi ZH,0x04	 ;
@@ -819,14 +818,15 @@ cpu_main:
 	subi ZH,hi8(-(ram))	 ;
 	ld _opcode_,Z+	 ; opcode <- ram[PC]
 	ld _data_,Z	 ; data <- ram[PC+1]
-	movw ZL,_opcode_	 ;
-	subi ZL,lo8(-(gs(.opcode_table)))	 ;
-	sbci ZH,hi8(-(gs(.opcode_table)))	 ;
+	movw ZL,_opcode_	 ; ZH:ZL <- _opcode_pointer_:_opcode_
 	ijmp	 ; jmp (.opcode_table + opcode)
 .pc_no_ram:
 	ldi _opcode_,0xff	 ; other addresses return 0xff
 	ldi _data_,0xff	 ; other addresses return 0xff
 	rjmp .xff
+
+/* align to 256-word boundary */
+.p2align 8
 .opcode_table:
 	rjmp .x00
 	rjmp .x01_ORA_inx
