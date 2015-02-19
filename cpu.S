@@ -58,6 +58,12 @@ N_FLAG = 0x80
 	ldi ZH, hi8(ram+256) $ \
 	ld (reg), Z
 
+/* reg <- ram[addr] */
+#define LD_ZERO_PAGE(reg,addr) \
+	mov ZL,(addr)	 $ \
+	ldi ZH,hi8(ram)	 $ \
+	ld (reg),Z
+
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
  ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -1517,27 +1523,21 @@ output: data value in _data_, tick count in _cycles_
 	ijmp
 .read_zpg:
 	adiw _PCL_,2	 ; PC += 2
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[data]
+	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
 	ldi _cycles_,3	 ; cycles <- 3
 	movw ZL,XL
 	ijmp
 .read_zpx:
 	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[data]
+	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
 .read_zpy:
 	adiw _PCL_,2	 ; PC += 2
 	add _data_,_Y_	 ; r24 += Y
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld _data_,Z	 ; data <- ram[data]
+	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
 	ldi _cycles_,4	 ; cycles <- 4
 	movw ZL,XL
 	ijmp
