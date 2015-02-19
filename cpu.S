@@ -871,7 +871,7 @@ cpu_main:
 	rjmp .xe7_ISB_zpg_undocumented
 	rjmp .xe8_INX
 	rjmp .xe9_SBC_imm
-	rjmp .xea
+	rjmp .xea_NOP
 	rjmp .xeb_SBC_imm_undocumented
 	rjmp .xec_CPX_abs
 	rjmp .xed_SBC_abs
@@ -2089,6 +2089,9 @@ input:  function pointer in ZH:ZL, to be used with icall
 	mov _Z_,_S_	 ;
 	mov _N_,_S_	 ;
 	TICK(2)
+.xea_NOP:
+	adiw _PCL_,1	 ; PC++
+	TICK(2)
 
 /*************************** STACK/PC INSTRUCTIONS ****************************/
 
@@ -2357,10 +2360,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 .xe2:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-/* NOP */
-.xea:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
 .xf4:
