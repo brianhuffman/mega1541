@@ -240,21 +240,6 @@ cpu6502_JSR:
 	movw _PCL_,r24	 ; PC <- address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
-	.section	.text.cpu6502_BIT,"ax",@progbits
-	.type	cpu6502_BIT, @function
-cpu6502_BIT:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	bst _data_,6	 ;
-	bld _P_,6	 ; V <- data.6
-	mov _N_,_data_	 ; N <- data.7
-	and _data_,_A_	 ;
-	mov _Z_,_data_	 ; Z <- data & A
-	ret
-	.size	cpu6502_BIT, .-cpu6502_BIT
 	.section	.text.cpu6502_LAX,"ax",@progbits
 	.type	cpu6502_LAX, @function
 cpu6502_LAX:
@@ -821,7 +806,7 @@ cpu_main:
 	rjmp .x21_AND_inx
 	rjmp .x22
 	rjmp .x23
-	rjmp .x24
+	rjmp .x24_BIT_zpg
 	rjmp .x25_AND_zpg
 	rjmp .x26
 	rjmp .x27
@@ -829,7 +814,7 @@ cpu_main:
 	rjmp .x29_AND_imm
 	rjmp .x2a_ROL_acc
 	rjmp .x2b_ANC_imm_undocumented
-	rjmp .x2c
+	rjmp .x2c_BIT_abs
 	rjmp .x2d_AND_abs
 	rjmp .x2e
 	rjmp .x2f
@@ -1504,6 +1489,21 @@ cpu_main:
 	ldi XL,lo8(gs(.CPY))
 	ldi XH,hi8(gs(.CPY))
 	rjmp .read_abs
+.x24_BIT_zpg:
+	ldi XL,lo8(gs(.BIT))
+	ldi XH,hi8(gs(.BIT))
+	rjmp .read_zpg
+.x2c_BIT_abs:
+	ldi XL,lo8(gs(.BIT))
+	ldi XH,hi8(gs(.BIT))
+	rjmp .read_abs
+.BIT:
+	bst _data_,6	 ;
+	bld _P_,6	 ; V <- data.6
+	mov _N_,_data_	 ; N <- data.7
+	and _data_,_A_	 ;
+	mov _Z_,_data_	 ; Z <- data & A
+	rjmp .tick
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
@@ -1939,10 +1939,6 @@ output: data value in _data_, tick count in _cycles_
 	rcall addr_inx	 ; 
 	ldi _cycles_,8	 ; 8 cycles
 	rjmp cpu6502_RLA
-.x24:
-	rcall addr_zpg	 ; 
-	rcall cpu6502_BIT	 ; 
-	TICK(3)
 .x26:
 	rcall addr_zpg	 ; 
 	rcall cpu6502_ROL	 ; 
@@ -1951,10 +1947,6 @@ output: data value in _data_, tick count in _cycles_
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp cpu6502_RLA
-.x2c:
-	rcall addr_abs	 ; 
-	rcall cpu6502_BIT	 ; 
-	TICK(4)
 .x2e:
 	rcall addr_abs	 ; 
 	rcall cpu6502_ROL	 ; 
