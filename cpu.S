@@ -64,6 +64,14 @@ N_FLAG = 0x80
 	ldi ZH,hi8(ram)	 $ \
 	ld (reg),Z
 
+/* reg+1:reg <- ram[addr+1]:ram[addr] */
+#define LDW_ZERO_PAGE(reg,addr) \
+	mov ZL,(addr)	 $ \
+	ldi ZH,hi8(ram)	 $ \
+	ld (reg),Z	 $ \
+	inc ZL	 $ \
+	ld (reg)+1,Z
+
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
  ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -1591,20 +1599,12 @@ output: data value in _data_, tick count in _cycles_
 .read_inx:
 	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld r24,Z	 ; r24 <- ram[r24]
-	inc ZL	 ; ZL++
-	ld r25,Z	 ; r25 <- ram[r24+1]
+	LDW_ZERO_PAGE(24,_data_)	 ; r25:r24 <- ram[data+1]:ram[data]
 	ldi _cycles_,6	 ; cycles <- 6
 	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_iny:
 	adiw _PCL_,2	 ; PC += 2
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(ram)	 ;
-	ld r24,Z	 ; r24 <- ram[r24]
-	inc ZL	 ; ZL++
-	ld r25,Z	 ; r25 <- ram[r24+1]
+	LDW_ZERO_PAGE(24,_data_)	 ; r25:r24 <- ram[data+1]:ram[data]
 	add r24,_Y_	 ; r24 += Y
 	brcs .read_iny_carry	 ; branch if r24+Y carries
 	ldi _cycles_,5	 ; cycles <- 5
