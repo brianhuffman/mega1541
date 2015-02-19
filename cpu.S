@@ -795,7 +795,7 @@ cpu_main:
 	rjmp .x07
 	rjmp .x08_PHP
 	rjmp .x09_ORA_imm
-	rjmp .x0a
+	rjmp .x0a_ASL_acc
 	rjmp .x0b_ANC_imm_undocumented
 	rjmp .x0c
 	rjmp .x0d_ORA_abs
@@ -827,7 +827,7 @@ cpu_main:
 	rjmp .x27
 	rjmp .x28_PLP
 	rjmp .x29_AND_imm
-	rjmp .x2a
+	rjmp .x2a_ROL_acc
 	rjmp .x2b_ANC_imm_undocumented
 	rjmp .x2c
 	rjmp .x2d_AND_abs
@@ -859,7 +859,7 @@ cpu_main:
 	rjmp .x47
 	rjmp .x48_PHA
 	rjmp .x49_EOR_imm
-	rjmp .x4a
+	rjmp .x4a_LSR_acc
 	rjmp .x4b_ASR_imm_undocumented
 	rjmp .x4c_JMP_abs
 	rjmp .x4d_EOR_abs
@@ -891,7 +891,7 @@ cpu_main:
 	rjmp .x67
 	rjmp .x68_PLA
 	rjmp .x69_ADC_imm
-	rjmp .x6a
+	rjmp .x6a_ROR_acc
 	rjmp .x6b
 	rjmp .x6c_JMP_ind
 	rjmp .x6d_ADC_abs
@@ -1620,6 +1620,41 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 
+/*********************** READ-MODIFY-WRITE INSTRUCTIONS ***********************/
+
+.x0a_ASL_acc:
+	adiw _PCL_,1	 ; PC++
+	clr _C_	 ; C <- 0
+	lsl _A_	 ; A <- A << 1, carry <- A bit 7
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	TICK(2)
+.x2a_ROL_acc:
+	adiw _PCL_,1	 ; PC++
+	lsr _C_	 ; carry <- C, C <- 0
+	rol _A_	 ; carry <- A7, A <- [A6, A5 .. A0, carry]
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	TICK(2)
+.x4a_LSR_acc:
+	adiw _PCL_,1	 ; PC++
+	clr _C_	 ; C <- 0
+	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	TICK(2)
+.x6a_ROR_acc:
+	adiw _PCL_,1	 ; PC++
+	lsr _C_	 ; carry <- C, C <- 0
+	ror _A_	 ; A <- [carry, A7 .. A2, A1], carry <- A0
+	rol _C_	 ; C <- carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	TICK(2)
+
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
 .x10_BPL:
@@ -1846,15 +1881,6 @@ output: data value in _data_, tick count in _cycles_
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp cpu6502_SLO
-/* ASL accumulator */
-.x0a:
-	adiw _PCL_,1	 ; PC++
-	clr _C_	 ; C <- 0
-	lsl _A_	 ; A <- A << 1, carry <- A bit 7
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
 .x0b_ANC_imm_undocumented:
 .x2b_ANC_imm_undocumented:
 	adiw _PCL_,2	 ; PC += 2
@@ -1925,15 +1951,6 @@ output: data value in _data_, tick count in _cycles_
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp cpu6502_RLA
-/* ROL accumulator */
-.x2a:
-	adiw _PCL_,1	 ; PC++
-	lsr _C_	 ; carry <- C, C <- 0
-	rol _A_	 ; carry <- A7, A <- [A6, A5 .. A1, carry]
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
 .x2c:
 	rcall addr_abs	 ; 
 	rcall cpu6502_BIT	 ; 
@@ -1995,15 +2012,6 @@ output: data value in _data_, tick count in _cycles_
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp cpu6502_SRE
-/* LSR accumulator */
-.x4a:
-	adiw _PCL_,1	 ; PC++
-	clr _C_	 ; C <- 0
-	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
 .x4b_ASR_imm_undocumented:
 	/* AND + LSR */
 	adiw _PCL_,2	 ; PC += 2
@@ -2070,15 +2078,6 @@ output: data value in _data_, tick count in _cycles_
 	rcall addr_zpg	 ; 
 	ldi _cycles_,5	 ; 5 cycles
 	rjmp cpu6502_RRA
-/* ROR accumulator */
-.x6a:
-	adiw _PCL_,1	 ; PC++
-	lsr _C_	 ; carry <- C, C <- 0
-	ror _A_	 ; A <- [carry, A7 .. A2, A1], carry <- A0
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
 .x6b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
