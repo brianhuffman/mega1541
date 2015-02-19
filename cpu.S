@@ -72,6 +72,12 @@ N_FLAG = 0x80
 	inc ZL	 $ \
 	ld (reg)+1,Z
 
+/* ram[addr] <- reg */
+#define ST_ZERO_PAGE(addr,reg) \
+	mov ZL,(addr)	 $ \
+	ldi ZH,hi8(ram)	 $ \
+	st Z,(reg)
+
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
  ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -379,16 +385,6 @@ cpu6502_SAX:
 	and _data_,_A_	 ;  D.3787, reg_a
 	rjmp mem_write	 ; 
 	.size	cpu6502_SAX, .-cpu6502_SAX
-	.section	.text.cpu6502_STA,"ax",@progbits
-	.type	cpu6502_STA, @function
-cpu6502_STA:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	mov _data_,_A_	 ; , reg_a
-	rjmp mem_write	 ; 
-	.size	cpu6502_STA, .-cpu6502_STA
 	.section	.text.cpu6502_SHA,"ax",@progbits
 	.type	cpu6502_SHA, @function
 cpu6502_SHA:
@@ -913,35 +909,35 @@ cpu_main:
 	rjmp .x7e
 	rjmp .x7f
 	rjmp .x80
-	rjmp .x81
+	rjmp .x81_STA_inx
 	rjmp .x82
 	rjmp .x83
-	rjmp .x84
-	rjmp .x85
-	rjmp .x86
+	rjmp .x84_STY_zpg
+	rjmp .x85_STA_zpg
+	rjmp .x86_STX_zpg
 	rjmp .x87
 	rjmp .x88_DEY
 	rjmp .x89
 	rjmp .x8a_TXA
 	rjmp .x8b
-	rjmp .x8c
-	rjmp .x8d
-	rjmp .x8e
+	rjmp .x8c_STY_abs
+	rjmp .x8d_STA_abs
+	rjmp .x8e_STX_abs
 	rjmp .x8f
 	rjmp .x90_BCC
-	rjmp .x91
+	rjmp .x91_STA_iny
 	rjmp .x92
 	rjmp .x93
-	rjmp .x94
+	rjmp .x94_STY_zpx
 	rjmp .x95_STA_zpx
-	rjmp .x96
+	rjmp .x96_STX_zpy
 	rjmp .x97
 	rjmp .x98_TYA
-	rjmp .x99
+	rjmp .x99_STA_aby
 	rjmp .x9a_TXS
 	rjmp .x9b
 	rjmp .x9c
-	rjmp .x9d
+	rjmp .x9d_STA_abx
 	rjmp .x9e
 	rjmp .x9f
 	rjmp .xa0_LDY_imm
@@ -1649,6 +1645,100 @@ output: data value in _data_, tick count in _cycles_
 	mov _N_,_A_	 ;
 	TICK(2)
 
+/***************************** WRITE INSTRUCTIONS *****************************/
+
+.x81_STA_inx:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_X_	 ; data += X
+	LDW_ZERO_PAGE(24,_data_)	 ; r25:r24 <- ram[data+1]:ram[data]
+	ldi _cycles_,6	 ; cycles <- 6
+	mov _data_,_A_	 ; data <- A
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+.x84_STY_zpg:
+	adiw _PCL_,2	 ; PC += 2
+	ST_ZERO_PAGE(_data_,_Y_)	 ; ram[data] <- Y
+	TICK(3)
+.x85_STA_zpg:
+	adiw _PCL_,2	 ; PC += 2
+	ST_ZERO_PAGE(_data_,_A_)	 ; ram[data] <- A
+	TICK(3)
+.x86_STX_zpg:
+	adiw _PCL_,2	 ; PC += 2
+	ST_ZERO_PAGE(_data_,_X_)	 ; ram[data] <- X
+	TICK(3)
+.x8c_STY_abs:
+	mov _data_,_Y_
+	rjmp .write_abs
+.x8d_STA_abs:
+	mov _data_,_A_
+	rjmp .write_abs
+.x8e_STX_abs:
+	mov _data_,_X_
+	rjmp .write_abs
+.x91_STA_iny:
+	adiw _PCL_,2	 ; PC += 2
+	LDW_ZERO_PAGE(24,_data_)	 ; r25:r24 <- ram[data+1]:ram[data]
+	add r24,_Y_	 ; r25:r24 += Y
+	adc r25,__zero_reg__	 ;
+	ldi _cycles_,6	 ; cycles <- 6
+	mov _data_,_A_	 ; data <- A
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+.x94_STY_zpx:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_X_	 ; data += X
+	ST_ZERO_PAGE(_data_,_Y_)	 ; ram[data] <- Y
+	TICK(4)
+.x95_STA_zpx:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_X_	 ; data += X
+	ST_ZERO_PAGE(_data_,_A_)	 ; ram[data] <- A
+	TICK(4)
+.x96_STX_zpy:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_Y_	 ; data += Y
+	ST_ZERO_PAGE(_data_,_X_)	 ; ram[data] <- X
+	TICK(4)
+.x99_STA_aby:
+	mov _data_,_A_
+	rjmp .write_aby
+.x9d_STA_abx:
+	mov _data_,_A_
+	rjmp .write_abx
+
+.write_abs:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	ldi _cycles_,4	 ; cycles <- 4
+.write_mem:	 ; write(r25:r24,data), rjmp .tick
+	cpi r25,4	 ;
+	brsh .write_mem_hi	 ; branch if address >= $0400
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(ram))	 ;
+	st Z,_data_	 ; ram[r25:r24] <- data
+.write_mem_hi:
+	/* TODO: write io memory */
+	rjmp .tick
+.write_abx:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_X_	 ; r25:r24 += X
+	adc r25,__zero_reg__	 ;
+	ldi _cycles_,5	 ; cycles <- 5
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+.write_aby:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_Y_	 ; r25:r24 += Y
+	adc r25,__zero_reg__	 ;
+	ldi _cycles_,5	 ; cycles <- 5
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
 .x10_BPL:
@@ -2115,10 +2205,6 @@ output: data value in _data_, tick count in _cycles_
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.x81:
-	rcall addr_inx	 ; 
-	rcall cpu6502_STA	 ; 
-	TICK(6)
 .x82:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
@@ -2128,20 +2214,6 @@ output: data value in _data_, tick count in _cycles_
 	rcall addr_inx	 ; 
 	rcall cpu6502_SAX	 ; 
 	TICK(6)
-.x84:
-	rcall addr_zpg	 ; 
-	mov r22,_Y_	 ; , reg_y
-	rcall mem_write	 ; 
-	TICK(3)
-.x85:
-	rcall addr_zpg	 ; 
-	rcall cpu6502_STA	 ; 
-	TICK(3)
-.x86:
-	rcall addr_zpg	 ; 
-	mov r22,_X_	 ; , reg_x
-	rcall mem_write	 ; 
-	TICK(3)
 .x87:
 	rcall addr_zpg	 ; 
 	rcall cpu6502_SAX	 ; 
@@ -2155,56 +2227,17 @@ output: data value in _data_, tick count in _cycles_
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	TICK(2)
-.x8c:
-	rcall addr_abs	 ; 
-	mov r22,_Y_	 ; , reg_y
-	rcall mem_write	 ; 
-	TICK(4)
-.x8d:
-	rcall addr_abs	 ; 
-	rcall cpu6502_STA	 ; 
-	TICK(4)
-.x8e:
-	rcall addr_abs	 ; 
-	mov r22,_X_	 ; , reg_x
-	rcall mem_write	 ; 
-	TICK(4)
 .x8f:
 	rcall addr_abs	 ; 
 	rcall cpu6502_SAX	 ; 
 	TICK(4)
-.x91:
-	rcall addr_iny	 ; 
-	rcall cpu6502_STA	 ; 
-	TICK(5)
 .x93:
 	rcall addr_iny	 ; 
 	rcall cpu6502_SHA	 ; 
 	TICK(6)
-.x94:
-	rcall addr_zpx	 ; 
-	mov r22,_Y_	 ; , reg_y
-	rcall mem_write	 ; 
-	TICK(4)
-.x95_STA_zpx:
-	adiw _PCL_,2	 ; PC += 2
-	mov ZL,_data_	 ;
-	add ZL,_X_      ;
-	ldi ZH,hi8(ram)	 ;
-	st Z,_A_	 ; ram[r24+X] <- A
-	TICK(4)
-.x96:
-	rcall addr_zpy	 ; 
-	mov r22,_X_	 ; , reg_x
-	rcall mem_write	 ; 
-	TICK(4)
 .x97:
 	rcall addr_zpy	 ; 
 	rcall cpu6502_SAX	 ; 
-	TICK(4)
-.x99:
-	rcall addr_aby	 ; 
-	rcall cpu6502_STA	 ; 
 	TICK(4)
 .x9b:
 	adiw _PCL_,1	 ; PC++
@@ -2218,10 +2251,6 @@ output: data value in _data_, tick count in _cycles_
 	and r22,r18	 ;  D.4021, reg_y
 	rcall mem_write	 ; 
 	TICK(5)
-.x9d:
-	rcall addr_abx	 ; 
-	rcall cpu6502_STA	 ; 
-	TICK(4)
 .x9e:
 	rcall addr_aby	 ; 
 	ldi r22,lo8(1)	 ;  D.4021,
