@@ -46,28 +46,31 @@ N_FLAG = 0x80
 	ldi _cycles_,(n) $ \
 	rjmp .tick
 
+#define ZERO_PAGE hi8(ram)
+#define STACK_PAGE hi8(ram+256)
+
 #define PUSH(reg) \
 	mov ZL, _S_ $ \
-	ldi ZH, hi8(ram+256) $ \
+	ldi ZH, STACK_PAGE $ \
 	st Z, (reg) $ \
 	dec _S_
 
 #define PULL(reg) \
 	inc _S_ $ \
 	mov ZL, _S_ $ \
-	ldi ZH, hi8(ram+256) $ \
+	ldi ZH, STACK_PAGE $ \
 	ld (reg), Z
 
 /* reg <- ram[addr] */
 #define LD_ZERO_PAGE(reg,addr) \
 	mov ZL,(addr)	 $ \
-	ldi ZH,hi8(ram)	 $ \
+	ldi ZH,ZERO_PAGE	 $ \
 	ld (reg),Z
 
 /* reg+1:reg <- ram[addr+1]:ram[addr] */
 #define LDW_ZERO_PAGE(reg,addr) \
 	mov ZL,(addr)	 $ \
-	ldi ZH,hi8(ram)	 $ \
+	ldi ZH,ZERO_PAGE	 $ \
 	ld (reg),Z	 $ \
 	inc ZL	 $ \
 	ld (reg)+1,Z
@@ -75,7 +78,7 @@ N_FLAG = 0x80
 /* ram[addr] <- reg */
 #define ST_ZERO_PAGE(addr,reg) \
 	mov ZL,(addr)	 $ \
-	ldi ZH,hi8(ram)	 $ \
+	ldi ZH,ZERO_PAGE	 $ \
 	st Z,(reg)
 
 /* XH:XL <- value */
