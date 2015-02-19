@@ -450,17 +450,6 @@ update_p:
 	andi _P_,~Z_FLAG	 ; clear Z flag if Z != 0
 	ret
 	.size	update_p, .-update_p
-	.section	.text.cpu6502_PHP,"ax",@progbits
-	.type	cpu6502_PHP, @function
-cpu6502_PHP:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall update_p	 ;
-	PUSH(_P_)	 ; stack[S--] <- P
-	ret
-	.size	cpu6502_PHP, .-cpu6502_PHP
 	.section	.text.cpu6502_DCP,"ax",@progbits
 	.type	cpu6502_DCP, @function
 cpu6502_DCP:
@@ -667,7 +656,8 @@ cpu_irq:
 	ldi r25,0xff	 ;
 	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
 	rcall cpu6502_JSR	 ; 
-	rcall cpu6502_PHP	 ; 
+	rcall update_p	 ;
+	PUSH(_P_)	 ; stack[S--] <- P
 	lds r24,reg_p	 ;  reg_p.57, reg_p
 	ori r24,lo8(4)	 ;  reg_p.57,
 	sts reg_p,r24	 ;  reg_p, reg_p.57
@@ -1931,7 +1921,8 @@ output: data value in _data_, tick count in _cycles_
 	TICK(5)
 .x08_PHP:
 	adiw _PCL_,1	 ; PC++
-	rcall cpu6502_PHP	 ;
+	rcall update_p	 ;
+	PUSH(_P_)	 ; stack[S--] <- P
 	TICK(3)
 .x28_PLP:
 	adiw _PCL_,1	 ; PC++
