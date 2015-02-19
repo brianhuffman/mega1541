@@ -78,6 +78,11 @@ N_FLAG = 0x80
 	ldi ZH,hi8(ram)	 $ \
 	st Z,(reg)
 
+/* XH:XL <- value */
+#define LDI_X(value) \
+	ldi XL,lo8(value) $ \
+	ldi XH,hi8(value)
+
  ;  GNU C (GCC) version 4.8.1 (avr)
  ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
  ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -1030,12 +1035,10 @@ cpu_main:
 /***************************** READ INSTRUCTIONS ******************************/
 
 .x01_ORA_inx:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
+	LDI_X(gs(.ORA))
 	rjmp .read_inx
 .x05_ORA_zpg:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
+	LDI_X(gs(.ORA))
 	rjmp .read_zpg
 .x09_ORA_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1046,32 +1049,25 @@ cpu_main:
 	mov _N_,_A_
 	rjmp .tick
 .x0d_ORA_abs:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
+	LDI_X(gs(.ORA))
 	rjmp .read_abs
 .x11_ORA_iny:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
+	LDI_X(gs(.ORA))
 	rjmp .read_iny
 .x15_ORA_zpx:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
+	LDI_X(gs(.ORA))
 	rjmp .read_zpx
 .x19_ORA_aby:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
+	LDI_X(gs(.ORA))
 	rjmp .read_aby
 .x1d_ORA_abx:
-	ldi XL,lo8(gs(.ORA))
-	ldi XH,hi8(gs(.ORA))
+	LDI_X(gs(.ORA))
 	rjmp .read_abx
 .x21_AND_inx:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
+	LDI_X(gs(.AND))
 	rjmp .read_inx
 .x25_AND_zpg:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
+	LDI_X(gs(.AND))
 	rjmp .read_zpg
 .x29_AND_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1082,32 +1078,25 @@ cpu_main:
 	mov _N_,_A_
 	rjmp .tick
 .x2d_AND_abs:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
+	LDI_X(gs(.AND))
 	rjmp .read_abs
 .x31_AND_iny:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
+	LDI_X(gs(.AND))
 	rjmp .read_iny
 .x35_AND_zpx:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
+	LDI_X(gs(.AND))
 	rjmp .read_zpx
 .x39_AND_aby:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
+	LDI_X(gs(.AND))
 	rjmp .read_aby
 .x3d_AND_abx:
-	ldi XL,lo8(gs(.AND))
-	ldi XH,hi8(gs(.AND))
+	LDI_X(gs(.AND))
 	rjmp .read_abx
 .x41_EOR_inx:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
+	LDI_X(gs(.EOR))
 	rjmp .read_inx
 .x45_EOR_zpg:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
+	LDI_X(gs(.EOR))
 	rjmp .read_zpg
 .x49_EOR_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1118,32 +1107,25 @@ cpu_main:
 	mov _N_,_A_
 	rjmp .tick
 .x4d_EOR_abs:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
+	LDI_X(gs(.EOR))
 	rjmp .read_abs
 .x51_EOR_iny:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
+	LDI_X(gs(.EOR))
 	rjmp .read_iny
 .x55_EOR_zpx:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
+	LDI_X(gs(.EOR))
 	rjmp .read_zpx
 .x59_EOR_aby:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
+	LDI_X(gs(.EOR))
 	rjmp .read_aby
 .x5d_EOR_abx:
-	ldi XL,lo8(gs(.EOR))
-	ldi XH,hi8(gs(.EOR))
+	LDI_X(gs(.EOR))
 	rjmp .read_abx
 .x61_ADC_inx:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
+	LDI_X(gs(.ADC))
 	rjmp .read_inx
 .x65_ADC_zpg:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
+	LDI_X(gs(.ADC))
 	rjmp .read_zpg
 .x69_ADC_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1210,32 +1192,25 @@ cpu_main:
 	mov _A_,r18	 ; A <- lo8(total)
 	rjmp .tick
 .x6d_ADC_abs:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
+	LDI_X(gs(.ADC))
 	rjmp .read_abs
 .x71_ADC_iny:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
+	LDI_X(gs(.ADC))
 	rjmp .read_iny
 .x75_ADC_zpx:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
+	LDI_X(gs(.ADC))
 	rjmp .read_zpx
 .x79_ADC_aby:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
+	LDI_X(gs(.ADC))
 	rjmp .read_aby
 .x7d_ADC_abx:
-	ldi XL,lo8(gs(.ADC))
-	ldi XH,hi8(gs(.ADC))
+	LDI_X(gs(.ADC))
 	rjmp .read_abx
 .xa1_LDA_inx:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
+	LDI_X(gs(.LDA))
 	rjmp .read_inx
 .xa5_LDA_zpg:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
+	LDI_X(gs(.LDA))
 	rjmp .read_zpg
 .xa9_LDA_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1246,32 +1221,25 @@ cpu_main:
 	mov _N_,_data_	 ;
 	rjmp .tick
 .xad_LDA_abs:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
+	LDI_X(gs(.LDA))
 	rjmp .read_abs
 .xb1_LDA_iny:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
+	LDI_X(gs(.LDA))
 	rjmp .read_iny
 .xb5_LDA_zpx:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
+	LDI_X(gs(.LDA))
 	rjmp .read_zpx
 .xb9_LDA_aby:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
+	LDI_X(gs(.LDA))
 	rjmp .read_aby
 .xbd_LDA_abx:
-	ldi XL,lo8(gs(.LDA))
-	ldi XH,hi8(gs(.LDA))
+	LDI_X(gs(.LDA))
 	rjmp .read_abx
 .xc1_CMP_inx:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
+	LDI_X(gs(.CMP))
 	rjmp .read_inx
 .xc5_CMP_zpg:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
+	LDI_X(gs(.CMP))
 	rjmp .read_zpg
 .xc9_CMP_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1286,32 +1254,25 @@ cpu_main:
 .CMP_carry:
 	rjmp .tick
 .xcd_CMP_abs:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
+	LDI_X(gs(.CMP))
 	rjmp .read_abs
 .xd1_CMP_iny:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
+	LDI_X(gs(.CMP))
 	rjmp .read_iny
 .xd5_CMP_zpx:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
+	LDI_X(gs(.CMP))
 	rjmp .read_zpx
 .xd9_CMP_aby:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
+	LDI_X(gs(.CMP))
 	rjmp .read_aby
 .xdd_CMP_abx:
-	ldi XL,lo8(gs(.CMP))
-	ldi XH,hi8(gs(.CMP))
+	LDI_X(gs(.CMP))
 	rjmp .read_abx
 .xe1_SBC_inx:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
+	LDI_X(gs(.SBC))
 	rjmp .read_inx
 .xe5_SBC_zpg:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
+	LDI_X(gs(.SBC))
 	rjmp .read_zpg
 .xe9_SBC_imm:
 .xeb_SBC_imm_undocumented:
@@ -1382,24 +1343,19 @@ cpu_main:
 	mov _A_,r25	 ;  reg_a, result
 	rjmp .tick
 .xed_SBC_abs:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
+	LDI_X(gs(.SBC))
 	rjmp .read_abs
 .xf1_SBC_iny:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
+	LDI_X(gs(.SBC))
 	rjmp .read_iny
 .xf5_SBC_zpx:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
+	LDI_X(gs(.SBC))
 	rjmp .read_zpx
 .xf9_SBC_aby:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
+	LDI_X(gs(.SBC))
 	rjmp .read_aby
 .xfd_SBC_abx:
-	ldi XL,lo8(gs(.SBC))
-	ldi XH,hi8(gs(.SBC))
+	LDI_X(gs(.SBC))
 	rjmp .read_abx
 .xa2_LDX_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1410,20 +1366,16 @@ cpu_main:
 	mov _N_,_data_	 ;
 	rjmp .tick	 ;
 .xa6_LDX_zpg:
-	ldi XL,lo8(gs(.LDX))
-	ldi XH,hi8(gs(.LDX))
+	LDI_X(gs(.LDX))
 	rjmp .read_zpg
 .xae_LDX_abs:
-	ldi XL,lo8(gs(.LDX))
-	ldi XH,hi8(gs(.LDX))
+	LDI_X(gs(.LDX))
 	rjmp .read_abs
 .xb6_LDX_zpy:
-	ldi XL,lo8(gs(.LDX))
-	ldi XH,hi8(gs(.LDX))
+	LDI_X(gs(.LDX))
 	rjmp .read_zpy
 .xbe_LDX_aby:
-	ldi XL,lo8(gs(.LDX))
-	ldi XH,hi8(gs(.LDX))
+	LDI_X(gs(.LDX))
 	rjmp .read_aby
 .xa0_LDY_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1434,20 +1386,16 @@ cpu_main:
 	mov _N_,_data_	 ;
 	rjmp .tick	 ;
 .xa4_LDY_zpg:
-	ldi XL,lo8(gs(.LDY))
-	ldi XH,hi8(gs(.LDY))
+	LDI_X(gs(.LDY))
 	rjmp .read_zpg
 .xac_LDY_abs:
-	ldi XL,lo8(gs(.LDY))
-	ldi XH,hi8(gs(.LDY))
+	LDI_X(gs(.LDY))
 	rjmp .read_abs
 .xb4_LDY_zpx:
-	ldi XL,lo8(gs(.LDY))
-	ldi XH,hi8(gs(.LDY))
+	LDI_X(gs(.LDY))
 	rjmp .read_zpx
 .xbc_LDY_abx:
-	ldi XL,lo8(gs(.LDY))
-	ldi XH,hi8(gs(.LDY))
+	LDI_X(gs(.LDY))
 	rjmp .read_abx
 .xe0_CPX_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1462,12 +1410,10 @@ cpu_main:
 .CPX_carry:
 	rjmp .tick
 .xe4_CPX_zpg:
-	ldi XL,lo8(gs(.CPX))
-	ldi XH,hi8(gs(.CPX))
+	LDI_X(gs(.CPX))
 	rjmp .read_zpg
 .xec_CPX_abs:
-	ldi XL,lo8(gs(.CPX))
-	ldi XH,hi8(gs(.CPX))
+	LDI_X(gs(.CPX))
 	rjmp .read_abs
 .xc0_CPY_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -1482,20 +1428,16 @@ cpu_main:
 .CPY_carry:
 	rjmp .tick
 .xc4_CPY_zpg:
-	ldi XL,lo8(gs(.CPY))
-	ldi XH,hi8(gs(.CPY))
+	LDI_X(gs(.CPY))
 	rjmp .read_zpg
 .xcc_CPY_abs:
-	ldi XL,lo8(gs(.CPY))
-	ldi XH,hi8(gs(.CPY))
+	LDI_X(gs(.CPY))
 	rjmp .read_abs
 .x24_BIT_zpg:
-	ldi XL,lo8(gs(.BIT))
-	ldi XH,hi8(gs(.BIT))
+	LDI_X(gs(.BIT))
 	rjmp .read_zpg
 .x2c_BIT_abs:
-	ldi XL,lo8(gs(.BIT))
-	ldi XH,hi8(gs(.BIT))
+	LDI_X(gs(.BIT))
 	rjmp .read_abs
 .BIT:
 	bst _data_,6	 ;
