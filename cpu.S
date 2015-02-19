@@ -287,106 +287,6 @@ cpu6502_LAX:
 	mov _A_,_data_	 ;
 	ret
 	.size	cpu6502_LAX, .-cpu6502_LAX
-	.section	.text.cpu6502_ASL,"ax",@progbits
-	.type	cpu6502_ASL, @function
-cpu6502_ASL:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	lsr _C_	 ; carry <- C <- 0
-	lsl _data_	 ; carry <- data.7 <- ... <- data.0 <- 0
-	rol _C_	 ; C <- carry <- 0
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp mem_write	 ;
-	.size	cpu6502_ASL, .-cpu6502_ASL
-	.section	.text.cpu6502_SLO,"ax",@progbits
-	.type	cpu6502_SLO, @function
-cpu6502_SLO:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall cpu6502_ASL	 ;
-	rjmp .ORA	 ;
-	.size	cpu6502_SLO, .-cpu6502_SLO
-	.section	.text.cpu6502_ROL,"ax",@progbits
-	.type	cpu6502_ROL, @function
-cpu6502_ROL:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	lsr _C_	 ; carry <- C <- 0
-	rol _data_	 ; carry <- data.7 <- ... <- data.0 <- carry
-	rol _C_	 ; C <- carry <- 0
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp mem_write	 ;
-	.size	cpu6502_ROL, .-cpu6502_ROL
-	.section	.text.cpu6502_RLA,"ax",@progbits
-	.type	cpu6502_RLA, @function
-cpu6502_RLA:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall cpu6502_ROL	 ;
-	rjmp .AND	 ;
-	.size	cpu6502_RLA, .-cpu6502_RLA
-	.section	.text.cpu6502_LSR,"ax",@progbits
-	.type	cpu6502_LSR, @function
-cpu6502_LSR:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	lsr _C_	 ; carry <- C <- 0
-	lsr _data_	 ; carry <- data.0 <- ... <- data.7 <- 0
-	rol _C_	 ; C <- carry <- 0
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp mem_write	 ;
-	.size	cpu6502_LSR, .-cpu6502_LSR
-	.section	.text.cpu6502_SRE,"ax",@progbits
-	.type	cpu6502_SRE, @function
-cpu6502_SRE:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall cpu6502_LSR	 ;
-	rjmp .EOR	 ;
-	.size	cpu6502_SRE, .-cpu6502_SRE
-	.section	.text.cpu6502_ROR,"ax",@progbits
-	.type	cpu6502_ROR, @function
-cpu6502_ROR:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	lsr _C_	 ; carry <- C <- 0
-	ror _data_	 ; carry <- data.0 <- ... <- data.7 <- carry
-	rol _C_	 ; C <- carry <- 0
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp mem_write	 ;
-	.size	cpu6502_ROR, .-cpu6502_ROR
-	.section	.text.cpu6502_RRA,"ax",@progbits
-	.type	cpu6502_RRA, @function
-cpu6502_RRA:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall cpu6502_ROR	 ;
-	rjmp .ADC	 ;
-	.size	cpu6502_RRA, .-cpu6502_RRA
 	.section	.text.cpu6502_SAX,"ax",@progbits
 	.type	cpu6502_SAX, @function
 cpu6502_SAX:
@@ -411,42 +311,6 @@ cpu6502_SHA:
 	and _data_,_A_	 ; data &= A
 	rjmp mem_write	 ; mem_write(addr, A & X & (addr_hi + 1))
 	.size	cpu6502_SHA, .-cpu6502_SHA
-	.section	.text.cpu6502_DEC,"ax",@progbits
-	.type	cpu6502_DEC, @function
-cpu6502_DEC:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	dec _data_	 ; data--
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp mem_write	 ;
-	.size	cpu6502_DEC, .-cpu6502_DEC
-	.section	.text.cpu6502_INC,"ax",@progbits
-	.type	cpu6502_INC, @function
-cpu6502_INC:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	inc _data_	 ; data++
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp mem_write	 ;
-	.size	cpu6502_INC, .-cpu6502_INC
-	.section	.text.cpu6502_ISB,"ax",@progbits
-	.type	cpu6502_ISB, @function
-cpu6502_ISB:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall cpu6502_INC	 ;
-	rjmp .SBC	 ;
-	.size	cpu6502_ISB, .-cpu6502_ISB
 	.section	.text.update_p,"ax",@progbits
 	.type	update_p, @function
 update_p:
@@ -463,16 +327,6 @@ update_p:
 	andi _P_,~Z_FLAG	 ; clear Z flag if Z != 0
 	ret
 	.size	update_p, .-update_p
-	.section	.text.cpu6502_DCP,"ax",@progbits
-	.type	cpu6502_DCP, @function
-cpu6502_DCP:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 2
-	rcall cpu6502_DEC	 ;
-	rjmp .CMP	 ;
-	.size	cpu6502_DCP, .-cpu6502_DCP
 	.section	.text.addr_zpg,"ax",@progbits
 .global	addr_zpg
 	.type	addr_zpg, @function
@@ -778,7 +632,7 @@ cpu_main:
 .pc_no_ram:
 	ldi _opcode_,0xff	 ; other addresses return 0xff
 	ldi _data_,0xff	 ; other addresses return 0xff
-	rjmp .xff
+	rjmp .xff_ISB_abx_undocumented
 
 /* align to 256-word boundary */
 .p2align 8
@@ -786,11 +640,11 @@ cpu_main:
 	rjmp .x00_BRK
 	rjmp .x01_ORA_inx
 	rjmp .x02
-	rjmp .x03
+	rjmp .x03_SLO_inx_undocumented
 	rjmp .x04
 	rjmp .x05_ORA_zpg
 	rjmp .x06_ASL_zpg
-	rjmp .x07
+	rjmp .x07_SLO_zpg_undocumented
 	rjmp .x08_PHP
 	rjmp .x09_ORA_imm
 	rjmp .x0a_ASL_acc
@@ -798,31 +652,31 @@ cpu_main:
 	rjmp .x0c
 	rjmp .x0d_ORA_abs
 	rjmp .x0e_ASL_abs
-	rjmp .x0f
+	rjmp .x0f_SLO_abs_undocumented
 	rjmp .x10_BPL
 	rjmp .x11_ORA_iny
 	rjmp .x12
-	rjmp .x13
+	rjmp .x13_SLO_iny_undocumented
 	rjmp .x14
 	rjmp .x15_ORA_zpx
 	rjmp .x16_ASL_zpx
-	rjmp .x17
+	rjmp .x17_SLO_zpx_undocumented
 	rjmp .x18_CLC
 	rjmp .x19_ORA_aby
 	rjmp .x1a
-	rjmp .x1b
+	rjmp .x1b_SLO_aby_undocumented
 	rjmp .x1c
 	rjmp .x1d_ORA_abx
 	rjmp .x1e_ASL_abx
-	rjmp .x1f
+	rjmp .x1f_SLO_abx_undocumented
 	rjmp .x20_JSR
 	rjmp .x21_AND_inx
 	rjmp .x22
-	rjmp .x23
+	rjmp .x23_RLA_inx_undocumented
 	rjmp .x24_BIT_zpg
 	rjmp .x25_AND_zpg
 	rjmp .x26_ROL_zpg
-	rjmp .x27
+	rjmp .x27_RLA_zpg_undocumented
 	rjmp .x28_PLP
 	rjmp .x29_AND_imm
 	rjmp .x2a_ROL_acc
@@ -830,31 +684,31 @@ cpu_main:
 	rjmp .x2c_BIT_abs
 	rjmp .x2d_AND_abs
 	rjmp .x2e_ROL_abs
-	rjmp .x2f
+	rjmp .x2f_RLA_abs_undocumented
 	rjmp .x30_BMI
 	rjmp .x31_AND_iny
 	rjmp .x32
-	rjmp .x33
+	rjmp .x33_RLA_iny_undocumented
 	rjmp .x34
 	rjmp .x35_AND_zpx
 	rjmp .x36_ROL_zpx
-	rjmp .x37
+	rjmp .x37_RLA_zpx_undocumented
 	rjmp .x38_SEC
 	rjmp .x39_AND_aby
 	rjmp .x3a
-	rjmp .x3b
+	rjmp .x3b_RLA_aby_undocumented
 	rjmp .x3c
 	rjmp .x3d_AND_abx
 	rjmp .x3e_ROL_abx
-	rjmp .x3f
+	rjmp .x3f_RLA_abx_undocumented
 	rjmp .x40_RTI
 	rjmp .x41_EOR_inx
 	rjmp .x42
-	rjmp .x43
+	rjmp .x43_SRE_inx_undocumented
 	rjmp .x44
 	rjmp .x45_EOR_zpg
 	rjmp .x46_LSR_zpg
-	rjmp .x47
+	rjmp .x47_SRE_zpg_undocumented
 	rjmp .x48_PHA
 	rjmp .x49_EOR_imm
 	rjmp .x4a_LSR_acc
@@ -862,31 +716,31 @@ cpu_main:
 	rjmp .x4c_JMP_abs
 	rjmp .x4d_EOR_abs
 	rjmp .x4e_LSR_abs
-	rjmp .x4f
+	rjmp .x4f_SRE_abs_undocumented
 	rjmp .x50_BVC
 	rjmp .x51_EOR_iny
 	rjmp .x52
-	rjmp .x53
+	rjmp .x53_SRE_iny_undocumented
 	rjmp .x54
 	rjmp .x55_EOR_zpx
 	rjmp .x56_LSR_zpx
-	rjmp .x57
+	rjmp .x57_SRE_zpx_undocumented
 	rjmp .x58_CLI
 	rjmp .x59_EOR_aby
 	rjmp .x5a
-	rjmp .x5b
+	rjmp .x5b_SRE_aby_undocumented
 	rjmp .x5c
 	rjmp .x5d_EOR_abx
 	rjmp .x5e_LSR_abx
-	rjmp .x5f
+	rjmp .x5f_SRE_abx_undocumented
 	rjmp .x60_RTS
 	rjmp .x61_ADC_inx
 	rjmp .x62
-	rjmp .x63
+	rjmp .x63_RRA_inx_undocumented
 	rjmp .x64
 	rjmp .x65_ADC_zpg
 	rjmp .x66_ROR_zpg
-	rjmp .x67
+	rjmp .x67_RRA_zpg_undocumented
 	rjmp .x68_PLA
 	rjmp .x69_ADC_imm
 	rjmp .x6a_ROR_acc
@@ -894,23 +748,23 @@ cpu_main:
 	rjmp .x6c_JMP_ind
 	rjmp .x6d_ADC_abs
 	rjmp .x6e_ROR_abs
-	rjmp .x6f
+	rjmp .x6f_RRA_abs_undocumented
 	rjmp .x70_BVS
 	rjmp .x71_ADC_iny
 	rjmp .x72
-	rjmp .x73
+	rjmp .x73_RRA_iny_undocumented
 	rjmp .x74
 	rjmp .x75_ADC_zpx
 	rjmp .x76_ROR_zpx
-	rjmp .x77
+	rjmp .x77_RRA_zpx_undocumented
 	rjmp .x78_SEI
 	rjmp .x79_ADC_aby
 	rjmp .x7a
-	rjmp .x7b
+	rjmp .x7b_RRA_aby_undocumented
 	rjmp .x7c
 	rjmp .x7d_ADC_abx
 	rjmp .x7e_ROR_abx
-	rjmp .x7f
+	rjmp .x7f_RRA_abx_undocumented
 	rjmp .x80
 	rjmp .x81_STA_inx
 	rjmp .x82
@@ -978,11 +832,11 @@ cpu_main:
 	rjmp .xc0_CPY_imm
 	rjmp .xc1_CMP_inx
 	rjmp .xc2
-	rjmp .xc3
+	rjmp .xc3_DCP_inx_undocumented
 	rjmp .xc4_CPY_zpg
 	rjmp .xc5_CMP_zpg
 	rjmp .xc6_DEC_zpg
-	rjmp .xc7
+	rjmp .xc7_DCP_zpg_undocumented
 	rjmp .xc8_INY
 	rjmp .xc9_CMP_imm
 	rjmp .xca_DEX
@@ -990,31 +844,31 @@ cpu_main:
 	rjmp .xcc_CPY_abs
 	rjmp .xcd_CMP_abs
 	rjmp .xce_DEC_abs
-	rjmp .xcf
+	rjmp .xcf_DCP_abs_undocumented
 	rjmp .xd0_BNE
 	rjmp .xd1_CMP_iny
 	rjmp .xd2
-	rjmp .xd3
+	rjmp .xd3_DCP_iny_undocumented
 	rjmp .xd4
 	rjmp .xd5_CMP_zpx
 	rjmp .xd6_DEC_zpx
-	rjmp .xd7
+	rjmp .xd7_DCP_zpx_undocumented
 	rjmp .xd8_CLD
 	rjmp .xd9_CMP_aby
 	rjmp .xda
-	rjmp .xdb
+	rjmp .xdb_DCP_aby_undocumented
 	rjmp .xdc
 	rjmp .xdd_CMP_abx
 	rjmp .xde_DEC_abx
-	rjmp .xdf
+	rjmp .xdf_DCP_abx_undocumented
 	rjmp .xe0_CPX_imm
 	rjmp .xe1_SBC_inx
 	rjmp .xe2
-	rjmp .xe3
+	rjmp .xe3_ISB_inx_undocumented
 	rjmp .xe4_CPX_zpg
 	rjmp .xe5_SBC_zpg
 	rjmp .xe6_INC_zpg
-	rjmp .xe7
+	rjmp .xe7_ISB_zpg_undocumented
 	rjmp .xe8_INX
 	rjmp .xe9_SBC_imm
 	rjmp .xea
@@ -1022,23 +876,23 @@ cpu_main:
 	rjmp .xec_CPX_abs
 	rjmp .xed_SBC_abs
 	rjmp .xee_INC_abs
-	rjmp .xef
+	rjmp .xef_ISB_abs_undocumented
 	rjmp .xf0_BEQ
 	rjmp .xf1_SBC_iny
 	rjmp .xf2
-	rjmp .xf3
+	rjmp .xf3_ISB_iny_undocumented
 	rjmp .xf4
 	rjmp .xf5_SBC_zpx
 	rjmp .xf6_INC_zpx
-	rjmp .xf7
+	rjmp .xf7_ISB_zpx_undocumented
 	rjmp .xf8_SED
 	rjmp .xf9_SBC_aby
 	rjmp .xfa
-	rjmp .xfb
+	rjmp .xfb_ISB_aby_undocumented
 	rjmp .xfc
 	rjmp .xfd_SBC_abx
 	rjmp .xfe_INC_abx
-	rjmp .xff
+	rjmp .xff_ISB_abx_undocumented
 
 /***************************** READ INSTRUCTIONS ******************************/
 
@@ -1696,6 +1550,210 @@ output: data value in _data_, tick count in _cycles_
 	LDI_X(gs(.INC))
 	rjmp .modify_abx
 
+.SLO:
+	/* ASL */
+	lsr _C_	 ; carry <- C <- 0
+	lsl _data_	 ; carry <- data.7 <- ... <- data.0 <- 0
+	rol _C_	 ; C <- carry <- 0
+	/* ORA */
+	or _A_,_data_	 ; A |= data
+	mov _Z_,_A_
+	mov _N_,_A_
+	ret
+.x03_SLO_inx_undocumented:
+	LDI_Z(gs(.SLO))
+	rjmp .modify_inx
+.x07_SLO_zpg_undocumented:
+	LDI_Z(gs(.SLO))
+	rjmp .modify_zpg
+.x0f_SLO_abs_undocumented:
+	LDI_Z(gs(.SLO))
+	rjmp .modify_abs
+.x13_SLO_iny_undocumented:
+	LDI_Z(gs(.SLO))
+	rjmp .modify_iny
+.x17_SLO_zpx_undocumented:
+	LDI_Z(gs(.SLO))
+	rjmp .modify_zpx
+.x1b_SLO_aby_undocumented:
+	LDI_Z(gs(.SLO))
+	rjmp .modify_aby
+.x1f_SLO_abx_undocumented:
+	LDI_Z(gs(.SLO))
+	rjmp .modify_abx
+.RLA:
+	/* ROL */
+	lsr _C_	 ; carry <- C <- 0
+	rol _data_	 ; carry <- data.7 <- ... <- data.0 <- carry
+	rol _C_	 ; C <- carry <- 0
+	/* AND */
+	and _A_,_data_	 ; A &= data
+	mov _Z_,_A_
+	mov _N_,_A_
+	ret
+.x23_RLA_inx_undocumented:
+	LDI_Z(gs(.RLA))
+	rjmp .modify_inx
+.x27_RLA_zpg_undocumented:
+	LDI_Z(gs(.RLA))
+	rjmp .modify_zpg
+.x2f_RLA_abs_undocumented:
+	LDI_Z(gs(.RLA))
+	rjmp .modify_abs
+.x33_RLA_iny_undocumented:
+	LDI_Z(gs(.RLA))
+	rjmp .modify_iny
+.x37_RLA_zpx_undocumented:
+	LDI_Z(gs(.RLA))
+	rjmp .modify_zpx
+.x3b_RLA_aby_undocumented:
+	LDI_Z(gs(.RLA))
+	rjmp .modify_aby
+.x3f_RLA_abx_undocumented:
+	LDI_Z(gs(.RLA))
+	rjmp .modify_abx
+.SRE:
+	/* LSR */
+	lsr _C_	 ; carry <- C <- 0
+	lsr _data_	 ; carry <- data.0 <- ... <- data.7 <- 0
+	rol _C_	 ; C <- carry <- 0
+	/* EOR */
+	eor _A_,_data_	 ; A ^= data
+	mov _Z_,_A_
+	mov _N_,_A_
+	ret
+.x43_SRE_inx_undocumented:
+	LDI_Z(gs(.SRE))
+	rjmp .modify_inx
+.x47_SRE_zpg_undocumented:
+	LDI_Z(gs(.SRE))
+	rjmp .modify_zpg
+.x4f_SRE_abs_undocumented:
+	LDI_Z(gs(.SRE))
+	rjmp .modify_abs
+.x53_SRE_iny_undocumented:
+	LDI_Z(gs(.SRE))
+	rjmp .modify_iny
+.x57_SRE_zpx_undocumented:
+	LDI_Z(gs(.SRE))
+	rjmp .modify_zpx
+.x5b_SRE_aby_undocumented:
+	LDI_Z(gs(.SRE))
+	rjmp .modify_aby
+.x5f_SRE_abx_undocumented:
+	LDI_Z(gs(.SRE))
+	rjmp .modify_abx
+.RRA:
+	/* ROR */
+	lsr _C_	 ; carry <- C <- 0
+	ror _data_	 ; carry <- data.0 <- ... <- data.7 <- carry
+	/* ADC */
+	adc _A_,_data_	 ; (carry, A) <- A + data + carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	brvs .RRA_overflow	 ; branch on overflow
+	rol _C_	 ; C <- carry <- 0
+	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
+	ret
+.RRA_overflow:
+	rol _C_	 ; C <- carry <- 0
+	ori _P_,V_FLAG	 ; P |= V_FLAG
+	ret
+.x63_RRA_inx_undocumented:
+	LDI_Z(gs(.RRA))
+	rjmp .modify_inx
+.x67_RRA_zpg_undocumented:
+	LDI_Z(gs(.RRA))
+	rjmp .modify_zpg
+.x6f_RRA_abs_undocumented:
+	LDI_Z(gs(.RRA))
+	rjmp .modify_abs
+.x73_RRA_iny_undocumented:
+	LDI_Z(gs(.RRA))
+	rjmp .modify_iny
+.x77_RRA_zpx_undocumented:
+	LDI_Z(gs(.RRA))
+	rjmp .modify_zpx
+.x7b_RRA_aby_undocumented:
+	LDI_Z(gs(.RRA))
+	rjmp .modify_aby
+.x7f_RRA_abx_undocumented:
+	LDI_Z(gs(.RRA))
+	rjmp .modify_abx
+.DCP:
+	/* DEC */
+	dec _data_	 ; data--
+	/* CMP */
+	mov _Z_,_A_	 ; Z <- A
+	sub _Z_,_data_	 ; Z <- A - data
+	mov _N_,_Z_	 ; N <- A - data
+	clr _C_	 ;
+	brlo .DCP_carry	 ; branch if A < data
+	inc _C_	 ; C <- 1 if A >= data
+.DCP_carry:
+	ret
+.xc3_DCP_inx_undocumented:
+	LDI_Z(gs(.DCP))
+	rjmp .modify_inx
+.xc7_DCP_zpg_undocumented:
+	LDI_Z(gs(.DCP))
+	rjmp .modify_zpg
+.xcf_DCP_abs_undocumented:
+	LDI_Z(gs(.DCP))
+	rjmp .modify_abs
+.xd3_DCP_iny_undocumented:
+	LDI_Z(gs(.DCP))
+	rjmp .modify_iny
+.xd7_DCP_zpx_undocumented:
+	LDI_Z(gs(.DCP))
+	rjmp .modify_zpx
+.xdb_DCP_aby_undocumented:
+	LDI_Z(gs(.DCP))
+	rjmp .modify_aby
+.xdf_DCP_abx_undocumented:
+	LDI_Z(gs(.DCP))
+	rjmp .modify_abx
+.ISB:
+	/* INC */
+	inc _data_	 ; data++
+	/* SBC */
+	com _C_	 ; toggle carry
+	lsr _C_	 ; carry <- ~C <- 0
+	sbc _A_,_data_	 ; (carry, A) <- A - data - carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	brvs .ISB_overflow	 ; branch on overflow
+	rol _C_	 ; ~C <- carry <- 0
+	com _C_	 ; un-toggle carry
+	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
+	ret
+.ISB_overflow:
+	rol _C_	 ; C <- carry <- 0
+	com _C_	 ; un-toggle carry
+	ori _P_,V_FLAG	 ; P |= V_FLAG
+	ret
+.xe3_ISB_inx_undocumented:
+	LDI_Z(gs(.ISB))
+	rjmp .modify_inx
+.xe7_ISB_zpg_undocumented:
+	LDI_Z(gs(.ISB))
+	rjmp .modify_zpg
+.xef_ISB_abs_undocumented:
+	LDI_Z(gs(.ISB))
+	rjmp .modify_abs
+.xf3_ISB_iny_undocumented:
+	LDI_Z(gs(.ISB))
+	rjmp .modify_iny
+.xf7_ISB_zpx_undocumented:
+	LDI_Z(gs(.ISB))
+	rjmp .modify_zpx
+.xfb_ISB_aby_undocumented:
+	LDI_Z(gs(.ISB))
+	rjmp .modify_aby
+.xff_ISB_abx_undocumented:
+	LDI_Z(gs(.ISB))
+	rjmp .modify_abx
+
 /*
 input:  function pointer in ZH:ZL, to be used with icall
         the function should use _data_ as input and output
@@ -2093,17 +2151,9 @@ input:  function pointer in ZH:ZL, to be used with icall
 
 /******************************************************************************/
 
-.x03:
-	rcall addr_inx	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_SLO
 .x04:
 	rcall addr_zpg	 ; 
 	TICK(3)
-.x07:
-	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp cpu6502_SLO
 .x0b_ANC_imm_undocumented:
 .x2b_ANC_imm_undocumented:
 	adiw _PCL_,2	 ; PC += 2
@@ -2116,85 +2166,29 @@ input:  function pointer in ZH:ZL, to be used with icall
 .x0c:
 	rcall addr_abs	 ; 
 	TICK(4)
-.x0f:
-	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_SLO
-.x13:
-	rcall addr_iny	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_SLO
 .x14:
 	rcall addr_zpx	 ; 
 	TICK(2)
-.x17:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_SLO
 .x1a:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.x1b:
-	rcall addr_aby	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_SLO
 .x1c:
 	rcall addr_abx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x1f:
-	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_SLO
-.x23:
-	rcall addr_inx	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_RLA
-.x27:
-	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp cpu6502_RLA
-.x2f:
-	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_RLA
-.x33:
-	rcall addr_iny	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_RLA
 .x34:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x37:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_RLA
 .x3a:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.x3b:
-	rcall addr_aby	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_RLA
 .x3c:
 	rcall addr_abx	 ; 
 	TICK(4)
-.x3f:
-	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_RLA
-.x43:
-	rcall addr_inx	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_SRE
 .x44:
 	rcall addr_zpg	 ; 
 	TICK(3)
-.x47:
-	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp cpu6502_SRE
 .x4b_ASR_imm_undocumented:
 	/* AND + LSR */
 	adiw _PCL_,2	 ; PC += 2
@@ -2205,80 +2199,32 @@ input:  function pointer in ZH:ZL, to be used with icall
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	TICK(2)
-.x4f:
-	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_SRE
-.x53:
-	rcall addr_iny	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_SRE
 .x54:
 	rcall addr_zpx	 ; 
 	TICK(4)
-.x57:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_SRE
 .x5a:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.x5b:
-	rcall addr_aby	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_SRE
 .x5c:
 	rcall addr_abx	 ; 
 	TICK(4)
-.x5f:
-	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_SRE
-.x63:
-	rcall addr_inx	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_RRA
 .x64:
 	rcall addr_zpg	 ; 
 	TICK(3)
-.x67:
-	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp cpu6502_RRA
 .x6b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	TICK(2)
-.x6f:
-	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_RRA
-.x73:
-	rcall addr_iny	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_RRA
 .x74:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.x77:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_RRA
 .x7a:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.x7b:
-	rcall addr_aby	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_RRA
 .x7c:
 	rcall addr_abx	 ; 
 	TICK(4)
-.x7f:
-	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_RRA
 .x80:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
@@ -2379,14 +2325,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.xc3:
-	rcall addr_inx	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_DCP
-.xc7:
-	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp cpu6502_DCP
 .xcb:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
@@ -2406,83 +2344,35 @@ input:  function pointer in ZH:ZL, to be used with icall
 	mov _N_,r25	 ;  flag_n, flag_z.226
 	mov _X_,r25	 ;  reg_x, flag_z.226
 	TICK(2)
-.xcf:
-	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_DCP
-.xd3:
-	rcall addr_iny	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_DCP
 .xd4:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.xd7:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_DCP
 .xda:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.xdb:
-	rcall addr_aby	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_DCP
 .xdc:
 	rcall addr_abx	 ; 
 	TICK(4)
-.xdf:
-	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_DCP
 .xe2:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.xe3:
-	rcall addr_inx	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_ISB
-.xe7:
-	rcall addr_zpg	 ; 
-	ldi _cycles_,5	 ; 5 cycles
-	rjmp cpu6502_ISB
 /* NOP */
 .xea:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.xef:
-	rcall addr_abs	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_ISB
-.xf3:
-	rcall addr_iny	 ; 
-	ldi _cycles_,8	 ; 8 cycles
-	rjmp cpu6502_ISB
 .xf4:
 	rcall addr_zpx	 ; 
 	ldi _cycles_,4	 ; 4 cycles
 	rjmp .tick	 ;
-.xf7:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,6	 ; 6 cycles
-	rjmp cpu6502_ISB
 .xfa:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
-.xfb:
-	rcall addr_aby	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_ISB
 .xfc:
 	rcall addr_abx	 ; 
 	TICK(4)
-.xff:
-	rcall addr_abx	 ; 
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp cpu6502_ISB
 .x02:
 .x12:
 .x22:
