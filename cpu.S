@@ -1559,10 +1559,8 @@ output: data value in _data_, tick count in _cycles_
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_abx:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
@@ -1570,16 +1568,12 @@ output: data value in _data_, tick count in _cycles_
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_X_	 ; r24 += X
 	brcs .read_abx_carry	 ; branch if r24+X carries
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_abx_carry:
 	inc r25	 ; r25++
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
-	movw ZL,XL
-	ijmp
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_aby:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
@@ -1587,16 +1581,12 @@ output: data value in _data_, tick count in _cycles_
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_Y_	 ; r24 += Y
 	brcs .read_aby_carry	 ; branch if r24+X carries
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
-	ijmp
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_aby_carry:
 	inc r25	 ; r25++
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
-	movw ZL,XL
-	ijmp
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_inx:
 	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
@@ -1605,10 +1595,8 @@ output: data value in _data_, tick count in _cycles_
 	ld r24,Z	 ; r24 <- ram[r24]
 	inc ZL	 ; ZL++
 	ld r25,Z	 ; r25 <- ram[r24+1]
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,6	 ; cycles <- 6
-	movw ZL,XL
-	ijmp
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_iny:
 	adiw _PCL_,2	 ; PC += 2
 	mov ZL,_data_	 ;
@@ -1618,14 +1606,30 @@ output: data value in _data_, tick count in _cycles_
 	ld r25,Z	 ; r25 <- ram[r24+1]
 	add r24,_Y_	 ; r24 += Y
 	brcs .read_iny_carry	 ; branch if r24+Y carries
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,5	 ; cycles <- 5
-	movw ZL,XL
-	ijmp
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_iny_carry:
 	inc r25	 ; r25++
-	rcall mem_read	 ; data <- read(r25:r24)
 	ldi _cycles_,6	 ; cycles <- 6
+	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
+.read_mem:
+	cpi r25,0x04	 ; branch if addr_hi >= 0x40
+	brsh .read_mem_L6	 ;
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(ram))	 ;
+	ld _data_,Z	 ; load from ram[addr]
+	movw ZL,XL
+	ijmp
+.read_mem_L6:
+	cpi r25,0xc0	 ; branch if addr_hi < 0xc0
+	brlo .read_mem_L9	 ;
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(dos1541-0xc000))	 ;
+	lpm _data_,Z	 ; load from rom[addr - 0xc0000]
+	movw ZL,XL
+	ijmp
+.read_mem_L9:
+	ldi _data_,0xff	 ; other addresses return 0xff
 	movw ZL,XL
 	ijmp
 
