@@ -1546,18 +1546,35 @@ output: data value in _data_, tick count in _cycles_
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
+.read_abs_no_carry:
 	ldi _cycles_,4	 ; cycles <- 4
-	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
+.read_mem:	 ; data <- read(r25:r24), ijmp (XH:XL)
+	cpi r25,0x04	 ; branch if addr_hi >= 0x40
+	brsh .read_mem_L6	 ;
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(ram))	 ;
+	ld _data_,Z	 ; load from ram[addr]
+	movw ZL,XL
+	ijmp
+.read_mem_L6:
+	cpi r25,0xc0	 ; branch if addr_hi < 0xc0
+	brlo .read_mem_L9	 ;
+	movw ZL,r24	 ;
+	subi ZH,hi8(-(dos1541-0xc000))	 ;
+	lpm _data_,Z	 ; load from rom[addr - 0xc0000]
+	movw ZL,XL
+	ijmp
+.read_mem_L9:
+	ldi _data_,0xff	 ; other addresses return 0xff
+	movw ZL,XL
+	ijmp
 .read_abx:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
 	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_X_	 ; r24 += X
-	brcs .read_abx_carry	 ; branch if r24+X carries
-	ldi _cycles_,4	 ; cycles <- 4
-	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
-.read_abx_carry:
+	brcc .read_abs_no_carry	 ; branch unless r24+X carries
 	inc r25	 ; r25++
 	ldi _cycles_,5	 ; cycles <- 5
 	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
@@ -1567,10 +1584,7 @@ output: data value in _data_, tick count in _cycles_
 	rcall mem_read_16	 ; r25:r24 <- read(PC)
 	adiw _PCL_,2	 ; PC += 2
 	add r24,_Y_	 ; r24 += Y
-	brcs .read_aby_carry	 ; branch if r24+X carries
-	ldi _cycles_,4	 ; cycles <- 4
-	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
-.read_aby_carry:
+	brcc .read_abs_no_carry	 ; branch unless r24+X carries
 	inc r25	 ; r25++
 	ldi _cycles_,5	 ; cycles <- 5
 	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
@@ -1599,26 +1613,6 @@ output: data value in _data_, tick count in _cycles_
 	inc r25	 ; r25++
 	ldi _cycles_,6	 ; cycles <- 6
 	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
-.read_mem:
-	cpi r25,0x04	 ; branch if addr_hi >= 0x40
-	brsh .read_mem_L6	 ;
-	movw ZL,r24	 ;
-	subi ZH,hi8(-(ram))	 ;
-	ld _data_,Z	 ; load from ram[addr]
-	movw ZL,XL
-	ijmp
-.read_mem_L6:
-	cpi r25,0xc0	 ; branch if addr_hi < 0xc0
-	brlo .read_mem_L9	 ;
-	movw ZL,r24	 ;
-	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm _data_,Z	 ; load from rom[addr - 0xc0000]
-	movw ZL,XL
-	ijmp
-.read_mem_L9:
-	ldi _data_,0xff	 ; other addresses return 0xff
-	movw ZL,XL
-	ijmp
 
 /*********************** READ-MODIFY-WRITE INSTRUCTIONS ***********************/
 
