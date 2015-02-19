@@ -1869,6 +1869,7 @@ output: data value in _data_, tick count in _cycles_
 	mov _N_,_A_	 ;
 	TICK(2)
 .x0b:
+.x2b:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
@@ -1949,18 +1950,6 @@ output: data value in _data_, tick count in _cycles_
 	rol _C_	 ; C <- carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	TICK(2)
-.x2b:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	rcall cpu6502_AND	 ; 
-	mov r24,_A_	 ;  D.4025, reg_a
-	com r24	 ;  D.4025
-	rol r24	 ;  D.4025
-	clr r24	 ;  D.4025
-	rol r24	 ;  D.4025
-	mov _C_,r24	 ;  flag_c, D.4025
 	TICK(2)
 .x2c:
 	rcall addr_abs	 ; 
