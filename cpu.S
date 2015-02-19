@@ -255,19 +255,6 @@ cpu6502_BIT:
 	mov _Z_,_data_	 ; Z <- data & A
 	ret
 	.size	cpu6502_BIT, .-cpu6502_BIT
-	.section	.text.cpu6502_AND,"ax",@progbits
-	.type	cpu6502_AND, @function
-cpu6502_AND:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	and _A_,_data_	 ; A &= data
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	ret
-	.size	cpu6502_AND, .-cpu6502_AND
 	.section	.text.cpu6502_LAX,"ax",@progbits
 	.type	cpu6502_LAX, @function
 cpu6502_LAX:
@@ -809,7 +796,7 @@ cpu_main:
 	rjmp .x08_PHP
 	rjmp .x09_ORA_imm
 	rjmp .x0a
-	rjmp .x0b
+	rjmp .x0b_ANC_imm_undocumented
 	rjmp .x0c
 	rjmp .x0d_ORA_abs
 	rjmp .x0e
@@ -841,7 +828,7 @@ cpu_main:
 	rjmp .x28_PLP
 	rjmp .x29_AND_imm
 	rjmp .x2a
-	rjmp .x2b
+	rjmp .x2b_ANC_imm_undocumented
 	rjmp .x2c
 	rjmp .x2d_AND_abs
 	rjmp .x2e
@@ -873,7 +860,7 @@ cpu_main:
 	rjmp .x48_PHA
 	rjmp .x49_EOR_imm
 	rjmp .x4a
-	rjmp .x4b
+	rjmp .x4b_ASR_imm_undocumented
 	rjmp .x4c_JMP_abs
 	rjmp .x4d_EOR_abs
 	rjmp .x4e
@@ -1868,18 +1855,14 @@ output: data value in _data_, tick count in _cycles_
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	TICK(2)
-.x0b:
-.x2b:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	rcall cpu6502_AND	 ; 
-	mov r24,_A_	 ;  D.4025, reg_a
-	com r24	 ;  D.4025
-	rol r24	 ;  D.4025
-	clr r24	 ;  D.4025
-	rol r24	 ;  D.4025
-	mov _C_,r24	 ;  flag_c, D.4025
+.x0b_ANC_imm_undocumented:
+.x2b_ANC_imm_undocumented:
+	adiw _PCL_,2	 ; PC += 2
+	and _A_,_data_	 ; A &= data
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	bst _A_,7	 ;
+	bld _C_,0	 ; C <- A.7
 	TICK(2)
 .x0c:
 	rcall addr_abs	 ; 
@@ -2021,11 +2004,10 @@ output: data value in _data_, tick count in _cycles_
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	TICK(2)
-.x4b:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	rcall cpu6502_AND	 ; 
+.x4b_ASR_imm_undocumented:
+	/* AND + LSR */
+	adiw _PCL_,2	 ; PC += 2
+	and _A_,_data_	 ; A &= data
 	clr _C_	 ; C <- 0
 	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
 	rol _C_	 ; C <- carry
