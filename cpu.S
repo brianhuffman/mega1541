@@ -981,16 +981,30 @@ cpu_main:
 	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .SBC:
-	mov r21,_P_	 ;  reg_p.249, reg_p
+	sbrc _P_,3	 ; skip if decimal mode is set
+	rjmp .SBC_dec	 ; jump if decimal mode is clear
+.SBC_bin:
+	com _data_	 ; data <- ~data
+	lsr _C_	 ; carry <- C <- 0
+	adc _A_,_data_	 ; (carry, A) <- A + data + carry
+	mov _Z_,_A_	 ;
+	mov _N_,_A_	 ;
+	brvs .SBC_bin_overflow	 ; branch on overflow
+	rol _C_	 ; C <- carry <- 0
+	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
+	rjmp .tick
+.SBC_bin_overflow:
+	rol _C_	 ; C <- carry <- 0
+	ori _P_,V_FLAG	 ; P |= V_FLAG
+	rjmp .tick
+.SBC_dec:
 	mov r20,_A_	 ;  reg_a.250, reg_a
 	mov r18,_C_	 ;  flag_c, flag_c
-	sbrs r21,3	 ;  reg_p.249,
-	rjmp .L30	 ; 
 	mov r25,r20	 ;  D.3761, reg_a.250
-	andi r25,lo8(15)	 ;  D.3761,
+	andi r25,0x0f	 ;  D.3761,
 	add r25,r18	 ;  D.3761, flag_c
 	mov r18,_data_	 ;  D.3761, D.3761
-	andi r18,lo8(15)	 ;  D.3761,
+	andi r18,0x0f	 ;  D.3761,
 	sub r25,r18	 ;  D.3761, D.3761
 	ldi r18,lo8(-7)	 ;  result,
 	add r18,r25	 ;  result, D.3761
@@ -1000,48 +1014,21 @@ cpu_main:
 	add r18,r25	 ;  result, D.3761
 .L31:
 	mov r25,r20	 ;  result, reg_a.250
-	andi r25,lo8(-16)	 ;  result,
+	andi r25,0xf0	 ;  result,
 	mov r19,_data_	 ;  D.3761, D.3761
-	andi r19,lo8(-16)	 ;  D.3761,
+	andi r19,0xf0	 ;  D.3761,
 	sub r25,r19	 ;  result, D.3761
 	add r25,r18	 ;  result, result
 	mov _Z_,r25	 ;  flag_z, result
 	mov _N_,r25	 ;  flag_n, result
-	andi r21,lo8(-66)	 ;  reg_p.253,
 	mov r18,r25	 ;  D.3761, result
 	eor r18,r20	 ;  D.3761, reg_a.250
 	eor r20,_data_	 ;  D.3761, D.3761
 	and r18,r20	 ;  D.3761, D.3761
-	sbrc r18,7	 ;  D.3761,
-	ori r21,lo8(64)	 ;  reg_p.254,
-.L37:
-	mov _P_,r21	 ;  reg_p, reg_p.254
+	bst r18,7	 ; t <- (A ^ result) & (A ^ data) bit 7
+	bld _P_,6	 ; P.6 <- t
 	mov _C_,__zero_reg__	 ;  flag_c,
-	subi r25,lo8(-(-96))	 ;  result,
-	rjmp .L34	 ; 
-.L30:
-	ldi r19,0	 ;  total
-	add r18,r20	 ;  total, reg_a.250
-	adc r19,__zero_reg__	 ;  total
-	subi r18,1	 ;  total,
-	sbc r19,__zero_reg__	 ;  total
-	sub r18,_data_	 ;  total, D.3761
-	sbc r19,__zero_reg__	 ;  total
-	mov _C_,r19	 ;  flag_c, total
-	mov r25,r18	 ;  result, total
-	mov r22,r21	 ;  reg_p.257, reg_p.249
-	andi r22,lo8(-65)	 ;  reg_p.257,
-	mov r21,r20	 ;  D.3761, reg_a.250
-	eor r21,r18	 ;  D.3761, total
-	eor r20,_data_	 ;  D.3761, D.3761
-	and r21,r20	 ;  D.3761, D.3761
-	sbrc r21,7	 ;  D.3761,
-	ori r22,lo8(64)	 ;  reg_p.254,
-.L38:
-	mov _P_,r22	 ;  reg_p, reg_p.254
-	mov _Z_,r18	 ;  flag_z, total
-	mov _N_,r18	 ;  flag_n, total
-.L34:
+	subi r25,0x60	 ;  result,
 	mov _A_,r25	 ;  reg_a, result
 	rjmp .tick
 .xed_SBC_abs:
