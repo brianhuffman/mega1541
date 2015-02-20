@@ -476,8 +476,8 @@ cpu_main:
 	ldi _data_,0xff	 ; other addresses return 0xff
 	rjmp .xff_ISB_abx_undocumented
 
-/* align to 256-word boundary */
-.p2align 8
+/* align to 256-word (512-byte) boundary */
+.p2align 9
 .opcode_table:
 	rjmp .x00_BRK
 	rjmp .x01_ORA_inx
