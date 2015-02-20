@@ -289,22 +289,6 @@ update_p:
 	andi _P_,~Z_FLAG	 ; clear Z flag if Z != 0
 	ret
 	.size	update_p, .-update_p
-	.section	.text.addr_zpg,"ax",@progbits
-.global	addr_zpg
-	.type	addr_zpg, @function
-addr_zpg:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; reg_pc.3, reg_pc
-	adiw _PCL_,1	 ; PC++
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov r24,_data_	 ;
-	ldi r25,0	 ;
-	ret
-	.size	addr_zpg, .-addr_zpg
 	.section	.text.addr_abs,"ax",@progbits
 .global	addr_abs
 	.type	addr_abs, @function
@@ -319,110 +303,6 @@ addr_abs:
 	adiw _PCL_,2	 ;  PC += 2
 	ret
 	.size	addr_abs, .-addr_abs
-	.section	.text.addr_zpx,"ax",@progbits
-.global	addr_zpx
-	.type	addr_zpx, @function
-addr_zpx:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	add r24,_data_	 ;
-	ldi r25,0	 ;
-	ret
-	.size	addr_zpx, .-addr_zpx
-	.section	.text.addr_zpy,"ax",@progbits
-.global	addr_zpy
-	.type	addr_zpy, @function
-addr_zpy:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_Y_	 ; data += Y
-	add r24,_data_	 ;
-	ldi r25,0	 ;
-	ret
-	.size	addr_zpy, .-addr_zpy
-	.section	.text.addr_abx,"ax",@progbits
-.global	addr_abx
-	.type	addr_abx, @function
-addr_abx:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
-	adiw _PCL_,2	 ; PC += 2
-	add r24,_X_	 ; r25:r24 += X
-	brcc .L84	 ; branch if same page
-	inc r25	 ;
-	ldi _cycles_,1	 ;
-	rjmp clock_advance	 ;
-.L84:
-	ret
-	.size	addr_abx, .-addr_abx
-	.section	.text.addr_aby,"ax",@progbits
-.global	addr_aby
-	.type	addr_aby, @function
-addr_aby:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
-	adiw _PCL_,2	 ; PC += 2
-	add r24,_Y_	 ; r25:r24 += Y
-	brcc .L86	 ; branch if same page
-	inc r25	 ;
-	ldi _cycles_,1	 ;
-	rjmp clock_advance	 ;
-.L86:
-	ret
-	.size	addr_aby, .-addr_aby
-	.section	.text.addr_inx,"ax",@progbits
-.global	addr_inx
-	.type	addr_inx, @function
-addr_inx:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	mov r24,_data_	 ;
-	ldi r25,0	 ;
-	rjmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
-	.size	addr_inx, .-addr_inx
-	.section	.text.addr_iny,"ax",@progbits
-.global	addr_iny
-	.type	addr_iny, @function
-addr_iny:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	adiw _PCL_,2	 ; PC += 2
-	mov ZL,_data_	 ;
-	ldi ZH,hi8(-(ram))	 ;
-	ld r24,Z	 ; r24 <- ram[data]
-	inc ZL	 ;
-	ld r25,Z	 ; r25 <- ram[data+1]
-	add r24,_Y_	 ; r25:r24 += Y
-	brcc .L89	 ; branch if same page
-	inc r25	 ;
-	ldi _cycles_,1	 ;
-	rjmp clock_advance	 ;
-.L89:
-	ret
-	.size	addr_iny, .-addr_iny
 	.section	.text.addr_ind,"ax",@progbits
 .global	addr_ind
 	.type	addr_ind, @function
