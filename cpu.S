@@ -251,13 +251,11 @@ cpu6502_PLP:
 .L__stack_usage = 0
 	PULL(_P_)	 ; P <- stack[++S]
 	mov _N_,_P_	 ; N <- P
-	bst _P_,1	 ; b <- P bit 1
+	bst _P_,0	 ; t <- P.0
+	bld _C_,0	 ; C <- t
 	clr _Z_	 ; Z <- 0
-	bld _Z_,0	 ; Z bit 0 <- b
-	ldi r18,0x01	 ; temp <- 0x01 (FIXME: save 1 instr if _Z_ >= 16)
-	eor _Z_,r18	 ; Z ^= 0x01
-	mov _C_,_P_	 ; C <- P (FIXME: save 1 instr if _C_ >= 16)
-	and _C_,r18	 ; C &= 0x01
+	sbrs _P_,1	 ; skip if P.1 is set
+	inc _Z_	 ; Z++ if P.1 is clear
 	ret
 	.size	cpu6502_PLP, .-cpu6502_PLP
 	.section	.text.cpu6502_JSR,"ax",@progbits
