@@ -681,7 +681,7 @@ cpu_main:
 	rjmp .xc8_INY
 	rjmp .xc9_CMP_imm
 	rjmp .xca_DEX
-	rjmp .xcb
+	rjmp .xcb_SBX_imm_undocumented
 	rjmp .xcc_CPY_abs
 	rjmp .xcd_CMP_abs
 	rjmp .xce_DEC_abs
@@ -2163,24 +2163,16 @@ input:  function pointer in ZH:ZL, to be used with icall
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	TICK(4)
-.xcb:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	adiw _PCL_,1	 ; PC++
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov r25,_X_	 ;  D.4021, reg_x
-	mov r18,_A_	 ;  reg_a, reg_a
-	and r25,r18	 ;  D.4021, reg_a
-	ldi r18,lo8(1)	 ;  D.4025,
-	cp r25,_data_	 ;  D.4021, data
-	brsh .L356	 ; ,
-	ldi r18,0	 ;  D.4025
+.xcb_SBX_imm_undocumented:
+	adiw _PCL_,2	 ; PC += 2
+	and _X_,_A_	 ; X &= A
+	sub _X_,_data_	 ; X -= data
+	clr _C_	 ; C <- 0
+	brlo .L356	 ; branch if X & A < data
+	inc _C_	 ; C <- 1 if X & A >= data
 .L356:
-	mov _C_,r18	 ;  flag_c, D.4025
-	sub r25,_data_	 ;  flag_z.226, data
-	mov _Z_,r25	 ;  flag_z, flag_z.226
-	mov _N_,r25	 ;  flag_n, flag_z.226
-	mov _X_,r25	 ;  reg_x, flag_z.226
+	mov _Z_,_X_	 ;
+	mov _N_,_X_	 ;
 	TICK(2)
 .x02:
 .x12:
