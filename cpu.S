@@ -641,7 +641,7 @@ cpu_main:
 	rjmp .x01_ORA_inx
 	rjmp .x02
 	rjmp .x03_SLO_inx_undocumented
-	rjmp .x04
+	rjmp .x04_NOP_zpg_undocumented
 	rjmp .x05_ORA_zpg
 	rjmp .x06_ASL_zpg
 	rjmp .x07_SLO_zpg_undocumented
@@ -649,7 +649,7 @@ cpu_main:
 	rjmp .x09_ORA_imm
 	rjmp .x0a_ASL_acc
 	rjmp .x0b_ANC_imm_undocumented
-	rjmp .x0c
+	rjmp .x0c_NOP_abs_undocumented
 	rjmp .x0d_ORA_abs
 	rjmp .x0e_ASL_abs
 	rjmp .x0f_SLO_abs_undocumented
@@ -657,15 +657,15 @@ cpu_main:
 	rjmp .x11_ORA_iny
 	rjmp .x12
 	rjmp .x13_SLO_iny_undocumented
-	rjmp .x14
+	rjmp .x14_NOP_zpx_undocumented
 	rjmp .x15_ORA_zpx
 	rjmp .x16_ASL_zpx
 	rjmp .x17_SLO_zpx_undocumented
 	rjmp .x18_CLC
 	rjmp .x19_ORA_aby
-	rjmp .x1a
+	rjmp .x1a_NOP_undocumented
 	rjmp .x1b_SLO_aby_undocumented
-	rjmp .x1c
+	rjmp .x1c_NOP_abx_undocumented
 	rjmp .x1d_ORA_abx
 	rjmp .x1e_ASL_abx
 	rjmp .x1f_SLO_abx_undocumented
@@ -689,15 +689,15 @@ cpu_main:
 	rjmp .x31_AND_iny
 	rjmp .x32
 	rjmp .x33_RLA_iny_undocumented
-	rjmp .x34
+	rjmp .x34_NOP_zpx_undocumented
 	rjmp .x35_AND_zpx
 	rjmp .x36_ROL_zpx
 	rjmp .x37_RLA_zpx_undocumented
 	rjmp .x38_SEC
 	rjmp .x39_AND_aby
-	rjmp .x3a
+	rjmp .x3a_NOP_undocumented
 	rjmp .x3b_RLA_aby_undocumented
-	rjmp .x3c
+	rjmp .x3c_NOP_abx_undocumented
 	rjmp .x3d_AND_abx
 	rjmp .x3e_ROL_abx
 	rjmp .x3f_RLA_abx_undocumented
@@ -705,7 +705,7 @@ cpu_main:
 	rjmp .x41_EOR_inx
 	rjmp .x42
 	rjmp .x43_SRE_inx_undocumented
-	rjmp .x44
+	rjmp .x44_NOP_zpg_undocumented
 	rjmp .x45_EOR_zpg
 	rjmp .x46_LSR_zpg
 	rjmp .x47_SRE_zpg_undocumented
@@ -721,15 +721,15 @@ cpu_main:
 	rjmp .x51_EOR_iny
 	rjmp .x52
 	rjmp .x53_SRE_iny_undocumented
-	rjmp .x54
+	rjmp .x54_NOP_zpx_undocumented
 	rjmp .x55_EOR_zpx
 	rjmp .x56_LSR_zpx
 	rjmp .x57_SRE_zpx_undocumented
 	rjmp .x58_CLI
 	rjmp .x59_EOR_aby
-	rjmp .x5a
+	rjmp .x5a_NOP_undocumented
 	rjmp .x5b_SRE_aby_undocumented
-	rjmp .x5c
+	rjmp .x5c_NOP_abx_undocumented
 	rjmp .x5d_EOR_abx
 	rjmp .x5e_LSR_abx
 	rjmp .x5f_SRE_abx_undocumented
@@ -737,7 +737,7 @@ cpu_main:
 	rjmp .x61_ADC_inx
 	rjmp .x62
 	rjmp .x63_RRA_inx_undocumented
-	rjmp .x64
+	rjmp .x64_NOP_zpg_undocumented
 	rjmp .x65_ADC_zpg
 	rjmp .x66_ROR_zpg
 	rjmp .x67_RRA_zpg_undocumented
@@ -753,28 +753,28 @@ cpu_main:
 	rjmp .x71_ADC_iny
 	rjmp .x72
 	rjmp .x73_RRA_iny_undocumented
-	rjmp .x74
+	rjmp .x74_NOP_zpx_undocumented
 	rjmp .x75_ADC_zpx
 	rjmp .x76_ROR_zpx
 	rjmp .x77_RRA_zpx_undocumented
 	rjmp .x78_SEI
 	rjmp .x79_ADC_aby
-	rjmp .x7a
+	rjmp .x7a_NOP_undocumented
 	rjmp .x7b_RRA_aby_undocumented
-	rjmp .x7c
+	rjmp .x7c_NOP_abx_undocumented
 	rjmp .x7d_ADC_abx
 	rjmp .x7e_ROR_abx
 	rjmp .x7f_RRA_abx_undocumented
-	rjmp .x80
+	rjmp .x80_NOP_imm_undocumented
 	rjmp .x81_STA_inx
-	rjmp .x82
+	rjmp .x82_NOP_imm_undocumented
 	rjmp .x83
 	rjmp .x84_STY_zpg
 	rjmp .x85_STA_zpg
 	rjmp .x86_STX_zpg
 	rjmp .x87
 	rjmp .x88_DEY
-	rjmp .x89
+	rjmp .x89_NOP_imm_undocumented
 	rjmp .x8a_TXA
 	rjmp .x8b
 	rjmp .x8c_STY_abs
@@ -831,7 +831,7 @@ cpu_main:
 	rjmp .xbf
 	rjmp .xc0_CPY_imm
 	rjmp .xc1_CMP_inx
-	rjmp .xc2
+	rjmp .xc2_NOP_imm_undocumented
 	rjmp .xc3_DCP_inx_undocumented
 	rjmp .xc4_CPY_zpg
 	rjmp .xc5_CMP_zpg
@@ -849,21 +849,21 @@ cpu_main:
 	rjmp .xd1_CMP_iny
 	rjmp .xd2
 	rjmp .xd3_DCP_iny_undocumented
-	rjmp .xd4
+	rjmp .xd4_NOP_zpx_undocumented
 	rjmp .xd5_CMP_zpx
 	rjmp .xd6_DEC_zpx
 	rjmp .xd7_DCP_zpx_undocumented
 	rjmp .xd8_CLD
 	rjmp .xd9_CMP_aby
-	rjmp .xda
+	rjmp .xda_NOP_undocumented
 	rjmp .xdb_DCP_aby_undocumented
-	rjmp .xdc
+	rjmp .xdc_NOP_abx_undocumented
 	rjmp .xdd_CMP_abx
 	rjmp .xde_DEC_abx
 	rjmp .xdf_DCP_abx_undocumented
 	rjmp .xe0_CPX_imm
 	rjmp .xe1_SBC_inx
-	rjmp .xe2
+	rjmp .xe2_NOP_imm_undocumented
 	rjmp .xe3_ISB_inx_undocumented
 	rjmp .xe4_CPX_zpg
 	rjmp .xe5_SBC_zpg
@@ -881,15 +881,15 @@ cpu_main:
 	rjmp .xf1_SBC_iny
 	rjmp .xf2
 	rjmp .xf3_ISB_iny_undocumented
-	rjmp .xf4
+	rjmp .xf4_NOP_zpx_undocumented
 	rjmp .xf5_SBC_zpx
 	rjmp .xf6_INC_zpx
 	rjmp .xf7_ISB_zpx_undocumented
 	rjmp .xf8_SED
 	rjmp .xf9_SBC_aby
-	rjmp .xfa
+	rjmp .xfa_NOP_undocumented
 	rjmp .xfb_ISB_aby_undocumented
-	rjmp .xfc
+	rjmp .xfc_NOP_abx_undocumented
 	rjmp .xfd_SBC_abx
 	rjmp .xfe_INC_abx
 	rjmp .xff_ISB_abx_undocumented
@@ -1308,6 +1308,40 @@ cpu_main:
 	and _data_,_A_	 ;
 	mov _Z_,_data_	 ; Z <- data & A
 	rjmp .tick
+
+.x80_NOP_imm_undocumented:
+.x82_NOP_imm_undocumented:
+.x89_NOP_imm_undocumented:
+.xc2_NOP_imm_undocumented:
+.xe2_NOP_imm_undocumented:
+	adiw _PCL_,2	 ; PC += 2
+	ldi _cycles_,2	 ; cycles <- 2
+.NOP:
+	rjmp .tick	 ;
+.x04_NOP_zpg_undocumented:
+.x44_NOP_zpg_undocumented:
+.x64_NOP_zpg_undocumented:
+	LDI_X(gs(.NOP))
+	rjmp .read_zpg
+.x0c_NOP_abs_undocumented:
+	LDI_X(gs(.NOP))
+	rjmp .read_abs
+.x14_NOP_zpx_undocumented:
+.x34_NOP_zpx_undocumented:
+.x54_NOP_zpx_undocumented:
+.x74_NOP_zpx_undocumented:
+.xd4_NOP_zpx_undocumented:
+.xf4_NOP_zpx_undocumented:
+	LDI_X(gs(.NOP))
+	rjmp .read_zpx
+.x1c_NOP_abx_undocumented:
+.x3c_NOP_abx_undocumented:
+.x5c_NOP_abx_undocumented:
+.x7c_NOP_abx_undocumented:
+.xdc_NOP_abx_undocumented:
+.xfc_NOP_abx_undocumented:
+	LDI_X(gs(.NOP))
+	rjmp .read_abx
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
@@ -2090,6 +2124,12 @@ input:  function pointer in ZH:ZL, to be used with icall
 	mov _N_,_S_	 ;
 	TICK(2)
 .xea_NOP:
+.x1a_NOP_undocumented:
+.x3a_NOP_undocumented:
+.x5a_NOP_undocumented:
+.x7a_NOP_undocumented:
+.xda_NOP_undocumented:
+.xfa_NOP_undocumented:
 	adiw _PCL_,1	 ; PC++
 	TICK(2)
 
@@ -2154,9 +2194,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 
 /******************************************************************************/
 
-.x04:
-	rcall addr_zpg	 ; 
-	TICK(3)
 .x0b_ANC_imm_undocumented:
 .x2b_ANC_imm_undocumented:
 	adiw _PCL_,2	 ; PC += 2
@@ -2166,32 +2203,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 	bst _A_,7	 ;
 	bld _C_,0	 ; C <- A.7
 	TICK(2)
-.x0c:
-	rcall addr_abs	 ; 
-	TICK(4)
-.x14:
-	rcall addr_zpx	 ; 
-	TICK(2)
-.x1a:
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.x1c:
-	rcall addr_abx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
-.x34:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
-.x3a:
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.x3c:
-	rcall addr_abx	 ; 
-	TICK(4)
-.x44:
-	rcall addr_zpg	 ; 
-	TICK(3)
 .x4b_ASR_imm_undocumented:
 	/* AND + LSR */
 	adiw _PCL_,2	 ; PC += 2
@@ -2202,41 +2213,9 @@ input:  function pointer in ZH:ZL, to be used with icall
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
 	TICK(2)
-.x54:
-	rcall addr_zpx	 ; 
-	TICK(4)
-.x5a:
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.x5c:
-	rcall addr_abx	 ; 
-	TICK(4)
-.x64:
-	rcall addr_zpg	 ; 
-	TICK(3)
 .x6b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
-	TICK(2)
-.x74:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
-.x7a:
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.x7c:
-	rcall addr_abx	 ; 
-	TICK(4)
-.x80:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.x82:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
 	TICK(2)
 .x83:
 	rcall addr_inx	 ; 
@@ -2246,11 +2225,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 	rcall addr_zpg	 ; 
 	rcall cpu6502_SAX	 ; 
 	TICK(3)
-.x89:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
 .x8b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
@@ -2323,11 +2297,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 	rcall addr_aby	 ; 
 	rcall cpu6502_LAX	 ; 
 	TICK(4)
-.xc2:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
 .xcb:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
@@ -2347,31 +2316,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 	mov _N_,r25	 ;  flag_n, flag_z.226
 	mov _X_,r25	 ;  reg_x, flag_z.226
 	TICK(2)
-.xd4:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
-.xda:
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.xdc:
-	rcall addr_abx	 ; 
-	TICK(4)
-.xe2:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.xf4:
-	rcall addr_zpx	 ; 
-	ldi _cycles_,4	 ; 4 cycles
-	rjmp .tick	 ;
-.xfa:
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
-.xfc:
-	rcall addr_abx	 ; 
-	TICK(4)
 .x02:
 .x12:
 .x22:
