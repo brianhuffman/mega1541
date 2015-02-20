@@ -440,16 +440,17 @@ cpu_main:
 	adc _time2_,r24	 ;
 	adc _time3_,r25	 ;
 	brpl .load_opcode	 ; continue if time >= 0
-.L98:
 	rjmp .L366	 ; save state and exit
-.tick:			 ;
-	sub _time0_,_cycles_	 ; time_left -= cycles
-.ticked:			 ;
-	brcc .load_opcode	 ; abort early if no carry
+.tick_carry:
 	sbc _time1_,__zero_reg__	 ;
 	sbc _time2_,__zero_reg__	 ;
 	sbc _time3_,__zero_reg__	 ;
-	brmi .L98	 ; quit if time < 0
+	brpl .load_opcode	 ; continue if time >= 0
+	rjmp .L366	 ; save state and exit
+.tick:
+	sub _time0_,_cycles_	 ; time_left -= cycles
+.ticked:
+	brcs .tick_carry	 ; abort early if no carry
 .load_opcode:
 	movw ZL,_PCL_	 ;
 	cpi ZH,0xc0	 ;
