@@ -273,20 +273,6 @@ cpu6502_JSR:
 	movw _PCL_,r24	 ; PC <- address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
-	.section	.text.cpu6502_LAX,"ax",@progbits
-	.type	cpu6502_LAX, @function
-cpu6502_LAX:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall mem_read	 ; data <- mem_read(r25:r24)
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	mov _X_,_data_	 ;
-	mov _A_,_data_	 ;
-	ret
-	.size	cpu6502_LAX, .-cpu6502_LAX
 	.section	.text.cpu6502_SAX,"ax",@progbits
 	.type	cpu6502_SAX, @function
 cpu6502_SAX:
@@ -800,11 +786,11 @@ cpu_main:
 	rjmp .xa0_LDY_imm
 	rjmp .xa1_LDA_inx
 	rjmp .xa2_LDX_imm
-	rjmp .xa3
+	rjmp .xa3_LAX_inx_undocumented
 	rjmp .xa4_LDY_zpg
 	rjmp .xa5_LDA_zpg
 	rjmp .xa6_LDX_zpg
-	rjmp .xa7
+	rjmp .xa7_LAX_zpg_undocumented
 	rjmp .xa8_TAY
 	rjmp .xa9_LDA_imm
 	rjmp .xaa_TAX
@@ -812,15 +798,15 @@ cpu_main:
 	rjmp .xac_LDY_abs
 	rjmp .xad_LDA_abs
 	rjmp .xae_LDX_abs
-	rjmp .xaf
+	rjmp .xaf_LAX_abs_undocumented
 	rjmp .xb0_BCS
 	rjmp .xb1_LDA_iny
 	rjmp .xb2
-	rjmp .xb3
+	rjmp .xb3_LAX_iny_undocumented
 	rjmp .xb4_LDY_zpx
 	rjmp .xb5_LDA_zpx
 	rjmp .xb6_LDX_zpy
-	rjmp .xb7
+	rjmp .xb7_LAX_zpy_undocumented
 	rjmp .xb8_CLV
 	rjmp .xb9_LDA_aby
 	rjmp .xba_TSX
@@ -828,7 +814,7 @@ cpu_main:
 	rjmp .xbc_LDY_abx
 	rjmp .xbd_LDA_abx
 	rjmp .xbe_LDX_aby
-	rjmp .xbf
+	rjmp .xbf_LAX_aby_undocumented
 	rjmp .xc0_CPY_imm
 	rjmp .xc1_CMP_inx
 	rjmp .xc2_NOP_imm_undocumented
@@ -1308,6 +1294,33 @@ cpu_main:
 	and _data_,_A_	 ;
 	mov _Z_,_data_	 ; Z <- data & A
 	rjmp .tick
+
+/* Undocumented read instructions */
+
+.LAX:
+	mov _Z_,_data_	 ;
+	mov _N_,_data_	 ;
+	mov _X_,_data_	 ;
+	mov _A_,_data_	 ;
+	rjmp .tick
+.xa3_LAX_inx_undocumented:
+	LDI_X(gs(.LAX))
+	rjmp .read_inx
+.xa7_LAX_zpg_undocumented:
+	LDI_X(gs(.LAX))
+	rjmp .read_zpg
+.xaf_LAX_abs_undocumented:
+	LDI_X(gs(.LAX))
+	rjmp .read_abs
+.xb3_LAX_iny_undocumented:
+	LDI_X(gs(.LAX))
+	rjmp .read_iny
+.xb7_LAX_zpy_undocumented:
+	LDI_X(gs(.LAX))
+	rjmp .read_zpy
+.xbf_LAX_aby_undocumented:
+	LDI_X(gs(.LAX))
+	rjmp .read_aby
 
 .x80_NOP_imm_undocumented:
 .x82_NOP_imm_undocumented:
@@ -2265,37 +2278,13 @@ input:  function pointer in ZH:ZL, to be used with icall
 	rcall addr_aby	 ; 
 	rcall cpu6502_SHA	 ; 
 	TICK(5)
-.xa3:
-	rcall addr_inx	 ; 
-	rcall cpu6502_LAX	 ; 
-	TICK(6)
-.xa7:
-	rcall addr_zpg	 ; 
-	rcall cpu6502_LAX	 ; 
-	TICK(3)
 .xab:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	TICK(2)
-.xaf:
-	rcall addr_abs	 ; 
-	rcall cpu6502_LAX	 ; 
-	TICK(4)
-.xb3:
-	rcall addr_iny	 ; 
-	rcall cpu6502_LAX	 ; 
-	TICK(5)
-.xb7:
-	rcall addr_zpy	 ; 
-	rcall cpu6502_LAX	 ; 
-	TICK(4)
 .xbb:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
-	TICK(4)
-.xbf:
-	rcall addr_aby	 ; 
-	rcall cpu6502_LAX	 ; 
 	TICK(4)
 .xcb:
 	adiw _PCL_,1	 ; PC++
