@@ -273,30 +273,6 @@ cpu6502_JSR:
 	movw _PCL_,r24	 ; PC <- address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
-	.section	.text.cpu6502_SAX,"ax",@progbits
-	.type	cpu6502_SAX, @function
-cpu6502_SAX:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	mov _data_,_X_	 ;  D.3787, reg_x
-	and _data_,_A_	 ;  D.3787, reg_a
-	rjmp mem_write	 ; 
-	.size	cpu6502_SAX, .-cpu6502_SAX
-	.section	.text.cpu6502_SHA,"ax",@progbits
-	.type	cpu6502_SHA, @function
-cpu6502_SHA:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	mov _data_,r25	 ; data <- addr_hi
-	inc _data_	 ; data += 1
-	and _data_,_X_	 ; data &= X
-	and _data_,_A_	 ; data &= A
-	rjmp mem_write	 ; mem_write(addr, A & X & (addr_hi + 1))
-	.size	cpu6502_SHA, .-cpu6502_SHA
 	.section	.text.update_p,"ax",@progbits
 	.type	update_p, @function
 update_p:
@@ -754,11 +730,11 @@ cpu_main:
 	rjmp .x80_NOP_imm_undocumented
 	rjmp .x81_STA_inx
 	rjmp .x82_NOP_imm_undocumented
-	rjmp .x83
+	rjmp .x83_SAX_inx_undocumented
 	rjmp .x84_STY_zpg
 	rjmp .x85_STA_zpg
 	rjmp .x86_STX_zpg
-	rjmp .x87
+	rjmp .x87_SAX_zpg_undocumented
 	rjmp .x88_DEY
 	rjmp .x89_NOP_imm_undocumented
 	rjmp .x8a_TXA
@@ -766,23 +742,23 @@ cpu_main:
 	rjmp .x8c_STY_abs
 	rjmp .x8d_STA_abs
 	rjmp .x8e_STX_abs
-	rjmp .x8f
+	rjmp .x8f_SAX_abs_undocumented
 	rjmp .x90_BCC
 	rjmp .x91_STA_iny
 	rjmp .x92
-	rjmp .x93
+	rjmp .x93_SHA_iny_undocumented
 	rjmp .x94_STY_zpx
 	rjmp .x95_STA_zpx
 	rjmp .x96_STX_zpy
-	rjmp .x97
+	rjmp .x97_SAX_zpy_undocumented
 	rjmp .x98_TYA
 	rjmp .x99_STA_aby
 	rjmp .x9a_TXS
 	rjmp .x9b
-	rjmp .x9c
+	rjmp .x9c_SHY_abx_undocumented
 	rjmp .x9d_STA_abx
-	rjmp .x9e
-	rjmp .x9f
+	rjmp .x9e_SHX_aby_undocumented
+	rjmp .x9f_SHA_aby_undocumented
 	rjmp .xa0_LDY_imm
 	rjmp .xa1_LDA_inx
 	rjmp .xa2_LDX_imm
@@ -1952,6 +1928,80 @@ input:  function pointer in ZH:ZL, to be used with icall
 	mov _data_,_A_
 	rjmp .write_abx
 
+.x83_SAX_inx_undocumented:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_X_	 ; data += X
+	LDW_ZERO_PAGE(24,_data_)	 ; r25:r24 <- ram[data+1]:ram[data]
+	ldi _cycles_,6	 ; cycles <- 6
+	mov _data_,_A_	 ; data <- A
+	and _data_,_X_	 ; data <- A & X
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+.x87_SAX_zpg_undocumented:
+	adiw _PCL_,2	 ; PC += 2
+	mov r24,_A_
+	and r24,_X_
+	ST_ZERO_PAGE(_data_,24)	 ; ram[data] <- A & X
+	TICK(3)
+.x8f_SAX_abs_undocumented:
+	mov _data_,_A_
+	and _data_,_X_
+	rjmp .write_abs
+.x97_SAX_zpy_undocumented:
+	adiw _PCL_,2	 ; PC += 2
+	add _data_,_Y_	 ; data += Y
+	mov r24,_A_	 ; temp <- A
+	and r24,_X_	 ; temp <- A & X
+	ST_ZERO_PAGE(_data_,24)	 ; ram[data] <- A & X
+	TICK(4)
+.x93_SHA_iny_undocumented:
+	adiw _PCL_,2	 ; PC += 2
+	LDW_ZERO_PAGE(24,_data_)	 ; r25:r24 <- ram[data+1]:ram[data]
+	add r24,_Y_	 ; r25:r24 += Y
+	adc r25,__zero_reg__	 ;
+	ldi _cycles_,6	 ; cycles <- 6
+	mov _data_,r25	 ; data <- addr_hi
+	inc _data_	 ; data += 1
+	and _data_,_X_	 ; data &= X
+	and _data_,_A_	 ; data &= A
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+.x9f_SHA_aby_undocumented:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_Y_	 ; r25:r24 += Y
+	adc r25,__zero_reg__	 ;
+	mov _data_,r25	 ; data <- addr_hi
+	inc _data_	 ; data += 1
+	and _data_,_X_	 ; data &= X
+	and _data_,_A_	 ; data &= A
+	ldi _cycles_,5	 ; cycles <- 5
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+.x9c_SHY_abx_undocumented:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_X_	 ; r25:r24 += X
+	adc r25,__zero_reg__	 ;
+	mov _data_,r25	 ; data <- addr_hi
+	inc _data_	 ; data += 1
+	and _data_,_Y_	 ; data &= Y
+	ldi _cycles_,5	 ; cycles <- 5
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+.x9e_SHX_aby_undocumented:
+	adiw _PCL_,1	 ; PC++
+	movw r24,_PCL_	 ; r25:r24 <- PC
+	rcall mem_read_16	 ; r25:r24 <- read(PC)
+	adiw _PCL_,2	 ; PC += 2
+	add r24,_Y_	 ; r25:r24 += Y
+	adc r25,__zero_reg__	 ;
+	mov _data_,r25	 ; data <- addr_hi
+	inc _data_	 ; data += 1
+	and _data_,_X_	 ; data &= X
+	ldi _cycles_,5	 ; cycles <- 5
+	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
+
 .write_abs:
 	adiw _PCL_,1	 ; PC++
 	movw r24,_PCL_	 ; r25:r24 <- PC
@@ -2230,54 +2280,15 @@ input:  function pointer in ZH:ZL, to be used with icall
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	TICK(2)
-.x83:
-	rcall addr_inx	 ; 
-	rcall cpu6502_SAX	 ; 
-	TICK(6)
-.x87:
-	rcall addr_zpg	 ; 
-	rcall cpu6502_SAX	 ; 
-	TICK(3)
 .x8b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	TICK(2)
-.x8f:
-	rcall addr_abs	 ; 
-	rcall cpu6502_SAX	 ; 
-	TICK(4)
-.x93:
-	rcall addr_iny	 ; 
-	rcall cpu6502_SHA	 ; 
-	TICK(6)
-.x97:
-	rcall addr_zpy	 ; 
-	rcall cpu6502_SAX	 ; 
-	TICK(4)
 .x9b:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
 	TICK(5)
-.x9c:
-	rcall addr_abx	 ; 
-	ldi r22,lo8(1)	 ;  D.4021,
-	add r22,r25	 ;  D.4021, D.4020
-	mov r18,_Y_	 ;  reg_y, reg_y
-	and r22,r18	 ;  D.4021, reg_y
-	rcall mem_write	 ; 
-	TICK(5)
-.x9e:
-	rcall addr_aby	 ; 
-	ldi r22,lo8(1)	 ;  D.4021,
-	add r22,r25	 ;  D.4021, D.4020
-	mov r18,_X_	 ;  reg_x, reg_x
-	and r22,r18	 ;  D.4021, reg_x
-	rcall mem_write	 ; 
-	TICK(5)
-.x9f:
-	rcall addr_aby	 ; 
-	rcall cpu6502_SHA	 ; 
-	TICK(5)
+
 .xab:
 	adiw _PCL_,1	 ; PC++
 	/* TODO */
