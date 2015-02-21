@@ -229,11 +229,11 @@ pack_flags:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	andi _P_,~(B_FLAG|C_FLAG)	 ; clear B and C flags
+	or _P_,_C_	 ; P.0 <- C.0
 	bst _N_,7	 ;
 	bld _P_,7	 ; P.7 <- N.7
-	bst _C_,0	 ;
-	bld _P_,0	 ; P.0 <- C.0
-	ori _P_,Z_FLAG	 ; set Z flag
+	ori _P_,Z_FLAG|0x20	 ; set Z flag and 1 flag
 	cpse _Z_,__zero_reg__	 ; skip if Z = 0
 	andi _P_,~Z_FLAG	 ; clear Z flag if Z != 0
 	ret
@@ -307,21 +307,17 @@ cpu_irq:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_p	 ;  reg_p, reg_p
-	sbrc r24,2	 ;  reg_p,
-	rjmp .L92	 ; 
+	sbrc _P_,2	 ; skip if I flag is clear
+	ret	 ;
 	ldi r24,0xfe	 ;
 	ldi r25,0xff	 ;
 	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
-	rcall cpu6502_JSR	 ; 
+	rcall cpu6502_JSR	 ;
 	rcall pack_flags	 ;
 	PUSH(_P_)	 ; stack[S--] <- P
-	lds r24,reg_p	 ;  reg_p.57, reg_p
-	ori r24,lo8(4)	 ;  reg_p.57,
-	sts reg_p,r24	 ;  reg_p, reg_p.57
+	ori _P_,I_FLAG	 ; set I flag
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp clock_advance	 ; 
-.L92:
 	ret
 	.size	cpu_irq, .-cpu_irq
 	.section	.text.cpu_nmi,"ax",@progbits
@@ -332,21 +328,14 @@ cpu_nmi:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	ldi r24,lo8(-6)	 ; ,
-	ldi r25,lo8(-1)	 ; ,
-	rcall mem_read_16	 ; 
-	rcall cpu6502_JSR	 ; 
-	rcall pack_flags	 ; 
-	lds r24,reg_p	 ;  D.3900, reg_p
-	andi r24,lo8(-17)	 ;  D.3900,
-	mov r30,_S_	 ;  reg_s.59, reg_s
-	ldi r25,lo8(-1)	 ;  reg_s.61,
-	add r25,r30	 ;  reg_s.61, reg_s.59
-	mov _S_,r25	 ;  reg_s, reg_s.61
-	ldi r31,0	 ; 
-	subi r30,lo8(-(ram+256))	 ;  tmp54,
-	sbci r31,hi8(-(ram+256))	 ;  tmp54,
-	st Z,r24	 ;  *_14, D.3900
+	ldi r24,0xfa	 ;
+	ldi r25,0xff	 ;
+	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffa)
+	rcall cpu6502_JSR	 ;
+	rcall pack_flags	 ;
+	PUSH(_P_)	 ; stack[S--] <- P
+	ldi _cycles_,7	 ; 7 cycles
+	rjmp clock_advance	 ;
 	ret
 	.size	cpu_nmi, .-cpu_nmi
 	.section	.text.cpu_main,"ax",@progbits
@@ -2019,12 +2008,11 @@ input:  function pointer in ZH:ZL, to be used with icall
 	adiw _PCL_,1	 ; PC++
 	ldi r24,0xfe	 ;
 	ldi r25,0xff	 ;
-	rcall mem_read_16	 ;
+	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
 	rcall cpu6502_JSR	 ;
 	rcall pack_flags	 ;
-	mov r25,_P_	 ; temp = P
-	ori r25,B_FLAG	 ; temp |= B_FLAG
-	PUSH(25)	 ; stack[S--] <- temp
+	ori _P_,B_FLAG	 ; P |= B_FLAG
+	PUSH(_P_)	 ; stack[S--] <- P
 	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
 	TICK(7)
 .x20_JSR:
