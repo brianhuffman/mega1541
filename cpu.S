@@ -2045,13 +2045,11 @@ input:  function pointer in ZH:ZL, to be used with icall
 	TICK(6)
 .x4c_JMP_abs:
 	rcall addr_abs	 ;
-	mov _PCH_,r25	 ;  reg_pc,
-	mov _PCL_,r24	 ;  reg_pc,
+	movw _PCL_,r24	 ;  reg_pc,
 	TICK(3)
 .x6c_JMP_ind:
 	rcall addr_ind	 ;
-	mov _PCH_,r25	 ;  reg_pc,
-	mov _PCL_,r24	 ;  reg_pc,
+	movw _PCL_,r24	 ;  reg_pc,
 	TICK(5)
 .x08_PHP:
 	adiw _PCL_,1	 ; PC++
