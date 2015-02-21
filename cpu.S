@@ -209,19 +209,6 @@ unpack_flags:
 	inc _Z_	 ; Z++ if P.1 is clear
 	ret
 	.size	unpack_flags, .-unpack_flags
-	.section	.text.cpu6502_JSR,"ax",@progbits
-	.type	cpu6502_JSR, @function
-cpu6502_JSR:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	sbiw _PCL_,1	 ; PC -= 1
-	PUSH(_PCH_)
-	PUSH(_PCL_)
-	movw _PCL_,r24	 ; PC <- address
-	ret
-	.size	cpu6502_JSR, .-cpu6502_JSR
 	.section	.text.pack_flags,"ax",@progbits
 	.type	pack_flags, @function
 pack_flags:
@@ -309,13 +296,15 @@ cpu_irq:
 .L__stack_usage = 0
 	sbrc _P_,2	 ; skip if I flag is clear
 	ret	 ;
-	ldi r24,0xfe	 ;
-	ldi r25,0xff	 ;
-	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
-	rcall cpu6502_JSR	 ;
+	PUSH(_PCH_)
+	PUSH(_PCL_)
 	rcall pack_flags	 ;
 	PUSH(_P_)	 ; stack[S--] <- P
 	ori _P_,I_FLAG	 ; set I flag
+	ldi r24,0xfe	 ;
+	ldi r25,0xff	 ;
+	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
+	movw _PCL_,r24	 ; PC <- address
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp clock_advance	 ; 
 	ret
@@ -328,12 +317,14 @@ cpu_nmi:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	PUSH(_PCH_)
+	PUSH(_PCL_)
+	rcall pack_flags	 ;
+	PUSH(_P_)	 ; stack[S--] <- P
 	ldi r24,0xfa	 ;
 	ldi r25,0xff	 ;
 	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffa)
-	rcall cpu6502_JSR	 ;
-	rcall pack_flags	 ;
-	PUSH(_P_)	 ; stack[S--] <- P
+	movw _PCL_,r24	 ; PC <- address
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp clock_advance	 ;
 	ret
@@ -2005,26 +1996,30 @@ input:  function pointer in ZH:ZL, to be used with icall
 /*************************** STACK/PC INSTRUCTIONS ****************************/
 
 .x00_BRK:
-	adiw _PCL_,1	 ; PC++
-	ldi r24,0xfe	 ;
-	ldi r25,0xff	 ;
-	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
-	rcall cpu6502_JSR	 ;
+	adiw _PCL_,2	 ; PC += 2
+	PUSH(_PCH_)	 ; push address of the BRK instruction +2
+	PUSH(_PCL_)
 	rcall pack_flags	 ;
 	ori _P_,B_FLAG	 ; P |= B_FLAG
 	PUSH(_P_)	 ; stack[S--] <- P
 	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
+	ldi r24,0xfe	 ;
+	ldi r25,0xff	 ;
+	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
+	movw _PCL_,r24	 ; PC <- r25:r24
 	TICK(7)
 .x20_JSR:
 	rcall addr_abs	 ;
-	rcall cpu6502_JSR	 ;
+	sbiw _PCL_,1	 ; PC -= 1
+	PUSH(_PCH_)	 ; push address of next instruction - 1
+	PUSH(_PCL_)	 ;
+	movw _PCL_,r24	 ; PC <- address
 	TICK(6)
 .x40_RTI:
 	PULL(_P_)	 ; P <- stack[++S]
 	rcall unpack_flags	 ;
 	PULL(_PCL_)	 ; PCL <- stack[++S]
 	PULL(_PCH_)	 ; PCH <- stack[++S]
-	adiw _PCL_,1	 ; PC ++
 	TICK(6)
 .x60_RTS:
 	PULL(_PCL_)	 ; PCL <- stack[++S]
