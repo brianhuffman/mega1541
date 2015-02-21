@@ -91,54 +91,6 @@ N_FLAG = 0x80
 	ldi ZL,lo8(value) $ \
 	ldi ZH,hi8(value)
 
- ;  GNU C (GCC) version 4.8.1 (avr)
- ; 	compiled by GNU C version 4.2.1 (Apple Inc. build 5646), GMP version 5.0.2, MPFR version 3.0.0, MPC version 0.9
- ;  GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
- ;  options passed: 
- ;  -I /Users/huffman/Applications/Arduino.app/Contents/Resources/Java/hardware/arduino/avr/cores/arduino
- ;  -I /Users/huffman/Applications/Arduino.app/Contents/Resources/Java/hardware/arduino/avr/variants/standard
- ;  -imultilib avr5
- ;  -iprefix /Users/huffman/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/avr/bin/../lib/gcc/avr/4.8.1/
- ;  -MMD build-uno/cpu.d -MQ build-uno/cpu.s -D F_CPU=16000000L
- ;  -D ARDUINO=160 -D ARDUINO_ARCH_AVR -D __PROG_TYPES_COMPAT__
- ;  -include Arduino.h cpu.c -mmcu=atmega328p
- ;  -auxbase-strip build-uno/cpu.s -Os -Wall -fverbose-asm
- ;  -ffunction-sections -fdata-sections
- ;  options enabled:  -faggressive-loop-optimizations -fauto-inc-dec
- ;  -fbranch-count-reg -fcaller-saves -fcombine-stack-adjustments -fcommon
- ;  -fcompare-elim -fcprop-registers -fcrossjumping -fcse-follow-jumps
- ;  -fdata-sections -fdefer-pop -fdevirtualize -fdwarf2-cfi-asm
- ;  -fearly-inlining -feliminate-unused-debug-types
- ;  -fexpensive-optimizations -fforward-propagate -ffunction-cse
- ;  -ffunction-sections -fgcse -fgcse-lm -fgnu-runtime
- ;  -fguess-branch-probability -fhoist-adjacent-loads -fident
- ;  -fif-conversion -fif-conversion2 -findirect-inlining -finline
- ;  -finline-atomics -finline-functions -finline-functions-called-once
- ;  -finline-small-functions -fipa-cp -fipa-profile -fipa-pure-const
- ;  -fipa-reference -fipa-sra -fira-hoist-pressure -fira-share-save-slots
- ;  -fira-share-spill-slots -fivopts -fkeep-static-consts
- ;  -fleading-underscore -fmath-errno -fmerge-constants
- ;  -fmerge-debug-strings -fmove-loop-invariants -fomit-frame-pointer
- ;  -foptimize-register-move -foptimize-sibling-calls -fpartial-inlining
- ;  -fpeephole -fpeephole2 -fprefetch-loop-arrays -freg-struct-return
- ;  -fregmove -freorder-blocks -freorder-functions -frerun-cse-after-loop
- ;  -fsched-critical-path-heuristic -fsched-dep-count-heuristic
- ;  -fsched-group-heuristic -fsched-interblock -fsched-last-insn-heuristic
- ;  -fsched-rank-heuristic -fsched-spec -fsched-spec-insn-heuristic
- ;  -fsched-stalled-insns-dep -fshow-column -fshrink-wrap -fsigned-zeros
- ;  -fsplit-ivs-in-unroller -fsplit-wide-types -fstrict-aliasing
- ;  -fstrict-overflow -fstrict-volatile-bitfields -fsync-libcalls
- ;  -fthread-jumps -ftoplevel-reorder -ftrapping-math -ftree-bit-ccp
- ;  -ftree-builtin-call-dce -ftree-ccp -ftree-ch -ftree-coalesce-vars
- ;  -ftree-copy-prop -ftree-copyrename -ftree-dce -ftree-dominator-opts
- ;  -ftree-dse -ftree-forwprop -ftree-fre -ftree-loop-if-convert
- ;  -ftree-loop-im -ftree-loop-ivcanon -ftree-loop-optimize
- ;  -ftree-parallelize-loops= -ftree-phiprop -ftree-pre -ftree-pta
- ;  -ftree-reassoc -ftree-scev-cprop -ftree-sink -ftree-slp-vectorize
- ;  -ftree-slsr -ftree-sra -ftree-switch-conversion -ftree-tail-merge
- ;  -ftree-ter -ftree-vect-loop-version -ftree-vrp -funit-at-a-time
- ;  -fverbose-asm -fzero-initialized-in-bss
-
 	.section	.text.mem_read,"ax",@progbits
 .global	mem_read
 	.type	mem_read, @function
