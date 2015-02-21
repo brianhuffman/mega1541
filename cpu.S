@@ -229,14 +229,29 @@ pack_flags:
 .global	addr_abs
 	.type	addr_abs, @function
 addr_abs:
+/* r25:r24 <- mem_read(++PC), PC += 2 */
+/* assumes that mem(PC+1) is already in _data_ */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	adiw _PCL_,2	 ; PC += 2
+	mov r24,_data_	 ; r24 <- data
+	movw ZL,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; , reg_pc
-	rcall mem_read_16	 ; 
-	adiw _PCL_,2	 ;  PC += 2
+	cpi _PCH_,0x04	 ; branch if PCH >= 0x04
+	brsh .addr_abs_hi	 ;
+	subi ZH,hi8(-(ram))	 ;
+	ld r25,Z	 ; load from ram[addr]
+	ret
+.addr_abs_hi:
+	cpi _PCH_,0xc0	 ; branch if PCH < 0xc0
+	brlo .addr_abs_io	 ;
+	subi ZH,hi8(-(dos1541-0xc000))	 ;
+	lpm r25,Z	 ; r25 <- rom[PC - 0xc0000]
+	ret
+.addr_abs_io:
+	ldi r25,0xff	 ; other addresses return 0xff
 	ret
 	.size	addr_abs, .-addr_abs
 	.section	.text.addr_ind,"ax",@progbits
