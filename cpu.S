@@ -162,25 +162,6 @@ mem_read_16:
 	mov r25,_data_	 ;
 	ret
 	.size	mem_read_16, .-mem_read_16
-	.section	.text.mem_write,"ax",@progbits
-.global	mem_write
-	.type	mem_write, @function
-mem_write:
-/* input: r25:r24, _data_ */
-/* touches: ZH, ZL */
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	cpi r25,4	 ;
-	brsh .mem_L15	 ; branch if address >= $0400
-	movw ZL,r24	 ;
-	subi ZH,hi8(-(ram))	 ;
-	st Z,_data_	 ; ram[address] <- data
-.mem_L15:
-	/* TODO: write io memory */
-	ret
-	.size	mem_write, .-mem_write
 	.section	.text.clock_advance,"ax",@progbits
 	.type	clock_advance, @function
 clock_advance:
