@@ -254,17 +254,6 @@ addr_abs:
 	ldi r25,0xff	 ; other addresses return 0xff
 	ret
 	.size	addr_abs, .-addr_abs
-	.section	.text.addr_ind,"ax",@progbits
-.global	addr_ind
-	.type	addr_ind, @function
-addr_ind:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
-	rjmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
-	.size	addr_ind, .-addr_ind
 	.section	.text.cpu_reset,"ax",@progbits
 .global	cpu_reset
 	.type	cpu_reset, @function
@@ -2007,7 +1996,8 @@ input:  function pointer in ZH:ZL, to be used with icall
 	movw _PCL_,r24	 ;  reg_pc,
 	TICK(3)
 .x6c_JMP_ind:
-	rcall addr_ind	 ;
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
+	rcall mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	movw _PCL_,r24	 ;  reg_pc,
 	TICK(5)
 .x08_PHP:
