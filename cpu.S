@@ -247,10 +247,7 @@ addr_ind:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- mem_read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	rjmp mem_read_16	 ; r25:r24 <- mem_read(r25:r24)
 	.size	addr_ind, .-addr_ind
 	.section	.text.cpu_reset,"ax",@progbits
@@ -1160,10 +1157,7 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_abs:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 .read_abs_no_carry:
 	ldi _cycles_,4	 ; cycles <- 4
 .read_mem:	 ; data <- read(r25:r24), ijmp (XH:XL)
@@ -1187,20 +1181,14 @@ output: data value in _data_, tick count in _cycles_
 	movw ZL,XL
 	ijmp
 .read_abx:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_X_	 ; r24 += X
 	brcc .read_abs_no_carry	 ; branch unless r24+X carries
 	inc r25	 ; r25++
 	ldi _cycles_,5	 ; cycles <- 5
 	rjmp .read_mem	 ; data <- read(r25:r24), ijmp (XH:XL)
 .read_aby:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_Y_	 ; r24 += Y
 	brcc .read_abs_no_carry	 ; branch unless r24+X carries
 	inc r25	 ; r25++
@@ -1596,10 +1584,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	st X,_data_	 ; ram[addr] <- data
 	TICK(6)
 .modify_abs:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	ldi _cycles_,6	 ; cycles <- 6
 .modify_mem:	 ; data <- read(r25:r24), ijmp (XH:XL)
 	cpi r25,0x04	 ; branch if addr_hi >= 0x40
@@ -1626,19 +1611,13 @@ input:  function pointer in ZH:ZL, to be used with icall
 	icall	 ; data <- f(data)
 	rjmp .tick
 .modify_abx:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- modify(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_X_	 ; r25:r24 += X
 	adc r25,__zero_reg__	 ;
 	ldi _cycles_,7	 ; cycles <- 7
 	rjmp .modify_mem	 ; data <- modify(r25:r24), ijmp (XH:XL)
 .modify_aby:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- modify(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_Y_	 ; r25:r24 += Y
 	adc r25,__zero_reg__	 ;
 	ldi _cycles_,7	 ; cycles <- 7
@@ -1762,10 +1741,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	and _data_,_A_	 ; data &= A
 	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
 .x9f_SHA_aby_undocumented:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_Y_	 ; r25:r24 += Y
 	adc r25,__zero_reg__	 ;
 	mov _data_,r25	 ; data <- addr_hi
@@ -1775,10 +1751,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	ldi _cycles_,5	 ; cycles <- 5
 	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
 .x9c_SHY_abx_undocumented:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_X_	 ; r25:r24 += X
 	adc r25,__zero_reg__	 ;
 	mov _data_,r25	 ; data <- addr_hi
@@ -1787,10 +1760,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	ldi _cycles_,5	 ; cycles <- 5
 	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
 .x9e_SHX_aby_undocumented:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_Y_	 ; r25:r24 += Y
 	adc r25,__zero_reg__	 ;
 	mov _data_,r25	 ; data <- addr_hi
@@ -1800,10 +1770,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
 
 .write_abs:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	ldi _cycles_,4	 ; cycles <- 4
 .write_mem:	 ; write(r25:r24,data), rjmp .tick
 	cpi r25,4	 ;
@@ -1815,19 +1782,13 @@ input:  function pointer in ZH:ZL, to be used with icall
 	/* TODO: write io memory */
 	rjmp .tick
 .write_abx:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_X_	 ; r25:r24 += X
 	adc r25,__zero_reg__	 ;
 	ldi _cycles_,5	 ; cycles <- 5
 	rjmp .write_mem	 ; write(r25:r24,data), rjmp .tick
 .write_aby:
-	adiw _PCL_,1	 ; PC++
-	movw r24,_PCL_	 ; r25:r24 <- PC
-	rcall mem_read_16	 ; r25:r24 <- read(PC)
-	adiw _PCL_,2	 ; PC += 2
+	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	add r24,_Y_	 ; r25:r24 += Y
 	adc r25,__zero_reg__	 ;
 	ldi _cycles_,5	 ; cycles <- 5
