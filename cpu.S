@@ -194,14 +194,13 @@ clock_advance:
 	sbc _time3_,__zero_reg__	 ;  time_left.20, D.3675
 	ret
 	.size	clock_advance, .-clock_advance
-	.section	.text.cpu6502_PLP,"ax",@progbits
-	.type	cpu6502_PLP, @function
-cpu6502_PLP:
+	.section	.text.unpack_flags,"ax",@progbits
+	.type	unpack_flags, @function
+unpack_flags:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	PULL(_P_)	 ; P <- stack[++S]
 	mov _N_,_P_	 ; N <- P
 	bst _P_,0	 ; t <- P.0
 	bld _C_,0	 ; C <- t
@@ -209,7 +208,7 @@ cpu6502_PLP:
 	sbrs _P_,1	 ; skip if P.1 is set
 	inc _Z_	 ; Z++ if P.1 is clear
 	ret
-	.size	cpu6502_PLP, .-cpu6502_PLP
+	.size	unpack_flags, .-unpack_flags
 	.section	.text.cpu6502_JSR,"ax",@progbits
 	.type	cpu6502_JSR, @function
 cpu6502_JSR:
@@ -223,9 +222,9 @@ cpu6502_JSR:
 	movw _PCL_,r24	 ; PC <- address
 	ret
 	.size	cpu6502_JSR, .-cpu6502_JSR
-	.section	.text.update_p,"ax",@progbits
-	.type	update_p, @function
-update_p:
+	.section	.text.pack_flags,"ax",@progbits
+	.type	pack_flags, @function
+pack_flags:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
@@ -238,7 +237,7 @@ update_p:
 	cpse _Z_,__zero_reg__	 ; skip if Z = 0
 	andi _P_,~Z_FLAG	 ; clear Z flag if Z != 0
 	ret
-	.size	update_p, .-update_p
+	.size	pack_flags, .-pack_flags
 	.section	.text.addr_abs,"ax",@progbits
 .global	addr_abs
 	.type	addr_abs, @function
@@ -315,7 +314,7 @@ cpu_irq:
 	ldi r25,0xff	 ;
 	rcall mem_read_16	 ; r25:r24 <- mem_read(0xfffe)
 	rcall cpu6502_JSR	 ; 
-	rcall update_p	 ;
+	rcall pack_flags	 ;
 	PUSH(_P_)	 ; stack[S--] <- P
 	lds r24,reg_p	 ;  reg_p.57, reg_p
 	ori r24,lo8(4)	 ;  reg_p.57,
@@ -337,7 +336,7 @@ cpu_nmi:
 	ldi r25,lo8(-1)	 ; ,
 	rcall mem_read_16	 ; 
 	rcall cpu6502_JSR	 ; 
-	rcall update_p	 ; 
+	rcall pack_flags	 ; 
 	lds r24,reg_p	 ;  D.3900, reg_p
 	andi r24,lo8(-17)	 ;  D.3900,
 	mov r30,_S_	 ;  reg_s.59, reg_s
@@ -2022,7 +2021,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	ldi r25,0xff	 ;
 	rcall mem_read_16	 ;
 	rcall cpu6502_JSR	 ;
-	rcall update_p	 ;
+	rcall pack_flags	 ;
 	mov r25,_P_	 ; temp = P
 	ori r25,B_FLAG	 ; temp |= B_FLAG
 	PUSH(25)	 ; stack[S--] <- temp
@@ -2033,7 +2032,8 @@ input:  function pointer in ZH:ZL, to be used with icall
 	rcall cpu6502_JSR	 ;
 	TICK(6)
 .x40_RTI:
-	rcall cpu6502_PLP	 ;
+	PULL(_P_)	 ; P <- stack[++S]
+	rcall unpack_flags	 ;
 	PULL(_PCL_)	 ; PCL <- stack[++S]
 	PULL(_PCH_)	 ; PCH <- stack[++S]
 	adiw _PCL_,1	 ; PC ++
@@ -2055,12 +2055,13 @@ input:  function pointer in ZH:ZL, to be used with icall
 	TICK(5)
 .x08_PHP:
 	adiw _PCL_,1	 ; PC++
-	rcall update_p	 ;
+	rcall pack_flags	 ;
 	PUSH(_P_)	 ; stack[S--] <- P
 	TICK(3)
 .x28_PLP:
 	adiw _PCL_,1	 ; PC++
-	rcall cpu6502_PLP	 ;
+	PULL(_P_)	 ; P <- stack[++S]
+	rcall unpack_flags	 ;
 	TICK(4)
 .x48_PHA:
 	adiw _PCL_,1	 ; PC++
