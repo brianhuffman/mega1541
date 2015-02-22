@@ -49,6 +49,7 @@ N_FLAG = 0x80
 
 #define ZERO_PAGE hi8(ram)
 #define STACK_PAGE hi8(ram+256)
+#define RAM_PAGES 4 /* should be 8 if we have more than 2k of SRAM available */
 
 #define PUSH(reg) \
 	mov ZL, _S_ $ \
@@ -103,7 +104,7 @@ mem_read:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	cpi r25,0x04	 ; branch if addr_hi >= 0x40
+	cpi r25,RAM_PAGES	 ; branch if addr_hi is above RAM
 	brsh .mem_L6	 ;
 	movw ZL,r24	 ;
 	subi ZH,hi8(-(ram))	 ;
@@ -134,8 +135,8 @@ mem_read_16:
 	cpi r24,0xff	 ;
 	breq .mem_L11	 ; branch if addr_lo = $ff
 .mem_16_ram:
-	cpi r25,0x04	 ;
-	brsh .mem_16_L6	 ; branch if addr_hi >= 0x40
+	cpi r25,RAM_PAGES	 ;
+	brsh .mem_16_L6	 ; branch if addr_hi is above RAM
 	movw ZL,r24	 ;
 	subi ZH,hi8(-(ram))	 ;
 	ld r24,Z+	 ; r24 <- ram[addr]
@@ -221,7 +222,7 @@ addr_abs:
 	mov r24,_data_	 ; r24 <- data
 	movw ZL,_PCL_	 ;
 	adiw _PCL_,1	 ; PC++
-	cpi ZH,0x04	 ; branch if PCH >= 0x04
+	cpi ZH,RAM_PAGES	 ; branch if address is above RAM
 	brsh .addr_abs_hi	 ;
 	subi ZH,hi8(-(ram))	 ;
 	ld r25,Z	 ; load from ram[addr]
@@ -376,8 +377,8 @@ cpu_main:
 	movw ZL,_opcode_	 ; ZH:ZL <- _opcode_pointer_:_opcode_
 	ijmp	 ; jmp (.opcode_table + opcode)
 .pc_no_rom:
-	cpi ZH,0x04	 ;
-	brsh .pc_no_ram	 ; branch if PC >= 0x0400
+	cpi ZH,RAM_PAGES	 ;
+	brsh .pc_no_ram	 ; branch if PC is above RAM
 .pc_in_ram:
 	subi ZH,hi8(-(ram))	 ;
 	ld _opcode_,Z+	 ; opcode <- ram[PC]
@@ -1147,7 +1148,7 @@ output: data value in _data_, tick count in _cycles_
 .read_abs_no_carry:
 	ldi _cycles_,4	 ; cycles <- 4
 .read_mem:	 ; data <- read(r25:r24), ijmp (XH:XL)
-	cpi r25,0x04	 ; branch if addr_hi >= 0x40
+	cpi r25,RAM_PAGES	 ; branch if addr is above RAM
 	brsh .read_mem_L6	 ;
 	movw ZL,r24	 ;
 	subi ZH,hi8(-(ram))	 ;
@@ -1573,7 +1574,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	ldi _cycles_,6	 ; cycles <- 6
 .modify_mem:	 ; data <- read(r25:r24), ijmp (XH:XL)
-	cpi r25,0x04	 ; branch if addr_hi >= 0x40
+	cpi r25,RAM_PAGES	 ; branch if addr is above RAM
 	brsh .modify_mem_hi	 ;
 	movw XL,r24	 ;
 	subi XH,hi8(-(ram))	 ;
@@ -1759,8 +1760,8 @@ input:  function pointer in ZH:ZL, to be used with icall
 	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
 	ldi _cycles_,4	 ; cycles <- 4
 .write_mem:	 ; write(r25:r24,value), rjmp .tick
-	cpi r25,4	 ;
-	brsh .write_mem_hi	 ; branch if address >= $0400
+	cpi r25,RAM_PAGES	 ;
+	brsh .write_mem_hi	 ; branch if address is above RAM
 	movw ZL,r24	 ;
 	subi ZH,hi8(-(ram))	 ;
 	st Z,_value_	 ; ram[r25:r24] <- data
