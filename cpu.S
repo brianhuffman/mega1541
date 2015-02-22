@@ -1765,7 +1765,22 @@ input:  function pointer in ZH:ZL, to be used with icall
 	subi ZH,hi8(-(ram))	 ;
 	st Z,_value_	 ; ram[r25:r24] <- data
 .write_mem_hi:
+	cpi r25,0x1c
+	breq .write_mem_via2
+	rjmp .tick
 	/* TODO: write io memory */
+.write_mem_via2:
+	cpi r24,0x0
+	brne .write_mem_done
+	sbi 4,5	 ; Set DDRB5 to 'output'
+	bst _value_,3	 ; bit 3 = LED output
+	brts .led_on
+	cbi 5,5	 ; Clear PORTB5 (pin 13, LED)
+	rjmp .tick
+.led_on:
+	sbi 5,5	 ; Set PORTB5 (pin 13, LED)
+	rjmp .tick
+.write_mem_done:
 	rjmp .tick
 .write_abx:
 	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
