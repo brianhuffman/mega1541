@@ -915,47 +915,36 @@ cpu_main:
 	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .SBC:
-	sbrc _P_,3	 ; skip if decimal mode is set
-	rjmp .SBC_dec	 ; jump if decimal mode is clear
-.SBC_bin:
+	/* N, V, Z, C are set the same in decimal and binary mode */
 	com _data_	 ; data <- ~data
 	lsr _C_	 ; carry <- C <- 0
 	adc _A_,_data_	 ; (carry, A) <- A + data + carry
 	mov _Z_,_A_	 ;
 	mov _N_,_A_	 ;
-	brvs .SBC_bin_overflow	 ; branch on overflow
+	brvs .SBC_overflow	 ; branch on overflow
 	rol _C_	 ; C <- carry <- 0
 	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
+	sbrc _P_,3	 ; skip if decimal mode is clear
+	rjmp .SBC_dec1	 ; jump if decimal mode is set
 	rjmp .tick
-.SBC_bin_overflow:
+.SBC_overflow:
 	rol _C_	 ; C <- carry <- 0
 	ori _P_,V_FLAG	 ; P |= V_FLAG
+	sbrs _P_,3	 ; skip if decimal mode is set
 	rjmp .tick
-.SBC_dec:
-	mov temp0,_A_	 ; total <- A
-	com _data_	 ; data <- 0xff - data
-	lsr _C_	 ; carry <- C <- 0
-	adc temp0,_data_	 ; (total,carry) <- A + ~data + carry
-	rol _C_	 ; C <- carry <- 0
+.SBC_dec1:
 	/* fix up lower nybble */
-	brhs .SBC_dec_2	 ; branch if adc half-carried
-	subi temp0,6	 ; total -= 6 if adc did not half-carry
-	brhc .SBC_dec_2	 ; branch unless sbi underflowed low nybble
-	subi temp0,-16	 ; total += 16 if sbi underflowed
-.SBC_dec_2:
-	/* set Z, N, V after low nybble fixup */
-	mov _Z_,temp0	 ; Z <- total
-	mov _N_,temp0	 ; N <- total
-	eor _data_,temp0	 ; data <- (data ^ total) & (A ^ total)
-	mov temp1,_A_	 ; temp <- A
-	eor temp1,temp0	 ; temp <- A ^ total
-	and _data_,temp1	 ; data <- (data ^ total) & (A ^ total)
-	bst _data_,7	 ; t <- (data ^ total) & (A ^ total) bit 7
-	bld _P_,6	 ; P.overflow <- t
+	mov temp0,_A_	 ; temp <- A
+	brhs .SBC_dec2	 ; branch if adc half-carried
+        /* permute lower nybble: [6..f,0..9] -> [0..9,a..f] */
+	subi temp0,6	 ; A -= 6 if adc did not half-carry
+	brhc .SBC_dec2	 ; branch unless subi underflowed low nybble
+	subi temp0,-16	 ; A += 16 if subi underflowed low nybble
+.SBC_dec2:
 	/* fix up upper nybble */
 	sbrs _C_,0	 ; skip if C.0 = 1
-	subi temp0,0x60	 ; if C.0 = 0, then total -= 0x60
-	mov _A_,temp0	 ; A <- total
+	subi temp0,0x60	 ; if C.0 = 0, then A -= 0x60
+	mov _A_,temp0	 ; A <- temp
 	rjmp .tick
 .xed_SBC_abs:
 	LDI_X(gs(.SBC))
