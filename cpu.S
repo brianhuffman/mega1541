@@ -767,8 +767,8 @@ cpu_main:
 	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
 .ADC:
-	sbrc _P_,3	 ; skip if decimal mode is set
-	rjmp .ADC_dec	 ; jump if decimal mode is clear
+	sbrc _P_,3	 ; skip if decimal mode is clear
+	rjmp .ADC_dec	 ; jump if decimal mode is set
 .ADC_bin:
 	lsr _C_	 ; carry <- C <- 0
 	adc _A_,_data_	 ; (carry, A) <- A + data + carry
