@@ -14,5 +14,6 @@ void cpu_nmi (void);
 //void cpu_brk (void);
 
 word cpu_get_pc (void);
+unsigned long cpu_get_regs (void);
 
 #endif

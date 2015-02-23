@@ -270,6 +270,20 @@ cpu_get_pc:
 	lds r25,reg_pc+1
 	ret
 	.size	cpu_get_pc, .-cpu_get_pc
+	.section	.text.cpu_get_regs,"ax",@progbits
+.global	cpu_get_regs
+	.type	cpu_get_regs, @function
+cpu_get_regs:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	lds r25,reg_a
+	lds r24,reg_x
+	lds r23,reg_y
+	lds r22,reg_s
+	ret
+	.size	cpu_get_regs, .-cpu_get_regs
 	.section	.text.cpu_irq,"ax",@progbits
 .global	cpu_irq
 	.type	cpu_irq, @function

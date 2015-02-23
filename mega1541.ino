@@ -25,6 +25,6 @@ void loop() {
   unsigned long time2 = micros();
   unsigned long delta = time2 - time1;
   Serial.println(delta);
-  Serial.println("PC=$" + String(cpu_get_pc(), HEX));
+  Serial.println("PC=$" + String(cpu_get_pc(), HEX) + " AXYS=$" + String(cpu_get_regs(), HEX));
   //Serial.println(cpu_state_string());
 }
