@@ -65,9 +65,9 @@ N_FLAG = 0x80
 
 /* reg <- ram[addr] */
 #define LD_ZERO_PAGE(reg,addr) \
-	mov ZL,(addr)	 $ \
-	ldi ZH,ZERO_PAGE	 $ \
-	ld (reg),Z
+	mov XL,(addr)	 $ \
+	ldi XH,ZERO_PAGE	 $ \
+	ld (reg),X
 
 /* reg+1:reg <- ram[addr+1]:ram[addr] */
 #define LDW_ZERO_PAGE(reg,addr) \
@@ -656,7 +656,7 @@ cpu_main:
 	LDI_X(gs(.ORA))
 	rjmp .read_inx
 .x05_ORA_zpg:
-	LDI_X(gs(.ORA))
+	LDI_Z(gs(.ORA))
 	rjmp .read_zpg
 .x09_ORA_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -673,7 +673,7 @@ cpu_main:
 	LDI_X(gs(.ORA))
 	rjmp .read_iny
 .x15_ORA_zpx:
-	LDI_X(gs(.ORA))
+	LDI_Z(gs(.ORA))
 	rjmp .read_zpx
 .x19_ORA_aby:
 	LDI_X(gs(.ORA))
@@ -685,7 +685,7 @@ cpu_main:
 	LDI_X(gs(.AND))
 	rjmp .read_inx
 .x25_AND_zpg:
-	LDI_X(gs(.AND))
+	LDI_Z(gs(.AND))
 	rjmp .read_zpg
 .x29_AND_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -702,7 +702,7 @@ cpu_main:
 	LDI_X(gs(.AND))
 	rjmp .read_iny
 .x35_AND_zpx:
-	LDI_X(gs(.AND))
+	LDI_Z(gs(.AND))
 	rjmp .read_zpx
 .x39_AND_aby:
 	LDI_X(gs(.AND))
@@ -714,7 +714,7 @@ cpu_main:
 	LDI_X(gs(.EOR))
 	rjmp .read_inx
 .x45_EOR_zpg:
-	LDI_X(gs(.EOR))
+	LDI_Z(gs(.EOR))
 	rjmp .read_zpg
 .x49_EOR_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -731,7 +731,7 @@ cpu_main:
 	LDI_X(gs(.EOR))
 	rjmp .read_iny
 .x55_EOR_zpx:
-	LDI_X(gs(.EOR))
+	LDI_Z(gs(.EOR))
 	rjmp .read_zpx
 .x59_EOR_aby:
 	LDI_X(gs(.EOR))
@@ -743,7 +743,7 @@ cpu_main:
 	LDI_X(gs(.ADC))
 	rjmp .read_inx
 .x65_ADC_zpg:
-	LDI_X(gs(.ADC))
+	LDI_Z(gs(.ADC))
 	rjmp .read_zpg
 .x69_ADC_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -816,7 +816,7 @@ cpu_main:
 	LDI_X(gs(.ADC))
 	rjmp .read_iny
 .x75_ADC_zpx:
-	LDI_X(gs(.ADC))
+	LDI_Z(gs(.ADC))
 	rjmp .read_zpx
 .x79_ADC_aby:
 	LDI_X(gs(.ADC))
@@ -828,7 +828,7 @@ cpu_main:
 	LDI_X(gs(.LDA))
 	rjmp .read_inx
 .xa5_LDA_zpg:
-	LDI_X(gs(.LDA))
+	LDI_Z(gs(.LDA))
 	rjmp .read_zpg
 .xa9_LDA_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -845,7 +845,7 @@ cpu_main:
 	LDI_X(gs(.LDA))
 	rjmp .read_iny
 .xb5_LDA_zpx:
-	LDI_X(gs(.LDA))
+	LDI_Z(gs(.LDA))
 	rjmp .read_zpx
 .xb9_LDA_aby:
 	LDI_X(gs(.LDA))
@@ -857,7 +857,7 @@ cpu_main:
 	LDI_X(gs(.CMP))
 	rjmp .read_inx
 .xc5_CMP_zpg:
-	LDI_X(gs(.CMP))
+	LDI_Z(gs(.CMP))
 	rjmp .read_zpg
 .xc9_CMP_imm:
 	adiw _PCL_,2	 ; PC += 2
@@ -878,7 +878,7 @@ cpu_main:
 	LDI_X(gs(.CMP))
 	rjmp .read_iny
 .xd5_CMP_zpx:
-	LDI_X(gs(.CMP))
+	LDI_Z(gs(.CMP))
 	rjmp .read_zpx
 .xd9_CMP_aby:
 	LDI_X(gs(.CMP))
@@ -890,7 +890,7 @@ cpu_main:
 	LDI_X(gs(.SBC))
 	rjmp .read_inx
 .xe5_SBC_zpg:
-	LDI_X(gs(.SBC))
+	LDI_Z(gs(.SBC))
 	rjmp .read_zpg
 .xe9_SBC_imm:
 .xeb_SBC_imm_undocumented:
@@ -954,7 +954,7 @@ cpu_main:
 	LDI_X(gs(.SBC))
 	rjmp .read_iny
 .xf5_SBC_zpx:
-	LDI_X(gs(.SBC))
+	LDI_Z(gs(.SBC))
 	rjmp .read_zpx
 .xf9_SBC_aby:
 	LDI_X(gs(.SBC))
@@ -971,13 +971,13 @@ cpu_main:
 	mov _N_,_data_	 ;
 	rjmp .tick	 ;
 .xa6_LDX_zpg:
-	LDI_X(gs(.LDX))
+	LDI_Z(gs(.LDX))
 	rjmp .read_zpg
 .xae_LDX_abs:
 	LDI_X(gs(.LDX))
 	rjmp .read_abs
 .xb6_LDX_zpy:
-	LDI_X(gs(.LDX))
+	LDI_Z(gs(.LDX))
 	rjmp .read_zpy
 .xbe_LDX_aby:
 	LDI_X(gs(.LDX))
@@ -991,13 +991,13 @@ cpu_main:
 	mov _N_,_data_	 ;
 	rjmp .tick	 ;
 .xa4_LDY_zpg:
-	LDI_X(gs(.LDY))
+	LDI_Z(gs(.LDY))
 	rjmp .read_zpg
 .xac_LDY_abs:
 	LDI_X(gs(.LDY))
 	rjmp .read_abs
 .xb4_LDY_zpx:
-	LDI_X(gs(.LDY))
+	LDI_Z(gs(.LDY))
 	rjmp .read_zpx
 .xbc_LDY_abx:
 	LDI_X(gs(.LDY))
@@ -1015,7 +1015,7 @@ cpu_main:
 .CPX_carry:
 	rjmp .tick
 .xe4_CPX_zpg:
-	LDI_X(gs(.CPX))
+	LDI_Z(gs(.CPX))
 	rjmp .read_zpg
 .xec_CPX_abs:
 	LDI_X(gs(.CPX))
@@ -1033,13 +1033,13 @@ cpu_main:
 .CPY_carry:
 	rjmp .tick
 .xc4_CPY_zpg:
-	LDI_X(gs(.CPY))
+	LDI_Z(gs(.CPY))
 	rjmp .read_zpg
 .xcc_CPY_abs:
 	LDI_X(gs(.CPY))
 	rjmp .read_abs
 .x24_BIT_zpg:
-	LDI_X(gs(.BIT))
+	LDI_Z(gs(.BIT))
 	rjmp .read_zpg
 .x2c_BIT_abs:
 	LDI_X(gs(.BIT))
@@ -1064,7 +1064,7 @@ cpu_main:
 	LDI_X(gs(.LAX))
 	rjmp .read_inx
 .xa7_LAX_zpg_undocumented:
-	LDI_X(gs(.LAX))
+	LDI_Z(gs(.LAX))
 	rjmp .read_zpg
 .xaf_LAX_abs_undocumented:
 	LDI_X(gs(.LAX))
@@ -1073,7 +1073,7 @@ cpu_main:
 	LDI_X(gs(.LAX))
 	rjmp .read_iny
 .xb7_LAX_zpy_undocumented:
-	LDI_X(gs(.LAX))
+	LDI_Z(gs(.LAX))
 	rjmp .read_zpy
 .xbf_LAX_aby_undocumented:
 	LDI_X(gs(.LAX))
@@ -1091,7 +1091,7 @@ cpu_main:
 .x04_NOP_zpg_undocumented:
 .x44_NOP_zpg_undocumented:
 .x64_NOP_zpg_undocumented:
-	LDI_X(gs(.NOP))
+	LDI_Z(gs(.NOP))
 	rjmp .read_zpg
 .x0c_NOP_abs_undocumented:
 	LDI_X(gs(.NOP))
@@ -1102,7 +1102,7 @@ cpu_main:
 .x74_NOP_zpx_undocumented:
 .xd4_NOP_zpx_undocumented:
 .xf4_NOP_zpx_undocumented:
-	LDI_X(gs(.NOP))
+	LDI_Z(gs(.NOP))
 	rjmp .read_zpx
 .x1c_NOP_abx_undocumented:
 .x3c_NOP_abx_undocumented:
@@ -1115,33 +1115,29 @@ cpu_main:
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
-input:  return address in XH:XL
+input:  return address in XH:XL (ZH:ZL for imm/zpg/zpx/zpy)
 output: data value in _data_, tick count in _cycles_
 */
 .read_imm:
 	adiw _PCL_,2	 ; PC += 2
 	ldi _cycles_,2	 ; cycles <- 2
-	movw ZL,XL
 	ijmp
 .read_zpg:
 	adiw _PCL_,2	 ; PC += 2
 	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
 	ldi _cycles_,3	 ; cycles <- 3
-	movw ZL,XL
 	ijmp
 .read_zpx:
 	adiw _PCL_,2	 ; PC += 2
 	add _data_,_X_	 ; data += X
 	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
 	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
 	ijmp
 .read_zpy:
 	adiw _PCL_,2	 ; PC += 2
 	add _data_,_Y_	 ; r24 += Y
 	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
 	ldi _cycles_,4	 ; cycles <- 4
-	movw ZL,XL
 	ijmp
 .read_abs:
 	rcall addr_abs	 ; r25:r24 <- mem_read(++PC), PC += 2
