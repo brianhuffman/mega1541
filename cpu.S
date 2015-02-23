@@ -133,8 +133,8 @@ mem_read:
 	.type	mem_read_16, @function
 mem_read_16:
 /* input: addr_hi:addr_lo */
-/* output: addr_hi:addr_lo */
-/* touches: ZH, ZL, _data_, temp0 */
+/* output: _PCH_:_PCL_ */
+/* touches: ZH, ZL, _data_ */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
@@ -148,8 +148,8 @@ mem_read_16:
 	brsh .mem_16_L6	 ; branch if addr_hi is above RAM
 	movw ZL,addr_lo	 ;
 	subi ZH,hi8(-(ram))	 ;
-	ld addr_lo,Z+	 ; addr_lo <- ram[addr]
-	ld addr_hi,Z	 ; addr_hi <- ram[addr+1]
+	ld _PCL_,Z+	 ; addr_lo <- ram[addr]
+	ld _PCH_,Z	 ; addr_hi <- ram[addr+1]
 	ret
 .mem_16_L6:
 	cpi addr_hi,0xc0	 ;
@@ -157,20 +157,19 @@ mem_read_16:
 .mem_16_rom:
 	movw ZL,addr_lo	 ;
 	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm addr_lo,Z+	 ; addr_lo <- rom[addr - 0xc0000]
-	lpm addr_hi,Z	 ; addr_hi <- rom[addr+1 - 0xc0000]
+	lpm _PCL_,Z+	 ; addr_lo <- rom[addr - 0xc0000]
+	lpm _PCH_,Z	 ; addr_hi <- rom[addr+1 - 0xc0000]
 	ret
 .mem_16_L9:
-	ldi addr_lo,0xff	 ; other addresses return 0xff
-	ldi addr_hi,0xff	 ; other addresses return 0xff
+	ldi _PCL_,0xff	 ; other addresses return 0xff
+	ldi _PCH_,0xff	 ; other addresses return 0xff
 	ret
 .mem_L11:
 	rcall mem_read	 ; data <- mem_read(addr)
-	mov temp0,_data_	 ; temp <- data
+	mov _PCL_,_data_	 ; PCL <- data
 	adiw addr_lo,1	 ; addr++
 	rcall mem_read	 ; data <- mem_read(addr+1)
-	mov addr_lo,temp0	 ;
-	mov addr_hi,_data_	 ;
+	mov _PCH_,_data_	 ; PCH <- data
 	ret
 	.size	mem_read_16, .-mem_read_16
 	.section	.text.clock_advance,"ax",@progbits
@@ -256,8 +255,7 @@ cpu_reset:
 .L__stack_usage = 0
 	ldi addr_lo,0xfc	 ;
 	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; addr_hi:addr_lo <- mem_read(0xfffc)
-	movw _PCL_,addr_lo	 ; PC <- mem_read(0xfffc)
+	rcall mem_read_16	 ; PC <- mem_read(0xfffc)
 	sts reg_pc,_PCL_
 	sts reg_pc+1,_PCH_
 	ldi r24,0xff
@@ -310,8 +308,7 @@ cpu_irq:
 	ori _P_,I_FLAG	 ; set I flag
 	ldi addr_lo,0xfe	 ;
 	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; addr_hi:addr_lo <- mem_read(0xfffe)
-	movw _PCL_,addr_lo	 ; PC <- address
+	rcall mem_read_16	 ; PC <- mem_read(0xfffe)
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp clock_advance	 ; 
 	ret
@@ -330,8 +327,7 @@ cpu_nmi:
 	PUSH(_P_)	 ; stack[S--] <- P
 	ldi addr_lo,0xfa	 ;
 	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; addr_hi:addr_lo <- mem_read(0xfffa)
-	movw _PCL_,addr_lo	 ; PC <- address
+	rcall mem_read_16	 ; PC <- mem_read(0xfffa)
 	ldi _cycles_,7	 ; 7 cycles
 	rjmp clock_advance	 ;
 	ret
@@ -1987,8 +1983,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
 	ldi addr_lo,0xfe	 ;
 	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; addr_hi:addr_lo <- mem_read(0xfffe)
-	movw _PCL_,addr_lo	 ; PC <- addr_hi:addr_lo
+	rcall mem_read_16	 ; PC <- mem_read(0xfffe)
 	TICK(7)
 .x20_JSR:
 	rcall addr_abs	 ;
@@ -2014,8 +2009,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 	TICK(3)
 .x6c_JMP_ind:
 	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	rcall mem_read_16	 ; addr_hi:addr_lo <- mem_read(addr_hi:addr_lo)
-	movw _PCL_,addr_lo	 ;  reg_pc,
+	rcall mem_read_16	 ; PC <- mem_read(addr_hi:addr_lo)
 	TICK(5)
 .x08_PHP:
 	adiw _PCL_,1	 ; PC++
