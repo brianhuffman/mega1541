@@ -16,15 +16,15 @@ _Z_ = 10
 _C_ = 11
 _PCL_ = 28
 _PCH_ = 29
-_time0_ = 12
-_time1_ = 13
+_time0_ = 18
+_time1_ = 19
 _time2_ = 14
 _time3_ = 15
 _cycles_ = 16
 _opcode_ = 20
 _opcode_pointer_ = 21
 _data_ = 22
-_value_ = 23
+_value_ = 2
 addr_lo = 24
 addr_hi = 25
 XL = 26
@@ -33,8 +33,8 @@ YL = 28
 YH = 29
 ZL = 30
 ZH = 31
-temp0 = 18
-temp1 = 19
+temp0 = 26
+temp1 = 27
 temp2 = 20
 temp3 = 25
 temp4 = 30
@@ -49,10 +49,9 @@ B_FLAG = 0x10
 V_FLAG = 0x40
 N_FLAG = 0x80
 
-/* define TICK(n) subi _time0_,(n) $ rjmp .ticked */
 #define TICK(n) \
-	ldi _cycles_,(n) $ \
-	rjmp .tick
+	subi _time0_,(n) $ \
+	rjmp .ticked
 
 #define ZERO_PAGE hi8(ram)
 #define STACK_PAGE hi8(ram+256)
