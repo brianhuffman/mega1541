@@ -932,38 +932,30 @@ cpu_main:
 	ori _P_,V_FLAG	 ; P |= V_FLAG
 	rjmp .tick
 .SBC_dec:
-	mov temp2,_A_	 ;  reg_a.250, reg_a
-	mov temp0,_C_	 ;  flag_c, flag_c
-	mov temp3,temp2	 ;  D.3761, reg_a.250
-	andi temp3,0x0f	 ;  D.3761,
-	add temp3,temp0	 ;  D.3761, flag_c
-	mov temp0,_data_	 ;  D.3761, D.3761
-	andi temp0,0x0f	 ;  D.3761,
-	sub temp3,temp0	 ;  D.3761, D.3761
-	ldi temp0,lo8(-7)	 ;  result,
-	add temp0,temp3	 ;  result, D.3761
-	cpi temp0,lo8(-16)	 ;  result,
-	brsh .L31	 ; ,
-	ldi temp0,lo8(9)	 ;  result,
-	add temp0,temp3	 ;  result, D.3761
-.L31:
-	mov temp3,temp2	 ;  result, reg_a.250
-	andi temp3,0xf0	 ;  result,
-	mov temp1,_data_	 ;  D.3761, D.3761
-	andi temp1,0xf0	 ;  D.3761,
-	sub temp3,temp1	 ;  result, D.3761
-	add temp3,temp0	 ;  result, result
-	mov _Z_,temp3	 ;  flag_z, result
-	mov _N_,temp3	 ;  flag_n, result
-	mov temp0,temp3	 ;  D.3761, result
-	eor temp0,temp2	 ;  D.3761, reg_a.250
-	eor temp2,_data_	 ;  D.3761, D.3761
-	and temp0,temp2	 ;  D.3761, D.3761
-	bst temp0,7	 ; t <- (A ^ result) & (A ^ data) bit 7
-	bld _P_,6	 ; P.6 <- t
-	mov _C_,__zero_reg__	 ;  flag_c,
-	subi temp3,0x60	 ;  result,
-	mov _A_,temp3	 ;  reg_a, result
+	mov temp0,_A_	 ; total <- A
+	com _data_	 ; data <- 0xff - data
+	lsr _C_	 ; carry <- C <- 0
+	adc temp0,_data_	 ; (total,carry) <- A + ~data + carry
+	rol _C_	 ; C <- carry <- 0
+	/* fix up lower nybble */
+	brhs .SBC_dec_2	 ; branch if adc half-carried
+	subi temp0,6	 ; total -= 6 if adc did not half-carry
+	brhc .SBC_dec_2	 ; branch unless sbi underflowed low nybble
+	subi temp0,-16	 ; total += 16 if sbi underflowed
+.SBC_dec_2:
+	/* set Z, N, V after low nybble fixup */
+	mov _Z_,temp0	 ; Z <- total
+	mov _N_,temp0	 ; N <- total
+	eor _data_,temp0	 ; data <- (data ^ total) & (A ^ total)
+	mov temp1,_A_	 ; temp <- A
+	eor temp1,temp0	 ; temp <- A ^ total
+	and _data_,temp1	 ; data <- (data ^ total) & (A ^ total)
+	bst _data_,7	 ; t <- (data ^ total) & (A ^ total) bit 7
+	bld _P_,6	 ; P.overflow <- t
+	/* fix up upper nybble */
+	sbrs _C_,0	 ; skip if C.0 = 1
+	subi temp0,0x60	 ; if C.0 = 0, then total -= 0x60
+	mov _A_,temp0	 ; A <- total
 	rjmp .tick
 .xed_SBC_abs:
 	LDI_X(gs(.SBC))
