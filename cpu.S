@@ -1,30 +1,31 @@
-	.file	"cpu.S"
+        .file        "cpu.S"
 __SP_H__ = 0x3e
 __SP_L__ = 0x3d
 __SREG__ = 0x3f
 __tmp_reg__ = 0
 __zero_reg__ = 1
 
-/* Register variables */
-_A_ = 4
-_X_ = 5
-_Y_ = 6
-_S_ = 7
-_P_ = 17
-_N_ = 9
-_Z_ = 10
-_C_ = 11
-_PCL_ = 28
-_PCH_ = 29
-_time0_ = 18
-_time1_ = 19
-_time2_ = 14
-_time3_ = 15
-_cycles_ = 16
-_opcode_ = 20
-_opcode_pointer_ = 21
-_data_ = 22
-_value_ = 2
+/* Static register variables */
+_A = 4
+_X = 5
+_Y = 6
+_S = 7
+_P = 17
+_N = 9
+_Z = 10
+_C = 11
+_PCL = 28
+_PCH = 29
+time0 = 18
+time1 = 19
+time2 = 14
+time3 = 15
+/* Loop-local register variables */
+cycles = 16
+opcode = 20
+opcode_pointer = 21
+data = 22
+value = 2
 addr_lo = 24
 addr_hi = 25
 XL = 26
@@ -50,1897 +51,1899 @@ V_FLAG = 0x40
 N_FLAG = 0x80
 
 #define TICK(n) \
-	subi _time0_,(n) $ \
-	rjmp .ticked
+        subi time0,(n) $ \
+        rjmp .ticked
 
 #define ZERO_PAGE hi8(ram)
 #define STACK_PAGE hi8(ram+256)
 #define RAM_PAGES 4 /* should be 8 if we have more than 2k of SRAM available */
 
-#define PUSH(reg) \
-	mov ZL, _S_ $ \
-	ldi ZH, STACK_PAGE $ \
-	st Z, (reg) $ \
-	dec _S_
+#define PUSH(reg)                 \
+        mov ZL, _S              $ \
+        ldi ZH, STACK_PAGE      $ \
+        st Z, (reg)             $ \
+        dec _S
 
-#define PULL(reg) \
-	inc _S_ $ \
-	mov ZL, _S_ $ \
-	ldi ZH, STACK_PAGE $ \
-	ld (reg), Z
+#define PULL(reg)                 \
+        inc _S                  $ \
+        mov ZL, _S              $ \
+        ldi ZH, STACK_PAGE      $ \
+        ld (reg), Z
 
 /* reg <- ram[addr] */
-#define LD_ZERO_PAGE(reg,addr) \
-	mov XL,(addr)	 $ \
-	ldi XH,ZERO_PAGE	 $ \
-	ld (reg),X
+#define LD_ZERO_PAGE(reg,addr)    \
+        mov XL,(addr)           $ \
+        ldi XH,ZERO_PAGE        $ \
+        ld (reg),X
 
 /* reg+1:reg <- ram[addr+1]:ram[addr] */
-#define LDW_ZERO_PAGE(reg,addr) \
-	mov ZL,(addr)	 $ \
-	ldi ZH,ZERO_PAGE	 $ \
-	ld (reg),Z	 $ \
-	inc ZL	 $ \
-	ld (reg)+1,Z
+#define LDW_ZERO_PAGE(reg,addr)   \
+        mov ZL,(addr)           $ \
+        ldi ZH,ZERO_PAGE        $ \
+        ld (reg),Z              $ \
+        inc ZL                  $ \
+        ld (reg)+1,Z
 
 /* ram[addr] <- reg */
-#define ST_ZERO_PAGE(addr,reg) \
-	mov ZL,(addr)	 $ \
-	ldi ZH,ZERO_PAGE	 $ \
-	st Z,(reg)
+#define ST_ZERO_PAGE(addr,reg)    \
+        mov ZL,(addr)           $ \
+        ldi ZH,ZERO_PAGE        $ \
+        st Z,(reg)
 
 /* XH:XL <- value */
-#define LDI_X(value) \
-	ldi XL,lo8(value) $ \
-	ldi XH,hi8(value)
+#define LDI_X(value)              \
+        ldi XL,lo8(value)       $ \
+        ldi XH,hi8(value)
 
 /* ZH:ZL <- value */
-#define LDI_Z(value) \
-	ldi ZL,lo8(value) $ \
-	ldi ZH,hi8(value)
+#define LDI_Z(value)              \
+        ldi ZL,lo8(value)       $ \
+        ldi ZH,hi8(value)
 
-	.section	.text.mem_read,"ax",@progbits
-.global	mem_read
-	.type	mem_read, @function
+        .section        .text.mem_read,"ax",@progbits
+.global        mem_read
+        .type        mem_read, @function
 mem_read:
 /* input: addr_hi:addr_lo */
-/* output: _data_ */
+/* output: data */
 /* touches: ZH, ZL */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	cpi addr_hi,RAM_PAGES	 ; branch if addr_hi is above RAM
-	brsh .mem_L6	 ;
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(ram))	 ;
-	ld _data_,Z	 ; load from ram[addr]
-	ret
+        cpi addr_hi,RAM_PAGES   ; branch if addr_hi is above RAM
+        brsh .mem_L6            ;
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(ram))     ;
+        ld data,Z               ; load from ram[addr]
+        ret
 .mem_L6:
-	cpi addr_hi,0xc0	 ; branch if addr_hi < 0xc0
-	brlo .mem_L9	 ;
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm _data_,Z	 ; load from rom[addr - 0xc0000]
-	ret
+        cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
+        brlo .mem_L9            ;
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm data,Z              ; load from rom[addr - 0xc0000]
+        ret
 .mem_L9:
-	ldi _data_,0xff	 ; other addresses return 0xff
-	ret
-	.size	mem_read, .-mem_read
-	.section	.text.mem_read_16,"ax",@progbits
-.global	mem_read_16
-	.type	mem_read_16, @function
+        ldi data,0xff           ; other addresses return 0xff
+        ret
+        .size        mem_read, .-mem_read
+        .section        .text.mem_read_16,"ax",@progbits
+.global        mem_read_16
+        .type        mem_read_16, @function
 mem_read_16:
 /* input: addr_hi:addr_lo */
-/* output: _PCH_:_PCL_ */
-/* touches: ZH, ZL, _data_ */
+/* output: _PCH:_PCL */
+/* touches: ZH, ZL, data */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 /* cycles (ram): 10+ret = 14 */
 /* cycles (rom): 15+ret = 19 */
 .L__stack_usage = 0
-	cpi addr_lo,0xff	 ;
-	breq .mem_L11	 ; branch if addr_lo = $ff
+        cpi addr_lo,0xff        ;
+        breq .mem_L11           ; branch if addr_lo = $ff
 .mem_16_ram:
-	cpi addr_hi,RAM_PAGES	 ;
-	brsh .mem_16_L6	 ; branch if addr_hi is above RAM
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(ram))	 ;
-	ld _PCL_,Z+	 ; addr_lo <- ram[addr]
-	ld _PCH_,Z	 ; addr_hi <- ram[addr+1]
-	ret
+        cpi addr_hi,RAM_PAGES   ;
+        brsh .mem_16_L6         ; branch if addr_hi is above RAM
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(ram))     ;
+        ld _PCL,Z+              ; addr_lo <- ram[addr]
+        ld _PCH,Z               ; addr_hi <- ram[addr+1]
+        ret
 .mem_16_L6:
-	cpi addr_hi,0xc0	 ;
-	brlo .mem_16_L9	 ; branch if addr_hi < 0xc0
+        cpi addr_hi,0xc0        ;
+        brlo .mem_16_L9         ; branch if addr_hi < 0xc0
 .mem_16_rom:
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm _PCL_,Z+	 ; addr_lo <- rom[addr - 0xc0000]
-	lpm _PCH_,Z	 ; addr_hi <- rom[addr+1 - 0xc0000]
-	ret
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm _PCL,Z+             ; addr_lo <- rom[addr - 0xc0000]
+        lpm _PCH,Z              ; addr_hi <- rom[addr+1 - 0xc0000]
+        ret
 .mem_16_L9:
-	ldi _PCL_,0xff	 ; other addresses return 0xff
-	ldi _PCH_,0xff	 ; other addresses return 0xff
-	ret
+        ldi _PCL,0xff           ; other addresses return 0xff
+        ldi _PCH,0xff           ; other addresses return 0xff
+        ret
 .mem_L11:
-	rcall mem_read	 ; data <- mem_read(addr)
-	mov _PCL_,_data_	 ; PCL <- data
-	adiw addr_lo,1	 ; addr++
-	rcall mem_read	 ; data <- mem_read(addr+1)
-	mov _PCH_,_data_	 ; PCH <- data
-	ret
-	.size	mem_read_16, .-mem_read_16
-	.section	.text.clock_advance,"ax",@progbits
-	.type	clock_advance, @function
+        rcall mem_read          ; data <- mem_read(addr)
+        mov _PCL,data           ; PCL <- data
+        adiw addr_lo,1          ; addr++
+        rcall mem_read          ; data <- mem_read(addr+1)
+        mov _PCH,data           ; PCH <- data
+        ret
+        .size        mem_read_16, .-mem_read_16
+        .section        .text.clock_advance,"ax",@progbits
+        .type        clock_advance, @function
 clock_advance:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	sub _time0_,_cycles_	 ;  time_left.20, D.3675
-	sbc _time1_,__zero_reg__	 ;  time_left.20, D.3675
-	sbc _time2_,__zero_reg__	 ;  time_left.20, D.3675
-	sbc _time3_,__zero_reg__	 ;  time_left.20, D.3675
-	ret
-	.size	clock_advance, .-clock_advance
-	.section	.text.unpack_flags,"ax",@progbits
-	.type	unpack_flags, @function
+        sub time0,cycles        ;  time_left.20, D.3675
+        sbc time1,__zero_reg__  ;  time_left.20, D.3675
+        sbc time2,__zero_reg__  ;  time_left.20, D.3675
+        sbc time3,__zero_reg__  ;  time_left.20, D.3675
+        ret
+        .size        clock_advance, .-clock_advance
+        .section        .text.unpack_flags,"ax",@progbits
+        .type        unpack_flags, @function
 unpack_flags:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	mov _N_,_P_	 ; N <- P
-	bst _P_,0	 ; t <- P.0
-	bld _C_,0	 ; C <- t
-	clr _Z_	 ; Z <- 0
-	sbrs _P_,1	 ; skip if P.1 is set
-	inc _Z_	 ; Z++ if P.1 is clear
-	ret
-	.size	unpack_flags, .-unpack_flags
-	.section	.text.pack_flags,"ax",@progbits
-	.type	pack_flags, @function
+        mov _N,_P              ; N <- P
+        bst _P,0               ; t <- P.0
+        bld _C,0               ; C <- t
+        clr _Z                 ; Z <- 0
+        sbrs _P,1              ; skip if P.1 is set
+        inc _Z                 ; Z++ if P.1 is clear
+        ret
+        .size        unpack_flags, .-unpack_flags
+        .section        .text.pack_flags,"ax",@progbits
+        .type        pack_flags, @function
 pack_flags:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	andi _P_,~(B_FLAG|C_FLAG)	 ; clear B and C flags
-	or _P_,_C_	 ; P.0 <- C.0
-	bst _N_,7	 ;
-	bld _P_,7	 ; P.7 <- N.7
-	ori _P_,Z_FLAG|0x20	 ; set Z flag and 1 flag
-	cpse _Z_,__zero_reg__	 ; skip if Z = 0
-	andi _P_,~Z_FLAG	 ; clear Z flag if Z != 0
-	ret
-	.size	pack_flags, .-pack_flags
-	.section	.text.addr_abs,"ax",@progbits
-.global	addr_abs
-	.type	addr_abs, @function
+        andi _P,~(B_FLAG|C_FLAG)       ; clear B and C flags
+        or _P,_C               ; P.0 <- C.0
+        bst _N,7               ;
+        bld _P,7               ; P.7 <- N.7
+        ori _P,Z_FLAG|0x20     ; set Z flag and 1 flag
+        cpse _Z,__zero_reg__   ; skip if Z = 0
+        andi _P,~Z_FLAG        ; clear Z flag if Z != 0
+        ret
+        .size        pack_flags, .-pack_flags
+        .section        .text.addr_abs,"ax",@progbits
+.global        addr_abs
+        .type        addr_abs, @function
 addr_abs:
 /* addr_hi:addr_lo <- mem_read(++PC), PC += 2 */
-/* assumes that mem(PC+1) is already in _data_ */
+/* assumes that mem(PC+1) is already in data */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
+/* cycles (ram): 9+ret = 13 */
+/* cycles (rom): 13+ret = 17 */
 .L__stack_usage = 0
-	adiw _PCL_,2	 ; PC += 2
-	mov addr_lo,_data_	 ; addr_lo <- data
-	movw ZL,_PCL_	 ;
-	adiw _PCL_,1	 ; PC++
-	cpi ZH,RAM_PAGES	 ; branch if address is above RAM
-	brsh .addr_abs_hi	 ;
-	subi ZH,hi8(-(ram))	 ;
-	ld addr_hi,Z	 ; load from ram[addr]
-	ret
+        adiw _PCL,2             ; PC += 2
+        mov addr_lo,data        ; addr_lo <- data
+        movw ZL,_PCL            ;
+        adiw _PCL,1             ; PC++
+        cpi ZH,RAM_PAGES        ; branch if address is above RAM
+        brsh .addr_abs_hi       ;
+        subi ZH,hi8(-(ram))     ;
+        ld addr_hi,Z            ; load from ram[addr]
+        ret
 .addr_abs_hi:
-	cpi ZH,0xc0	 ; branch if PCH < 0xc0
-	brlo .addr_abs_io	 ;
-	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm addr_hi,Z	 ; addr_hi <- rom[PC - 0xc0000]
-	ret
+        cpi ZH,0xc0             ; branch if PCH < 0xc0
+        brlo .addr_abs_io       ;
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm addr_hi,Z           ; addr_hi <- rom[PC - 0xc0000]
+        ret
 .addr_abs_io:
-	ldi addr_hi,0xff	 ; other addresses return 0xff
-	ret
-	.size	addr_abs, .-addr_abs
-	.section	.text.cpu_reset,"ax",@progbits
-.global	cpu_reset
-	.type	cpu_reset, @function
+        ldi addr_hi,0xff        ; other addresses return 0xff
+        ret
+        .size        addr_abs, .-addr_abs
+        .section        .text.cpu_reset,"ax",@progbits
+.global        cpu_reset
+        .type        cpu_reset, @function
 cpu_reset:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	ldi addr_lo,0xfc	 ;
-	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; PC <- mem_read(0xfffc)
-	sts reg_pc,_PCL_
-	sts reg_pc+1,_PCH_
-	ldi r24,0xff
-	sts time_left,r24
-	sts time_left+1,r24
-	sts time_left+2,r24
-	sts time_left+3,r24
-	ret
-	.size	cpu_reset, .-cpu_reset
-	.section	.text.cpu_get_pc,"ax",@progbits
-.global	cpu_get_pc
-	.type	cpu_get_pc, @function
+        ldi addr_lo,0xfc        ;
+        ldi addr_hi,0xff        ;
+        rcall mem_read_16       ; PC <- mem_read(0xfffc)
+        sts reg_pc,_PCL
+        sts reg_pc+1,_PCH
+        ldi r24,0xff
+        sts time_left,r24
+        sts time_left+1,r24
+        sts time_left+2,r24
+        sts time_left+3,r24
+        ret
+        .size        cpu_reset, .-cpu_reset
+        .section        .text.cpu_get_pc,"ax",@progbits
+.global        cpu_get_pc
+        .type        cpu_get_pc, @function
 cpu_get_pc:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,reg_pc
-	lds r25,reg_pc+1
-	ret
-	.size	cpu_get_pc, .-cpu_get_pc
-	.section	.text.cpu_get_regs,"ax",@progbits
-.global	cpu_get_regs
-	.type	cpu_get_regs, @function
+        lds r24,reg_pc
+        lds r25,reg_pc+1
+        ret
+        .size        cpu_get_pc, .-cpu_get_pc
+        .section        .text.cpu_get_regs,"ax",@progbits
+.global        cpu_get_regs
+        .type        cpu_get_regs, @function
 cpu_get_regs:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r25,reg_a
-	lds r24,reg_x
-	lds r23,reg_y
-	lds r22,reg_s
-	ret
-	.size	cpu_get_regs, .-cpu_get_regs
-	.section	.text.cpu_irq,"ax",@progbits
-.global	cpu_irq
-	.type	cpu_irq, @function
+        lds r25,reg_a
+        lds r24,reg_x
+        lds r23,reg_y
+        lds r22,reg_s
+        ret
+        .size        cpu_get_regs, .-cpu_get_regs
+        .section        .text.cpu_irq,"ax",@progbits
+.global        cpu_irq
+        .type        cpu_irq, @function
 cpu_irq:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	sbrc _P_,2	 ; skip if I flag is clear
-	ret	 ;
-	PUSH(_PCH_)
-	PUSH(_PCL_)
-	rcall pack_flags	 ;
-	PUSH(_P_)	 ; stack[S--] <- P
-	ori _P_,I_FLAG	 ; set I flag
-	ldi addr_lo,0xfe	 ;
-	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; PC <- mem_read(0xfffe)
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp clock_advance	 ; 
-	ret
-	.size	cpu_irq, .-cpu_irq
-	.section	.text.cpu_nmi,"ax",@progbits
-.global	cpu_nmi
-	.type	cpu_nmi, @function
+        sbrc _P,2               ; skip if I flag is clear
+        ret                     ;
+        PUSH(_PCH)
+        PUSH(_PCL)
+        rcall pack_flags        ;
+        PUSH(_P)                ; stack[S--] <- P
+        ori _P,I_FLAG           ; set I flag
+        ldi addr_lo,0xfe        ;
+        ldi addr_hi,0xff        ;
+        rcall mem_read_16       ; PC <- mem_read(0xfffe)
+        ldi cycles,7            ; 7 cycles
+        rjmp clock_advance      ;
+        ret
+        .size        cpu_irq, .-cpu_irq
+        .section        .text.cpu_nmi,"ax",@progbits
+.global        cpu_nmi
+        .type        cpu_nmi, @function
 cpu_nmi:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	PUSH(_PCH_)
-	PUSH(_PCL_)
-	rcall pack_flags	 ;
-	PUSH(_P_)	 ; stack[S--] <- P
-	ldi addr_lo,0xfa	 ;
-	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; PC <- mem_read(0xfffa)
-	ldi _cycles_,7	 ; 7 cycles
-	rjmp clock_advance	 ;
-	ret
-	.size	cpu_nmi, .-cpu_nmi
-	.section	.text.cpu_main,"ax",@progbits
-.global	cpu_main
-	.type	cpu_main, @function
+        PUSH(_PCH)
+        PUSH(_PCL)
+        rcall pack_flags        ;
+        PUSH(_P)                ; stack[S--] <- P
+        ldi addr_lo,0xfa        ;
+        ldi addr_hi,0xff        ;
+        rcall mem_read_16       ; PC <- mem_read(0xfffa)
+        ldi cycles,7            ; 7 cycles
+        rjmp clock_advance      ;
+        ret
+        .size        cpu_nmi, .-cpu_nmi
+        .section        .text.cpu_main,"ax",@progbits
+.global        cpu_main
+        .type        cpu_main, @function
 cpu_main:
-	push _PCL_
-	push _PCH_
-	push _A_
-	push _X_
-	push _Y_
-	push _S_
-	push _P_
-	push _N_
-	push _Z_
-	push _C_
-	push _time0_
-	push _time1_
-	push _time2_
-	push _time3_
-	lds _PCL_,reg_pc
-	lds _PCH_,reg_pc+1
-	lds _A_,reg_a
-	lds _X_,reg_x
-	lds _Y_,reg_y
-	lds _S_,reg_s
-	lds _P_,reg_p
-	lds _N_,flag_n
-	lds _Z_,flag_z
-	lds _C_,flag_c
-	lds _time0_,time_left
-	lds _time1_,time_left+1
-	lds _time2_,time_left+2
-	lds _time3_,time_left+3
+        push _PCL
+        push _PCH
+        push _A
+        push _X
+        push _Y
+        push _S
+        push _P
+        push _N
+        push _Z
+        push _C
+        push time0
+        push time1
+        push time2
+        push time3
+        lds _PCL,reg_pc
+        lds _PCH,reg_pc+1
+        lds _A,reg_a
+        lds _X,reg_x
+        lds _Y,reg_y
+        lds _S,reg_s
+        lds _P,reg_p
+        lds _N,flag_n
+        lds _Z,flag_z
+        lds _C,flag_c
+        lds time0,time_left
+        lds time1,time_left+1
+        lds time2,time_left+2
+        lds time3,time_left+3
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 14 */
 .L__stack_usage = 14
-	ldi _opcode_pointer_,hi8(gs(.opcode_table))	 ;
-	add _time0_,r22	 ; time_left += cycles
-	adc _time1_,r23	 ;
-	adc _time2_,r24	 ;
-	adc _time3_,r25	 ;
-	brpl .load_opcode	 ; continue if time >= 0
-	rjmp .L366	 ; save state and exit
+        ldi opcode_pointer,hi8(gs(.opcode_table))     ;
+        add time0,r22           ; time_left += cycles
+        adc time1,r23           ;
+        adc time2,r24           ;
+        adc time3,r25           ;
+        brpl .load_opcode       ; continue if time >= 0
+        rjmp .L366              ; save state and exit
 .tick_carry:
-	sbc _time1_,__zero_reg__	 ;
-	sbc _time2_,__zero_reg__	 ;
-	sbc _time3_,__zero_reg__	 ;
-	brpl .load_opcode	 ; continue if time >= 0
-	rjmp .L366	 ; save state and exit
+        sbc time1,__zero_reg__  ;
+        sbc time2,__zero_reg__  ;
+        sbc time3,__zero_reg__  ;
+        brpl .load_opcode       ; continue if time >= 0
+        rjmp .L366              ; save state and exit
 .tick:
-	sub _time0_,_cycles_	 ; time_left -= cycles
+        sub time0,cycles        ; time_left -= cycles
 .ticked:
-	brcs .tick_carry	 ; abort early if no carry
+        brcs .tick_carry        ; abort early if no carry
 .load_opcode:
-	movw ZL,_PCL_	 ;
-	cpi ZH,0xc0	 ;
-	brlo .pc_no_rom	 ; branch if PC < 0xc000 */
+        movw ZL,_PCL            ;
+        cpi ZH,0xc0             ;
+        brlo .pc_no_rom         ; branch if PC < 0xc000 */
 .pc_in_rom:
-	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm _opcode_,Z+	 ; opcode <- rom[PC - 0xc0000]
-	lpm _data_,Z+	 ; data <- rom[PC+1 - 0xc0000]
-	movw ZL,_opcode_	 ; ZH:ZL <- _opcode_pointer_:_opcode_
-	ijmp	 ; jmp (.opcode_table + opcode)
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm opcode,Z+           ; opcode <- rom[PC - 0xc0000]
+        lpm data,Z+             ; data <- rom[PC+1 - 0xc0000]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (.opcode_table + opcode)
 .pc_no_rom:
-	cpi ZH,RAM_PAGES	 ;
-	brsh .pc_no_ram	 ; branch if PC is above RAM
+        cpi ZH,RAM_PAGES        ;
+        brsh .pc_no_ram         ; branch if PC is above RAM
 .pc_in_ram:
-	subi ZH,hi8(-(ram))	 ;
-	ld _opcode_,Z+	 ; opcode <- ram[PC]
-	ld _data_,Z	 ; data <- ram[PC+1]
-	movw ZL,_opcode_	 ; ZH:ZL <- _opcode_pointer_:_opcode_
-	ijmp	 ; jmp (.opcode_table + opcode)
+        subi ZH,hi8(-(ram))     ;
+        ld opcode,Z+            ; opcode <- ram[PC]
+        ld data,Z               ; data <- ram[PC+1]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (.opcode_table + opcode)
 .pc_no_ram:
-	ldi _opcode_,0xff	 ; other addresses return 0xff
-	ldi _data_,0xff	 ; other addresses return 0xff
-	rjmp .xff_ISB_abx_undocumented
+        ldi opcode,0xff         ; other addresses return 0xff
+        ldi data,0xff           ; other addresses return 0xff
+        rjmp .xff_ISB_abx_undocumented
 
 /* align to 256-word (512-byte) boundary */
 .p2align 9
 .opcode_table:
-	rjmp .x00_BRK
-	rjmp .x01_ORA_inx
-	rjmp .x02
-	rjmp .x03_SLO_inx_undocumented
-	rjmp .x04_NOP_zpg_undocumented
-	rjmp .x05_ORA_zpg
-	rjmp .x06_ASL_zpg
-	rjmp .x07_SLO_zpg_undocumented
-	rjmp .x08_PHP
-	rjmp .x09_ORA_imm
-	rjmp .x0a_ASL_acc
-	rjmp .x0b_ANC_imm_undocumented
-	rjmp .x0c_NOP_abs_undocumented
-	rjmp .x0d_ORA_abs
-	rjmp .x0e_ASL_abs
-	rjmp .x0f_SLO_abs_undocumented
-	rjmp .x10_BPL
-	rjmp .x11_ORA_iny
-	rjmp .x12
-	rjmp .x13_SLO_iny_undocumented
-	rjmp .x14_NOP_zpx_undocumented
-	rjmp .x15_ORA_zpx
-	rjmp .x16_ASL_zpx
-	rjmp .x17_SLO_zpx_undocumented
-	rjmp .x18_CLC
-	rjmp .x19_ORA_aby
-	rjmp .x1a_NOP_undocumented
-	rjmp .x1b_SLO_aby_undocumented
-	rjmp .x1c_NOP_abx_undocumented
-	rjmp .x1d_ORA_abx
-	rjmp .x1e_ASL_abx
-	rjmp .x1f_SLO_abx_undocumented
-	rjmp .x20_JSR
-	rjmp .x21_AND_inx
-	rjmp .x22
-	rjmp .x23_RLA_inx_undocumented
-	rjmp .x24_BIT_zpg
-	rjmp .x25_AND_zpg
-	rjmp .x26_ROL_zpg
-	rjmp .x27_RLA_zpg_undocumented
-	rjmp .x28_PLP
-	rjmp .x29_AND_imm
-	rjmp .x2a_ROL_acc
-	rjmp .x2b_ANC_imm_undocumented
-	rjmp .x2c_BIT_abs
-	rjmp .x2d_AND_abs
-	rjmp .x2e_ROL_abs
-	rjmp .x2f_RLA_abs_undocumented
-	rjmp .x30_BMI
-	rjmp .x31_AND_iny
-	rjmp .x32
-	rjmp .x33_RLA_iny_undocumented
-	rjmp .x34_NOP_zpx_undocumented
-	rjmp .x35_AND_zpx
-	rjmp .x36_ROL_zpx
-	rjmp .x37_RLA_zpx_undocumented
-	rjmp .x38_SEC
-	rjmp .x39_AND_aby
-	rjmp .x3a_NOP_undocumented
-	rjmp .x3b_RLA_aby_undocumented
-	rjmp .x3c_NOP_abx_undocumented
-	rjmp .x3d_AND_abx
-	rjmp .x3e_ROL_abx
-	rjmp .x3f_RLA_abx_undocumented
-	rjmp .x40_RTI
-	rjmp .x41_EOR_inx
-	rjmp .x42
-	rjmp .x43_SRE_inx_undocumented
-	rjmp .x44_NOP_zpg_undocumented
-	rjmp .x45_EOR_zpg
-	rjmp .x46_LSR_zpg
-	rjmp .x47_SRE_zpg_undocumented
-	rjmp .x48_PHA
-	rjmp .x49_EOR_imm
-	rjmp .x4a_LSR_acc
-	rjmp .x4b_ASR_imm_undocumented
-	rjmp .x4c_JMP_abs
-	rjmp .x4d_EOR_abs
-	rjmp .x4e_LSR_abs
-	rjmp .x4f_SRE_abs_undocumented
-	rjmp .x50_BVC
-	rjmp .x51_EOR_iny
-	rjmp .x52
-	rjmp .x53_SRE_iny_undocumented
-	rjmp .x54_NOP_zpx_undocumented
-	rjmp .x55_EOR_zpx
-	rjmp .x56_LSR_zpx
-	rjmp .x57_SRE_zpx_undocumented
-	rjmp .x58_CLI
-	rjmp .x59_EOR_aby
-	rjmp .x5a_NOP_undocumented
-	rjmp .x5b_SRE_aby_undocumented
-	rjmp .x5c_NOP_abx_undocumented
-	rjmp .x5d_EOR_abx
-	rjmp .x5e_LSR_abx
-	rjmp .x5f_SRE_abx_undocumented
-	rjmp .x60_RTS
-	rjmp .x61_ADC_inx
-	rjmp .x62
-	rjmp .x63_RRA_inx_undocumented
-	rjmp .x64_NOP_zpg_undocumented
-	rjmp .x65_ADC_zpg
-	rjmp .x66_ROR_zpg
-	rjmp .x67_RRA_zpg_undocumented
-	rjmp .x68_PLA
-	rjmp .x69_ADC_imm
-	rjmp .x6a_ROR_acc
-	rjmp .x6b
-	rjmp .x6c_JMP_ind
-	rjmp .x6d_ADC_abs
-	rjmp .x6e_ROR_abs
-	rjmp .x6f_RRA_abs_undocumented
-	rjmp .x70_BVS
-	rjmp .x71_ADC_iny
-	rjmp .x72
-	rjmp .x73_RRA_iny_undocumented
-	rjmp .x74_NOP_zpx_undocumented
-	rjmp .x75_ADC_zpx
-	rjmp .x76_ROR_zpx
-	rjmp .x77_RRA_zpx_undocumented
-	rjmp .x78_SEI
-	rjmp .x79_ADC_aby
-	rjmp .x7a_NOP_undocumented
-	rjmp .x7b_RRA_aby_undocumented
-	rjmp .x7c_NOP_abx_undocumented
-	rjmp .x7d_ADC_abx
-	rjmp .x7e_ROR_abx
-	rjmp .x7f_RRA_abx_undocumented
-	rjmp .x80_NOP_imm_undocumented
-	rjmp .x81_STA_inx
-	rjmp .x82_NOP_imm_undocumented
-	rjmp .x83_SAX_inx_undocumented
-	rjmp .x84_STY_zpg
-	rjmp .x85_STA_zpg
-	rjmp .x86_STX_zpg
-	rjmp .x87_SAX_zpg_undocumented
-	rjmp .x88_DEY
-	rjmp .x89_NOP_imm_undocumented
-	rjmp .x8a_TXA
-	rjmp .x8b
-	rjmp .x8c_STY_abs
-	rjmp .x8d_STA_abs
-	rjmp .x8e_STX_abs
-	rjmp .x8f_SAX_abs_undocumented
-	rjmp .x90_BCC
-	rjmp .x91_STA_iny
-	rjmp .x92
-	rjmp .x93_SHA_iny_undocumented
-	rjmp .x94_STY_zpx
-	rjmp .x95_STA_zpx
-	rjmp .x96_STX_zpy
-	rjmp .x97_SAX_zpy_undocumented
-	rjmp .x98_TYA
-	rjmp .x99_STA_aby
-	rjmp .x9a_TXS
-	rjmp .x9b
-	rjmp .x9c_SHY_abx_undocumented
-	rjmp .x9d_STA_abx
-	rjmp .x9e_SHX_aby_undocumented
-	rjmp .x9f_SHA_aby_undocumented
-	rjmp .xa0_LDY_imm
-	rjmp .xa1_LDA_inx
-	rjmp .xa2_LDX_imm
-	rjmp .xa3_LAX_inx_undocumented
-	rjmp .xa4_LDY_zpg
-	rjmp .xa5_LDA_zpg
-	rjmp .xa6_LDX_zpg
-	rjmp .xa7_LAX_zpg_undocumented
-	rjmp .xa8_TAY
-	rjmp .xa9_LDA_imm
-	rjmp .xaa_TAX
-	rjmp .xab
-	rjmp .xac_LDY_abs
-	rjmp .xad_LDA_abs
-	rjmp .xae_LDX_abs
-	rjmp .xaf_LAX_abs_undocumented
-	rjmp .xb0_BCS
-	rjmp .xb1_LDA_iny
-	rjmp .xb2
-	rjmp .xb3_LAX_iny_undocumented
-	rjmp .xb4_LDY_zpx
-	rjmp .xb5_LDA_zpx
-	rjmp .xb6_LDX_zpy
-	rjmp .xb7_LAX_zpy_undocumented
-	rjmp .xb8_CLV
-	rjmp .xb9_LDA_aby
-	rjmp .xba_TSX
-	rjmp .xbb
-	rjmp .xbc_LDY_abx
-	rjmp .xbd_LDA_abx
-	rjmp .xbe_LDX_aby
-	rjmp .xbf_LAX_aby_undocumented
-	rjmp .xc0_CPY_imm
-	rjmp .xc1_CMP_inx
-	rjmp .xc2_NOP_imm_undocumented
-	rjmp .xc3_DCP_inx_undocumented
-	rjmp .xc4_CPY_zpg
-	rjmp .xc5_CMP_zpg
-	rjmp .xc6_DEC_zpg
-	rjmp .xc7_DCP_zpg_undocumented
-	rjmp .xc8_INY
-	rjmp .xc9_CMP_imm
-	rjmp .xca_DEX
-	rjmp .xcb_SBX_imm_undocumented
-	rjmp .xcc_CPY_abs
-	rjmp .xcd_CMP_abs
-	rjmp .xce_DEC_abs
-	rjmp .xcf_DCP_abs_undocumented
-	rjmp .xd0_BNE
-	rjmp .xd1_CMP_iny
-	rjmp .xd2
-	rjmp .xd3_DCP_iny_undocumented
-	rjmp .xd4_NOP_zpx_undocumented
-	rjmp .xd5_CMP_zpx
-	rjmp .xd6_DEC_zpx
-	rjmp .xd7_DCP_zpx_undocumented
-	rjmp .xd8_CLD
-	rjmp .xd9_CMP_aby
-	rjmp .xda_NOP_undocumented
-	rjmp .xdb_DCP_aby_undocumented
-	rjmp .xdc_NOP_abx_undocumented
-	rjmp .xdd_CMP_abx
-	rjmp .xde_DEC_abx
-	rjmp .xdf_DCP_abx_undocumented
-	rjmp .xe0_CPX_imm
-	rjmp .xe1_SBC_inx
-	rjmp .xe2_NOP_imm_undocumented
-	rjmp .xe3_ISB_inx_undocumented
-	rjmp .xe4_CPX_zpg
-	rjmp .xe5_SBC_zpg
-	rjmp .xe6_INC_zpg
-	rjmp .xe7_ISB_zpg_undocumented
-	rjmp .xe8_INX
-	rjmp .xe9_SBC_imm
-	rjmp .xea_NOP
-	rjmp .xeb_SBC_imm_undocumented
-	rjmp .xec_CPX_abs
-	rjmp .xed_SBC_abs
-	rjmp .xee_INC_abs
-	rjmp .xef_ISB_abs_undocumented
-	rjmp .xf0_BEQ
-	rjmp .xf1_SBC_iny
-	rjmp .xf2
-	rjmp .xf3_ISB_iny_undocumented
-	rjmp .xf4_NOP_zpx_undocumented
-	rjmp .xf5_SBC_zpx
-	rjmp .xf6_INC_zpx
-	rjmp .xf7_ISB_zpx_undocumented
-	rjmp .xf8_SED
-	rjmp .xf9_SBC_aby
-	rjmp .xfa_NOP_undocumented
-	rjmp .xfb_ISB_aby_undocumented
-	rjmp .xfc_NOP_abx_undocumented
-	rjmp .xfd_SBC_abx
-	rjmp .xfe_INC_abx
-	rjmp .xff_ISB_abx_undocumented
+        rjmp .x00_BRK
+        rjmp .x01_ORA_inx
+        rjmp .x02
+        rjmp .x03_SLO_inx_undocumented
+        rjmp .x04_NOP_zpg_undocumented
+        rjmp .x05_ORA_zpg
+        rjmp .x06_ASL_zpg
+        rjmp .x07_SLO_zpg_undocumented
+        rjmp .x08_PHP
+        rjmp .x09_ORA_imm
+        rjmp .x0a_ASL_acc
+        rjmp .x0b_ANC_imm_undocumented
+        rjmp .x0c_NOP_abs_undocumented
+        rjmp .x0d_ORA_abs
+        rjmp .x0e_ASL_abs
+        rjmp .x0f_SLO_abs_undocumented
+        rjmp .x10_BPL
+        rjmp .x11_ORA_iny
+        rjmp .x12
+        rjmp .x13_SLO_iny_undocumented
+        rjmp .x14_NOP_zpx_undocumented
+        rjmp .x15_ORA_zpx
+        rjmp .x16_ASL_zpx
+        rjmp .x17_SLO_zpx_undocumented
+        rjmp .x18_CLC
+        rjmp .x19_ORA_aby
+        rjmp .x1a_NOP_undocumented
+        rjmp .x1b_SLO_aby_undocumented
+        rjmp .x1c_NOP_abx_undocumented
+        rjmp .x1d_ORA_abx
+        rjmp .x1e_ASL_abx
+        rjmp .x1f_SLO_abx_undocumented
+        rjmp .x20_JSR
+        rjmp .x21_AND_inx
+        rjmp .x22
+        rjmp .x23_RLA_inx_undocumented
+        rjmp .x24_BIT_zpg
+        rjmp .x25_AND_zpg
+        rjmp .x26_ROL_zpg
+        rjmp .x27_RLA_zpg_undocumented
+        rjmp .x28_PLP
+        rjmp .x29_AND_imm
+        rjmp .x2a_ROL_acc
+        rjmp .x2b_ANC_imm_undocumented
+        rjmp .x2c_BIT_abs
+        rjmp .x2d_AND_abs
+        rjmp .x2e_ROL_abs
+        rjmp .x2f_RLA_abs_undocumented
+        rjmp .x30_BMI
+        rjmp .x31_AND_iny
+        rjmp .x32
+        rjmp .x33_RLA_iny_undocumented
+        rjmp .x34_NOP_zpx_undocumented
+        rjmp .x35_AND_zpx
+        rjmp .x36_ROL_zpx
+        rjmp .x37_RLA_zpx_undocumented
+        rjmp .x38_SEC
+        rjmp .x39_AND_aby
+        rjmp .x3a_NOP_undocumented
+        rjmp .x3b_RLA_aby_undocumented
+        rjmp .x3c_NOP_abx_undocumented
+        rjmp .x3d_AND_abx
+        rjmp .x3e_ROL_abx
+        rjmp .x3f_RLA_abx_undocumented
+        rjmp .x40_RTI
+        rjmp .x41_EOR_inx
+        rjmp .x42
+        rjmp .x43_SRE_inx_undocumented
+        rjmp .x44_NOP_zpg_undocumented
+        rjmp .x45_EOR_zpg
+        rjmp .x46_LSR_zpg
+        rjmp .x47_SRE_zpg_undocumented
+        rjmp .x48_PHA
+        rjmp .x49_EOR_imm
+        rjmp .x4a_LSR_acc
+        rjmp .x4b_ASR_imm_undocumented
+        rjmp .x4c_JMP_abs
+        rjmp .x4d_EOR_abs
+        rjmp .x4e_LSR_abs
+        rjmp .x4f_SRE_abs_undocumented
+        rjmp .x50_BVC
+        rjmp .x51_EOR_iny
+        rjmp .x52
+        rjmp .x53_SRE_iny_undocumented
+        rjmp .x54_NOP_zpx_undocumented
+        rjmp .x55_EOR_zpx
+        rjmp .x56_LSR_zpx
+        rjmp .x57_SRE_zpx_undocumented
+        rjmp .x58_CLI
+        rjmp .x59_EOR_aby
+        rjmp .x5a_NOP_undocumented
+        rjmp .x5b_SRE_aby_undocumented
+        rjmp .x5c_NOP_abx_undocumented
+        rjmp .x5d_EOR_abx
+        rjmp .x5e_LSR_abx
+        rjmp .x5f_SRE_abx_undocumented
+        rjmp .x60_RTS
+        rjmp .x61_ADC_inx
+        rjmp .x62
+        rjmp .x63_RRA_inx_undocumented
+        rjmp .x64_NOP_zpg_undocumented
+        rjmp .x65_ADC_zpg
+        rjmp .x66_ROR_zpg
+        rjmp .x67_RRA_zpg_undocumented
+        rjmp .x68_PLA
+        rjmp .x69_ADC_imm
+        rjmp .x6a_ROR_acc
+        rjmp .x6b
+        rjmp .x6c_JMP_ind
+        rjmp .x6d_ADC_abs
+        rjmp .x6e_ROR_abs
+        rjmp .x6f_RRA_abs_undocumented
+        rjmp .x70_BVS
+        rjmp .x71_ADC_iny
+        rjmp .x72
+        rjmp .x73_RRA_iny_undocumented
+        rjmp .x74_NOP_zpx_undocumented
+        rjmp .x75_ADC_zpx
+        rjmp .x76_ROR_zpx
+        rjmp .x77_RRA_zpx_undocumented
+        rjmp .x78_SEI
+        rjmp .x79_ADC_aby
+        rjmp .x7a_NOP_undocumented
+        rjmp .x7b_RRA_aby_undocumented
+        rjmp .x7c_NOP_abx_undocumented
+        rjmp .x7d_ADC_abx
+        rjmp .x7e_ROR_abx
+        rjmp .x7f_RRA_abx_undocumented
+        rjmp .x80_NOP_imm_undocumented
+        rjmp .x81_STA_inx
+        rjmp .x82_NOP_imm_undocumented
+        rjmp .x83_SAX_inx_undocumented
+        rjmp .x84_STY_zpg
+        rjmp .x85_STA_zpg
+        rjmp .x86_STX_zpg
+        rjmp .x87_SAX_zpg_undocumented
+        rjmp .x88_DEY
+        rjmp .x89_NOP_imm_undocumented
+        rjmp .x8a_TXA
+        rjmp .x8b
+        rjmp .x8c_STY_abs
+        rjmp .x8d_STA_abs
+        rjmp .x8e_STX_abs
+        rjmp .x8f_SAX_abs_undocumented
+        rjmp .x90_BCC
+        rjmp .x91_STA_iny
+        rjmp .x92
+        rjmp .x93_SHA_iny_undocumented
+        rjmp .x94_STY_zpx
+        rjmp .x95_STA_zpx
+        rjmp .x96_STX_zpy
+        rjmp .x97_SAX_zpy_undocumented
+        rjmp .x98_TYA
+        rjmp .x99_STA_aby
+        rjmp .x9a_TXS
+        rjmp .x9b
+        rjmp .x9c_SHY_abx_undocumented
+        rjmp .x9d_STA_abx
+        rjmp .x9e_SHX_aby_undocumented
+        rjmp .x9f_SHA_aby_undocumented
+        rjmp .xa0_LDY_imm
+        rjmp .xa1_LDA_inx
+        rjmp .xa2_LDX_imm
+        rjmp .xa3_LAX_inx_undocumented
+        rjmp .xa4_LDY_zpg
+        rjmp .xa5_LDA_zpg
+        rjmp .xa6_LDX_zpg
+        rjmp .xa7_LAX_zpg_undocumented
+        rjmp .xa8_TAY
+        rjmp .xa9_LDA_imm
+        rjmp .xaa_TAX
+        rjmp .xab
+        rjmp .xac_LDY_abs
+        rjmp .xad_LDA_abs
+        rjmp .xae_LDX_abs
+        rjmp .xaf_LAX_abs_undocumented
+        rjmp .xb0_BCS
+        rjmp .xb1_LDA_iny
+        rjmp .xb2
+        rjmp .xb3_LAX_iny_undocumented
+        rjmp .xb4_LDY_zpx
+        rjmp .xb5_LDA_zpx
+        rjmp .xb6_LDX_zpy
+        rjmp .xb7_LAX_zpy_undocumented
+        rjmp .xb8_CLV
+        rjmp .xb9_LDA_aby
+        rjmp .xba_TSX
+        rjmp .xbb
+        rjmp .xbc_LDY_abx
+        rjmp .xbd_LDA_abx
+        rjmp .xbe_LDX_aby
+        rjmp .xbf_LAX_aby_undocumented
+        rjmp .xc0_CPY_imm
+        rjmp .xc1_CMP_inx
+        rjmp .xc2_NOP_imm_undocumented
+        rjmp .xc3_DCP_inx_undocumented
+        rjmp .xc4_CPY_zpg
+        rjmp .xc5_CMP_zpg
+        rjmp .xc6_DEC_zpg
+        rjmp .xc7_DCP_zpg_undocumented
+        rjmp .xc8_INY
+        rjmp .xc9_CMP_imm
+        rjmp .xca_DEX
+        rjmp .xcb_SBX_imm_undocumented
+        rjmp .xcc_CPY_abs
+        rjmp .xcd_CMP_abs
+        rjmp .xce_DEC_abs
+        rjmp .xcf_DCP_abs_undocumented
+        rjmp .xd0_BNE
+        rjmp .xd1_CMP_iny
+        rjmp .xd2
+        rjmp .xd3_DCP_iny_undocumented
+        rjmp .xd4_NOP_zpx_undocumented
+        rjmp .xd5_CMP_zpx
+        rjmp .xd6_DEC_zpx
+        rjmp .xd7_DCP_zpx_undocumented
+        rjmp .xd8_CLD
+        rjmp .xd9_CMP_aby
+        rjmp .xda_NOP_undocumented
+        rjmp .xdb_DCP_aby_undocumented
+        rjmp .xdc_NOP_abx_undocumented
+        rjmp .xdd_CMP_abx
+        rjmp .xde_DEC_abx
+        rjmp .xdf_DCP_abx_undocumented
+        rjmp .xe0_CPX_imm
+        rjmp .xe1_SBC_inx
+        rjmp .xe2_NOP_imm_undocumented
+        rjmp .xe3_ISB_inx_undocumented
+        rjmp .xe4_CPX_zpg
+        rjmp .xe5_SBC_zpg
+        rjmp .xe6_INC_zpg
+        rjmp .xe7_ISB_zpg_undocumented
+        rjmp .xe8_INX
+        rjmp .xe9_SBC_imm
+        rjmp .xea_NOP
+        rjmp .xeb_SBC_imm_undocumented
+        rjmp .xec_CPX_abs
+        rjmp .xed_SBC_abs
+        rjmp .xee_INC_abs
+        rjmp .xef_ISB_abs_undocumented
+        rjmp .xf0_BEQ
+        rjmp .xf1_SBC_iny
+        rjmp .xf2
+        rjmp .xf3_ISB_iny_undocumented
+        rjmp .xf4_NOP_zpx_undocumented
+        rjmp .xf5_SBC_zpx
+        rjmp .xf6_INC_zpx
+        rjmp .xf7_ISB_zpx_undocumented
+        rjmp .xf8_SED
+        rjmp .xf9_SBC_aby
+        rjmp .xfa_NOP_undocumented
+        rjmp .xfb_ISB_aby_undocumented
+        rjmp .xfc_NOP_abx_undocumented
+        rjmp .xfd_SBC_abx
+        rjmp .xfe_INC_abx
+        rjmp .xff_ISB_abx_undocumented
 
 /***************************** READ INSTRUCTIONS ******************************/
 
 .x01_ORA_inx:
-	LDI_X(gs(.ORA))
-	rjmp .read_inx
+        LDI_X(gs(.ORA))
+        rjmp .read_inx
 .x05_ORA_zpg:
-	LDI_Z(gs(.ORA))
-	rjmp .read_zpg
+        LDI_Z(gs(.ORA))
+        rjmp .read_zpg
 .x09_ORA_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .ORA:
-	or _A_,_data_	 ; A |= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick
+        or _A,data              ; A |= data
+        mov _Z,_A
+        mov _N,_A
+        rjmp .tick
 .x0d_ORA_abs:
-	LDI_X(gs(.ORA))
-	rjmp .read_abs
+        LDI_X(gs(.ORA))
+        rjmp .read_abs
 .x11_ORA_iny:
-	LDI_X(gs(.ORA))
-	rjmp .read_iny
+        LDI_X(gs(.ORA))
+        rjmp .read_iny
 .x15_ORA_zpx:
-	LDI_Z(gs(.ORA))
-	rjmp .read_zpx
+        LDI_Z(gs(.ORA))
+        rjmp .read_zpx
 .x19_ORA_aby:
-	LDI_X(gs(.ORA))
-	rjmp .read_aby
+        LDI_X(gs(.ORA))
+        rjmp .read_aby
 .x1d_ORA_abx:
-	LDI_X(gs(.ORA))
-	rjmp .read_abx
+        LDI_X(gs(.ORA))
+        rjmp .read_abx
 .x21_AND_inx:
-	LDI_X(gs(.AND))
-	rjmp .read_inx
+        LDI_X(gs(_AND))
+        rjmp .read_inx
 .x25_AND_zpg:
-	LDI_Z(gs(.AND))
-	rjmp .read_zpg
+        LDI_Z(gs(_AND))
+        rjmp .read_zpg
 .x29_AND_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
-.AND:
-	and _A_,_data_	 ; A &= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
+_AND:
+        and _A,data             ; A &= data
+        mov _Z,_A
+        mov _N,_A
+        rjmp .tick
 .x2d_AND_abs:
-	LDI_X(gs(.AND))
-	rjmp .read_abs
+        LDI_X(gs(_AND))
+        rjmp .read_abs
 .x31_AND_iny:
-	LDI_X(gs(.AND))
-	rjmp .read_iny
+        LDI_X(gs(_AND))
+        rjmp .read_iny
 .x35_AND_zpx:
-	LDI_Z(gs(.AND))
-	rjmp .read_zpx
+        LDI_Z(gs(_AND))
+        rjmp .read_zpx
 .x39_AND_aby:
-	LDI_X(gs(.AND))
-	rjmp .read_aby
+        LDI_X(gs(_AND))
+        rjmp .read_aby
 .x3d_AND_abx:
-	LDI_X(gs(.AND))
-	rjmp .read_abx
+        LDI_X(gs(_AND))
+        rjmp .read_abx
 .x41_EOR_inx:
-	LDI_X(gs(.EOR))
-	rjmp .read_inx
+        LDI_X(gs(.EOR))
+        rjmp .read_inx
 .x45_EOR_zpg:
-	LDI_Z(gs(.EOR))
-	rjmp .read_zpg
+        LDI_Z(gs(.EOR))
+        rjmp .read_zpg
 .x49_EOR_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .EOR:
-	eor _A_,_data_	 ; A ^= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	rjmp .tick
+        eor _A,data             ; A ^= data
+        mov _Z,_A
+        mov _N,_A
+        rjmp .tick
 .x4d_EOR_abs:
-	LDI_X(gs(.EOR))
-	rjmp .read_abs
+        LDI_X(gs(.EOR))
+        rjmp .read_abs
 .x51_EOR_iny:
-	LDI_X(gs(.EOR))
-	rjmp .read_iny
+        LDI_X(gs(.EOR))
+        rjmp .read_iny
 .x55_EOR_zpx:
-	LDI_Z(gs(.EOR))
-	rjmp .read_zpx
+        LDI_Z(gs(.EOR))
+        rjmp .read_zpx
 .x59_EOR_aby:
-	LDI_X(gs(.EOR))
-	rjmp .read_aby
+        LDI_X(gs(.EOR))
+        rjmp .read_aby
 .x5d_EOR_abx:
-	LDI_X(gs(.EOR))
-	rjmp .read_abx
+        LDI_X(gs(.EOR))
+        rjmp .read_abx
 .x61_ADC_inx:
-	LDI_X(gs(.ADC))
-	rjmp .read_inx
+        LDI_X(gs(_ADC))
+        rjmp .read_inx
 .x65_ADC_zpg:
-	LDI_Z(gs(.ADC))
-	rjmp .read_zpg
+        LDI_Z(gs(_ADC))
+        rjmp .read_zpg
 .x69_ADC_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
-.ADC:
-	sbrc _P_,3	 ; skip if decimal mode is clear
-	rjmp .ADC_dec	 ; jump if decimal mode is set
-.ADC_bin:
-	lsr _C_	 ; carry <- C <- 0
-	adc _A_,_data_	 ; (carry, A) <- A + data + carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	brvs .ADC_bin_overflow	 ; branch on overflow
-	rol _C_	 ; C <- carry <- 0
-	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
-	rjmp .tick
-.ADC_bin_overflow:
-	rol _C_	 ; C <- carry <- 0
-	ori _P_,V_FLAG	 ; P |= V_FLAG
-	rjmp .tick
-.ADC_dec:
-	mov temp4,_A_	 ; temp4 <- A
-	mov temp0,_A_	 ; total <- A
-	ldi temp1,0	 ;
-	add temp0,_C_	 ; total += C
-	adc temp1,__zero_reg__	 ;
-	add temp0,_data_	 ; total += data
-	adc temp1,__zero_reg__	 ;
-	mov _Z_,temp0	 ; Z <- lo8(total)
-	mov temp3,_A_	 ; temp3 <- A
-	andi temp3,0x0f	 ; temp3 <- A & 0x0f
-	add temp3,_C_	 ; temp3 += C
-	mov temp2,_data_	 ; temp2 <- data
-	andi temp2,0x0f	 ; temp2 <- data & 0x0f
-	add temp3,temp2	 ; temp3 += temp2
-	cpi temp3,10	 ;
-	brlo .L12	 ; branch if temp3 < 10
-	cpi temp3,26	 ;
-	brsh .L13	 ; branch if temp3 < 26
-	subi temp0,-6	 ; total += 6
-	sbci temp1,-1	 ;
-	rjmp .L12	 ;
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
+_ADC:
+        sbrc _P,3               ; skip if decimal mode is clear
+        rjmp _ADC_dec           ; jump if decimal mode is set
+_ADC_bin:
+        lsr _C                  ; carry <- C <- 0
+        adc _A,data             ; (carry, A) <- A + data + carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        brvs _ADC_bin_overflow  ; branch on overflow
+        rol _C                  ; C <- carry <- 0
+        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        rjmp .tick
+_ADC_bin_overflow:
+        rol _C                  ; C <- carry <- 0
+        ori _P,V_FLAG           ; P |= V_FLAG
+        rjmp .tick
+_ADC_dec:
+        mov temp4,_A            ; temp4 <- A
+        mov temp0,_A            ; total <- A
+        ldi temp1,0             ;
+        add temp0,_C            ; total += C
+        adc temp1,__zero_reg__  ;
+        add temp0,data          ; total += data
+        adc temp1,__zero_reg__  ;
+        mov _Z,temp0            ; Z <- lo8(total)
+        mov temp3,_A            ; temp3 <- A
+        andi temp3,0x0f         ; temp3 <- A & 0x0f
+        add temp3,_C            ; temp3 += C
+        mov temp2,data          ; temp2 <- data
+        andi temp2,0x0f         ; temp2 <- data & 0x0f
+        add temp3,temp2         ; temp3 += temp2
+        cpi temp3,10            ;
+        brlo .L12               ; branch if temp3 < 10
+        cpi temp3,26            ;
+        brsh .L13               ; branch if temp3 < 26
+        subi temp0,-6           ; total += 6
+        sbci temp1,-1           ;
+        rjmp .L12               ;
 .L13:
-	subi temp0,10	 ; total -= 10
-	sbc temp1,__zero_reg__	 ;
+        subi temp0,10           ; total -= 10
+        sbc temp1,__zero_reg__  ;
 .L12:
-	/* set N, V after low nybble fixup */
-	mov _N_,temp0	 ; N <- lo8(total)
-	eor _data_,temp0	 ; data <- (data ^ total) & (A ^ total)
-	eor temp4,temp0	 ;
-	and _data_,temp4	 ;
-	bst _data_,7	 ; t <- (data ^ total) & (A ^ total) bit 7
-	bld _P_,6	 ; P.overflow <- t
-	/* high nybble fixup */
-	cpi temp0,0xa0	 ; total,
-	cpc temp1,__zero_reg__	 ;  total
-	brlo .L16	 ; branch if total < 0xa0
-	subi temp0,-96	 ; total += 0x60
-	sbci temp1,-1	 ;
+        ;; set N, V after low nybble fixup
+        mov _N,temp0            ; N <- lo8(total)
+        eor data,temp0          ; data <- (data ^ total) & (A ^ total)
+        eor temp4,temp0         ;
+        and data,temp4          ;
+        bst data,7              ; t <- (data ^ total) & (A ^ total) bit 7
+        bld _P,6                ; P.overflow <- t
+        ;; high nybble fixup
+        cpi temp0,0xa0          ; total
+        cpc temp1,__zero_reg__  ; total
+        brlo .L16               ; branch if total < 0xa0
+        subi temp0,-96          ; total += 0x60
+        sbci temp1,-1           ;
 .L16:
-	clr _C_	 ; C <- 0
-	cpse temp1,__zero_reg__	 ;
-	inc _C_	 ; C <- 1 if temp1 > 0
-	mov _A_,temp0	 ; A <- lo8(total)
-	rjmp .tick
+        clr _C                  ; C <- 0
+        cpse temp1,__zero_reg__ ;
+        inc _C                  ; C <- 1 if temp1 > 0
+        mov _A,temp0            ; A <- lo8(total)
+        rjmp .tick
 .x6d_ADC_abs:
-	LDI_X(gs(.ADC))
-	rjmp .read_abs
+        LDI_X(gs(_ADC))
+        rjmp .read_abs
 .x71_ADC_iny:
-	LDI_X(gs(.ADC))
-	rjmp .read_iny
+        LDI_X(gs(_ADC))
+        rjmp .read_iny
 .x75_ADC_zpx:
-	LDI_Z(gs(.ADC))
-	rjmp .read_zpx
+        LDI_Z(gs(_ADC))
+        rjmp .read_zpx
 .x79_ADC_aby:
-	LDI_X(gs(.ADC))
-	rjmp .read_aby
+        LDI_X(gs(_ADC))
+        rjmp .read_aby
 .x7d_ADC_abx:
-	LDI_X(gs(.ADC))
-	rjmp .read_abx
+        LDI_X(gs(_ADC))
+        rjmp .read_abx
 .xa1_LDA_inx:
-	LDI_X(gs(.LDA))
-	rjmp .read_inx
+        LDI_X(gs(.LDA))
+        rjmp .read_inx
 .xa5_LDA_zpg:
-	LDI_Z(gs(.LDA))
-	rjmp .read_zpg
+        LDI_Z(gs(.LDA))
+        rjmp .read_zpg
 .xa9_LDA_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .LDA:
-	mov _A_,_data_	 ; A <- data
-	sub _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp .tick
+        mov _A,data             ; A <- data
+        sub _Z,data             ;
+        mov _N,data             ;
+        rjmp .tick
 .xad_LDA_abs:
-	LDI_X(gs(.LDA))
-	rjmp .read_abs
+        LDI_X(gs(.LDA))
+        rjmp .read_abs
 .xb1_LDA_iny:
-	LDI_X(gs(.LDA))
-	rjmp .read_iny
+        LDI_X(gs(.LDA))
+        rjmp .read_iny
 .xb5_LDA_zpx:
-	LDI_Z(gs(.LDA))
-	rjmp .read_zpx
+        LDI_Z(gs(.LDA))
+        rjmp .read_zpx
 .xb9_LDA_aby:
-	LDI_X(gs(.LDA))
-	rjmp .read_aby
+        LDI_X(gs(.LDA))
+        rjmp .read_aby
 .xbd_LDA_abx:
-	LDI_X(gs(.LDA))
-	rjmp .read_abx
+        LDI_X(gs(.LDA))
+        rjmp .read_abx
 .xc1_CMP_inx:
-	LDI_X(gs(.CMP))
-	rjmp .read_inx
+        LDI_X(gs(.CMP))
+        rjmp .read_inx
 .xc5_CMP_zpg:
-	LDI_Z(gs(.CMP))
-	rjmp .read_zpg
+        LDI_Z(gs(.CMP))
+        rjmp .read_zpg
 .xc9_CMP_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .CMP:
-	mov _Z_,_A_	 ; Z <- A
-	sub _Z_,_data_	 ; Z <- A - data
-	mov _N_,_Z_	 ; N <- A - data
-	clr _C_	 ;
-	brlo .CMP_carry	 ; branch if A < data
-	inc _C_	 ; C <- 1 if A >= data
+        mov _Z,_A               ; Z <- A
+        sub _Z,data             ; Z <- A - data
+        mov _N,_Z               ; N <- A - data
+        clr _C                  ;
+        brlo .CMP_carry         ; branch if A < data
+        inc _C                  ; C <- 1 if A >= data
 .CMP_carry:
-	rjmp .tick
+        rjmp .tick
 .xcd_CMP_abs:
-	LDI_X(gs(.CMP))
-	rjmp .read_abs
+        LDI_X(gs(.CMP))
+        rjmp .read_abs
 .xd1_CMP_iny:
-	LDI_X(gs(.CMP))
-	rjmp .read_iny
+        LDI_X(gs(.CMP))
+        rjmp .read_iny
 .xd5_CMP_zpx:
-	LDI_Z(gs(.CMP))
-	rjmp .read_zpx
+        LDI_Z(gs(.CMP))
+        rjmp .read_zpx
 .xd9_CMP_aby:
-	LDI_X(gs(.CMP))
-	rjmp .read_aby
+        LDI_X(gs(.CMP))
+        rjmp .read_aby
 .xdd_CMP_abx:
-	LDI_X(gs(.CMP))
-	rjmp .read_abx
+        LDI_X(gs(.CMP))
+        rjmp .read_abx
 .xe1_SBC_inx:
-	LDI_X(gs(.SBC))
-	rjmp .read_inx
+        LDI_X(gs(.SBC))
+        rjmp .read_inx
 .xe5_SBC_zpg:
-	LDI_Z(gs(.SBC))
-	rjmp .read_zpg
+        LDI_Z(gs(.SBC))
+        rjmp .read_zpg
 .xe9_SBC_imm:
 .xeb_SBC_imm_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .SBC:
-	/* N, V, Z, C are set the same in decimal and binary mode */
-	com _data_	 ; data <- ~data
-	lsr _C_	 ; carry <- C <- 0
-	adc _A_,_data_	 ; (carry, A) <- A + data + carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	brvs .SBC_overflow	 ; branch on overflow
-	rol _C_	 ; C <- carry <- 0
-	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
-	sbrc _P_,3	 ; skip if decimal mode is clear
-	rjmp .SBC_dec1	 ; jump if decimal mode is set
-	rjmp .tick
+        ;; N, V, Z, C are set the same in decimal and binary mode
+        com data                ; data <- ~data
+        lsr _C                  ; carry <- C <- 0
+        adc _A,data             ; (carry, A) <- A + data + carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        brvs .SBC_overflow      ; branch on overflow
+        rol _C                  ; C <- carry <- 0
+        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        sbrc _P,3               ; skip if decimal mode is clear
+        rjmp .SBC_dec1          ; jump if decimal mode is set
+        rjmp .tick
 .SBC_overflow:
-	rol _C_	 ; C <- carry <- 0
-	ori _P_,V_FLAG	 ; P |= V_FLAG
-	sbrs _P_,3	 ; skip if decimal mode is set
-	rjmp .tick
+        rol _C                  ; C <- carry <- 0
+        ori _P,V_FLAG           ; P |= V_FLAG
+        sbrs _P,3               ; skip if decimal mode is set
+        rjmp .tick
 .SBC_dec1:
-	/* fix up lower nybble */
-	mov temp0,_A_	 ; temp <- A
-	brhs .SBC_dec2	 ; branch if adc half-carried
-        /* permute lower nybble: [6..f,0..9] -> [0..9,a..f] */
-	subi temp0,6	 ; A -= 6 if adc did not half-carry
-	brhc .SBC_dec2	 ; branch unless subi underflowed low nybble
-	subi temp0,-16	 ; A += 16 if subi underflowed low nybble
+        ;; fix up lower nybble
+        mov temp0,_A            ; temp <- A
+        brhs .SBC_dec2          ; branch if adc half-carried
+        ;; permute lower nybble: [6..f,0..9] -> [0..9,a..f]
+        subi temp0,6            ; A -= 6 if adc did not half-carry
+        brhc .SBC_dec2          ; branch unless subi underflowed low nybble
+        subi temp0,-16          ; A += 16 if subi underflowed low nybble
 .SBC_dec2:
-	/* fix up upper nybble */
-	sbrs _C_,0	 ; skip if C.0 = 1
-	subi temp0,0x60	 ; if C.0 = 0, then A -= 0x60
-	mov _A_,temp0	 ; A <- temp
-	rjmp .tick
+        ;; fix up upper nybble
+        sbrs _C,0               ; skip if C.0 = 1
+        subi temp0,0x60         ; if C.0 = 0, then A -= 0x60
+        mov _A,temp0            ; A <- temp
+        rjmp .tick
 .xed_SBC_abs:
-	LDI_X(gs(.SBC))
-	rjmp .read_abs
+        LDI_X(gs(.SBC))
+        rjmp .read_abs
 .xf1_SBC_iny:
-	LDI_X(gs(.SBC))
-	rjmp .read_iny
+        LDI_X(gs(.SBC))
+        rjmp .read_iny
 .xf5_SBC_zpx:
-	LDI_Z(gs(.SBC))
-	rjmp .read_zpx
+        LDI_Z(gs(.SBC))
+        rjmp .read_zpx
 .xf9_SBC_aby:
-	LDI_X(gs(.SBC))
-	rjmp .read_aby
+        LDI_X(gs(.SBC))
+        rjmp .read_aby
 .xfd_SBC_abx:
-	LDI_X(gs(.SBC))
-	rjmp .read_abx
+        LDI_X(gs(.SBC))
+        rjmp .read_abx
 .xa2_LDX_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .LDX:
-	mov _X_,_data_	 ; X <- data
-	sub _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp .tick	 ;
+        mov _X,data             ; X <- data
+        sub _Z,data             ;
+        mov _N,data             ;
+        rjmp .tick              ;
 .xa6_LDX_zpg:
-	LDI_Z(gs(.LDX))
-	rjmp .read_zpg
+        LDI_Z(gs(.LDX))
+        rjmp .read_zpg
 .xae_LDX_abs:
-	LDI_X(gs(.LDX))
-	rjmp .read_abs
+        LDI_X(gs(.LDX))
+        rjmp .read_abs
 .xb6_LDX_zpy:
-	LDI_Z(gs(.LDX))
-	rjmp .read_zpy
+        LDI_Z(gs(.LDX))
+        rjmp .read_zpy
 .xbe_LDX_aby:
-	LDI_X(gs(.LDX))
-	rjmp .read_aby
+        LDI_X(gs(.LDX))
+        rjmp .read_aby
 .xa0_LDY_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .LDY:
-	mov _Y_,_data_	 ; Y <- data
-	sub _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	rjmp .tick	 ;
+        mov _Y,data             ; Y <- data
+        sub _Z,data             ;
+        mov _N,data             ;
+        rjmp .tick              ;
 .xa4_LDY_zpg:
-	LDI_Z(gs(.LDY))
-	rjmp .read_zpg
+        LDI_Z(gs(.LDY))
+        rjmp .read_zpg
 .xac_LDY_abs:
-	LDI_X(gs(.LDY))
-	rjmp .read_abs
+        LDI_X(gs(.LDY))
+        rjmp .read_abs
 .xb4_LDY_zpx:
-	LDI_Z(gs(.LDY))
-	rjmp .read_zpx
+        LDI_Z(gs(.LDY))
+        rjmp .read_zpx
 .xbc_LDY_abx:
-	LDI_X(gs(.LDY))
-	rjmp .read_abx
+        LDI_X(gs(.LDY))
+        rjmp .read_abx
 .xe0_CPX_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .CPX:
-	mov _Z_,_X_	 ; Z <- X
-	sub _Z_,_data_	 ; Z <- X - data
-	mov _N_,_Z_	 ; N <- X - data
-	clr _C_	 ; C <- 0
-	brlo .CPX_carry	 ; branch if X < data
-	inc _C_	 ; C <- 1 if X >= data
+        mov _Z,_X               ; Z <- X
+        sub _Z,data             ; Z <- X - data
+        mov _N,_Z               ; N <- X - data
+        clr _C                  ; C <- 0
+        brlo .CPX_carry         ; branch if X < data
+        inc _C                  ; C <- 1 if X >= data
 .CPX_carry:
-	rjmp .tick
+        rjmp .tick
 .xe4_CPX_zpg:
-	LDI_Z(gs(.CPX))
-	rjmp .read_zpg
+        LDI_Z(gs(.CPX))
+        rjmp .read_zpg
 .xec_CPX_abs:
-	LDI_X(gs(.CPX))
-	rjmp .read_abs
+        LDI_X(gs(.CPX))
+        rjmp .read_abs
 .xc0_CPY_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .CPY:
-	mov _Z_,_Y_	 ; Z <- Y
-	sub _Z_,_data_	 ; Z <- Y - data
-	mov _N_,_Z_	 ; N <- Y - data
-	clr _C_	 ; C <- 0
-	brlo .CPY_carry	 ; branch if Y < data
-	inc _C_	 ; C <- 1 if Y >= data
+        mov _Z,_Y               ; Z <- Y
+        sub _Z,data             ; Z <- Y - data
+        mov _N,_Z               ; N <- Y - data
+        clr _C                  ; C <- 0
+        brlo .CPY_carry         ; branch if Y < data
+        inc _C                  ; C <- 1 if Y >= data
 .CPY_carry:
-	rjmp .tick
+        rjmp .tick
 .xc4_CPY_zpg:
-	LDI_Z(gs(.CPY))
-	rjmp .read_zpg
+        LDI_Z(gs(.CPY))
+        rjmp .read_zpg
 .xcc_CPY_abs:
-	LDI_X(gs(.CPY))
-	rjmp .read_abs
+        LDI_X(gs(.CPY))
+        rjmp .read_abs
 .x24_BIT_zpg:
-	LDI_Z(gs(.BIT))
-	rjmp .read_zpg
+        LDI_Z(gs(.BIT))
+        rjmp .read_zpg
 .x2c_BIT_abs:
-	LDI_X(gs(.BIT))
-	rjmp .read_abs
+        LDI_X(gs(.BIT))
+        rjmp .read_abs
 .BIT:
-	bst _data_,6	 ;
-	bld _P_,6	 ; V <- data.6
-	mov _N_,_data_	 ; N <- data.7
-	and _data_,_A_	 ;
-	mov _Z_,_data_	 ; Z <- data & A
-	rjmp .tick
+        bst data,6              ;
+        bld _P,6                ; V <- data.6
+        mov _N,data             ; N <- data.7
+        and data,_A             ;
+        mov _Z,data             ; Z <- data & A
+        rjmp .tick
 
 /* Undocumented read instructions */
 
 .LAX:
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	mov _X_,_data_	 ;
-	mov _A_,_data_	 ;
-	rjmp .tick
+        mov _Z,data             ;
+        mov _N,data             ;
+        mov _X,data             ;
+        mov _A,data             ;
+        rjmp .tick
 .xa3_LAX_inx_undocumented:
-	LDI_X(gs(.LAX))
-	rjmp .read_inx
+        LDI_X(gs(.LAX))
+        rjmp .read_inx
 .xa7_LAX_zpg_undocumented:
-	LDI_Z(gs(.LAX))
-	rjmp .read_zpg
+        LDI_Z(gs(.LAX))
+        rjmp .read_zpg
 .xaf_LAX_abs_undocumented:
-	LDI_X(gs(.LAX))
-	rjmp .read_abs
+        LDI_X(gs(.LAX))
+        rjmp .read_abs
 .xb3_LAX_iny_undocumented:
-	LDI_X(gs(.LAX))
-	rjmp .read_iny
+        LDI_X(gs(.LAX))
+        rjmp .read_iny
 .xb7_LAX_zpy_undocumented:
-	LDI_Z(gs(.LAX))
-	rjmp .read_zpy
+        LDI_Z(gs(.LAX))
+        rjmp .read_zpy
 .xbf_LAX_aby_undocumented:
-	LDI_X(gs(.LAX))
-	rjmp .read_aby
+        LDI_X(gs(.LAX))
+        rjmp .read_aby
 
 .x80_NOP_imm_undocumented:
 .x82_NOP_imm_undocumented:
 .x89_NOP_imm_undocumented:
 .xc2_NOP_imm_undocumented:
 .xe2_NOP_imm_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
 .NOP:
-	rjmp .tick	 ;
+        rjmp .tick              ;
 .x04_NOP_zpg_undocumented:
 .x44_NOP_zpg_undocumented:
 .x64_NOP_zpg_undocumented:
-	LDI_Z(gs(.NOP))
-	rjmp .read_zpg
+        LDI_Z(gs(.NOP))
+        rjmp .read_zpg
 .x0c_NOP_abs_undocumented:
-	LDI_X(gs(.NOP))
-	rjmp .read_abs
+        LDI_X(gs(.NOP))
+        rjmp .read_abs
 .x14_NOP_zpx_undocumented:
 .x34_NOP_zpx_undocumented:
 .x54_NOP_zpx_undocumented:
 .x74_NOP_zpx_undocumented:
 .xd4_NOP_zpx_undocumented:
 .xf4_NOP_zpx_undocumented:
-	LDI_Z(gs(.NOP))
-	rjmp .read_zpx
+        LDI_Z(gs(.NOP))
+        rjmp .read_zpx
 .x1c_NOP_abx_undocumented:
 .x3c_NOP_abx_undocumented:
 .x5c_NOP_abx_undocumented:
 .x7c_NOP_abx_undocumented:
 .xdc_NOP_abx_undocumented:
 .xfc_NOP_abx_undocumented:
-	LDI_X(gs(.NOP))
-	rjmp .read_abx
+        LDI_X(gs(.NOP))
+        rjmp .read_abx
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
 input:  return address in XH:XL (ZH:ZL for imm/zpg/zpx/zpy)
-output: data value in _data_, tick count in _cycles_
+output: data value in data, tick count in cycles
 */
 .read_imm:
-	adiw _PCL_,2	 ; PC += 2
-	ldi _cycles_,2	 ; cycles <- 2
-	ijmp
+        adiw _PCL,2             ; PC += 2
+        ldi cycles,2            ; cycles <- 2
+        ijmp
 .read_zpg:
-	adiw _PCL_,2	 ; PC += 2
-	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
-	ldi _cycles_,3	 ; cycles <- 3
-	ijmp
+        adiw _PCL,2             ; PC += 2
+        LD_ZERO_PAGE(data,data) ; data <- ram[data]
+        ldi cycles,3            ; cycles <- 3
+        ijmp
 .read_zpx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
-	ldi _cycles_,4	 ; cycles <- 4
-	ijmp
+        adiw _PCL,2             ; PC += 2
+        add data,_X             ; data += X
+        LD_ZERO_PAGE(data,data) ; data <- ram[data]
+        ldi cycles,4            ; cycles <- 4
+        ijmp
 .read_zpy:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_Y_	 ; data += Y
-	LD_ZERO_PAGE(_data_,_data_)	 ; data <- ram[data]
-	ldi _cycles_,4	 ; cycles <- 4
-	ijmp
+        adiw _PCL,2             ; PC += 2
+        add data,_Y             ; data += Y
+        LD_ZERO_PAGE(data,data) ; data <- ram[data]
+        ldi cycles,4            ; cycles <- 4
+        ijmp
 .read_abs:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
 .read_abs_no_carry:
-	ldi _cycles_,4	 ; cycles <- 4
-.read_mem:	 ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
-	cpi addr_hi,RAM_PAGES	 ; branch if addr is above RAM
-	brsh .read_mem_L6	 ;
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(ram))	 ;
-	ld _data_,Z	 ; load from ram[addr]
-	movw ZL,XL
-	ijmp
+        ldi cycles,4            ; cycles <- 4
+.read_mem:                      ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        cpi addr_hi,RAM_PAGES   ; branch if addr is above RAM
+        brsh .read_mem_L6       ;
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(ram))     ;
+        ld data,Z               ; load from ram[addr]
+        movw ZL,XL
+        ijmp
 .read_mem_L6:
-	cpi addr_hi,0xc0	 ; branch if addr_hi < 0xc0
-	brlo .read_mem_L9	 ;
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm _data_,Z	 ; load from rom[addr - 0xc0000]
-	movw ZL,XL
-	ijmp
+        cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
+        brlo .read_mem_L9       ;
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm data,Z              ; load from rom[addr - 0xc0000]
+        movw ZL,XL
+        ijmp
 .read_mem_L9:
-	ldi _data_,0xff	 ; other addresses return 0xff
-	movw ZL,XL
-	ijmp
+        ldi data,0xff           ; other addresses return 0xff
+        movw ZL,XL
+        ijmp
 .read_abx:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_X_	 ; addr_lo += X
-	brcc .read_abs_no_carry	 ; branch unless addr_lo+X carries
-	inc addr_hi	 ; addr_hi++
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .read_mem	 ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_X          ; addr_lo += X
+        brcc .read_abs_no_carry ; branch unless addr_lo+X carries
+        inc addr_hi             ; addr_hi++
+        ldi cycles,5            ; cycles <- 5
+        rjmp .read_mem          ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 .read_aby:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_Y_	 ; addr_lo += Y
-	brcc .read_abs_no_carry	 ; branch unless addr_lo+X carries
-	inc addr_hi	 ; addr_hi++
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .read_mem	 ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_Y          ; addr_lo += Y
+        brcc .read_abs_no_carry ; branch unless addr_lo+X carries
+        inc addr_hi             ; addr_hi++
+        ldi cycles,5            ; cycles <- 5
+        rjmp .read_mem          ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 .read_inx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	LDW_ZERO_PAGE(addr_lo,_data_)	 ; addr_hi:addr_lo <- ram[data+1]:ram[data]
-	ldi _cycles_,6	 ; cycles <- 6
-	rjmp .read_mem	 ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        adiw _PCL,2             ; PC += 2
+        add data,_X             ; data += X
+        LDW_ZERO_PAGE(addr_lo,data)   ; addr_hi:addr_lo <- ram[data+1]:ram[data]
+        ldi cycles,6            ; cycles <- 6
+        rjmp .read_mem          ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 .read_iny:
-	adiw _PCL_,2	 ; PC += 2
-	LDW_ZERO_PAGE(addr_lo,_data_)	 ; addr_hi:addr_lo <- ram[data+1]:ram[data]
-	add addr_lo,_Y_	 ; addr_lo += Y
-	brcs .read_iny_carry	 ; branch if addr_lo+Y carries
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .read_mem	 ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        adiw _PCL,2             ; PC += 2
+        LDW_ZERO_PAGE(addr_lo,data)   ; addr_hi:addr_lo <- ram[data+1]:ram[data]
+        add addr_lo,_Y          ; addr_lo += Y
+        brcs .read_iny_carry    ; branch if addr_lo+Y carries
+        ldi cycles,5            ; cycles <- 5
+        rjmp .read_mem          ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 .read_iny_carry:
-	inc addr_hi	 ; addr_hi++
-	ldi _cycles_,6	 ; cycles <- 6
-	rjmp .read_mem	 ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        inc addr_hi             ; addr_hi++
+        ldi cycles,6            ; cycles <- 6
+        rjmp .read_mem          ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 
 /*********************** READ-MODIFY-WRITE INSTRUCTIONS ***********************/
 
 .x0a_ASL_acc:
-	adiw _PCL_,1	 ; PC++
-	clr _C_	 ; C <- 0
-	lsl _A_	 ; A <- A << 1, carry <- A bit 7
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        clr _C                  ; C <- 0
+        lsl _A                  ; A <- A << 1, carry <- A bit 7
+        rol _C                  ; C <- carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        TICK(2)
 .x2a_ROL_acc:
-	adiw _PCL_,1	 ; PC++
-	lsr _C_	 ; carry <- C, C <- 0
-	rol _A_	 ; carry <- A7, A <- [A6, A5 .. A0, carry]
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        lsr _C                  ; carry <- C, C <- 0
+        rol _A                  ; carry <- A7, A <- [A6, A5 .. A0, carry]
+        rol _C                  ; C <- carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        TICK(2)
 .x4a_LSR_acc:
-	adiw _PCL_,1	 ; PC++
-	clr _C_	 ; C <- 0
-	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        clr _C                  ; C <- 0
+        lsr _A                  ; A <- [0, A7, .. A2, A1], carry <- A0
+        rol _C                  ; C <- carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        TICK(2)
 .x6a_ROR_acc:
-	adiw _PCL_,1	 ; PC++
-	lsr _C_	 ; carry <- C, C <- 0
-	ror _A_	 ; A <- [carry, A7 .. A2, A1], carry <- A0
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        lsr _C                  ; carry <- C, C <- 0
+        ror _A                  ; A <- [carry, A7 .. A2, A1], carry <- A0
+        rol _C                  ; C <- carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        TICK(2)
 
-.ASL:
-	clr _C_	 ; C <- 0
-	lsl _data_	 ; A <- A << 1, carry <- A bit 7
-	rol _C_	 ; C <- carry
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	ret
+_ASL:
+        clr _C                  ; C <- 0
+        lsl data                ; A <- A << 1, carry <- A bit 7
+        rol _C                  ; C <- carry
+        mov _Z,data             ;
+        mov _N,data             ;
+        ret
 .x06_ASL_zpg:
-	LDI_Z(gs(.ASL))
-	rjmp .modify_zpg
+        LDI_Z(gs(_ASL))
+        rjmp .modify_zpg
 .x0e_ASL_abs:
-	LDI_X(gs(.ASL))
-	rjmp .modify_abs
+        LDI_X(gs(_ASL))
+        rjmp .modify_abs
 .x16_ASL_zpx:
-	LDI_Z(gs(.ASL))
-	rjmp .modify_zpx
+        LDI_Z(gs(_ASL))
+        rjmp .modify_zpx
 .x1e_ASL_abx:
-	LDI_X(gs(.ASL))
-	rjmp .modify_abx
+        LDI_X(gs(_ASL))
+        rjmp .modify_abx
 .ROL:
-	lsr _C_	 ; carry <- C, C <- 0
-	rol _data_	 ; carry <- A7, A <- [A6, A5 .. A0, carry]
-	rol _C_	 ; C <- carry
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	ret
+        lsr _C                  ; carry <- C, C <- 0
+        rol data                ; carry <- A7, A <- [A6, A5 .. A0, carry]
+        rol _C                  ; C <- carry
+        mov _Z,data             ;
+        mov _N,data             ;
+        ret
 .x26_ROL_zpg:
-	LDI_Z(gs(.ROL))
-	rjmp .modify_zpg
+        LDI_Z(gs(.ROL))
+        rjmp .modify_zpg
 .x2e_ROL_abs:
-	LDI_X(gs(.ROL))
-	rjmp .modify_abs
+        LDI_X(gs(.ROL))
+        rjmp .modify_abs
 .x36_ROL_zpx:
-	LDI_Z(gs(.ROL))
-	rjmp .modify_zpx
+        LDI_Z(gs(.ROL))
+        rjmp .modify_zpx
 .x3e_ROL_abx:
-	LDI_X(gs(.ROL))
-	rjmp .modify_abx
+        LDI_X(gs(.ROL))
+        rjmp .modify_abx
 .LSR:
-	clr _C_	 ; C <- 0
-	lsr _data_	 ; A <- [0, A7, .. A2, A1], carry <- A0
-	rol _C_	 ; C <- carry
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	ret
+        clr _C                  ; C <- 0
+        lsr data                ; A <- [0, A7, .. A2, A1], carry <- A0
+        rol _C                  ; C <- carry
+        mov _Z,data             ;
+        mov _N,data             ;
+        ret
 .x46_LSR_zpg:
-	LDI_Z(gs(.LSR))
-	rjmp .modify_zpg
+        LDI_Z(gs(.LSR))
+        rjmp .modify_zpg
 .x4e_LSR_abs:
-	LDI_X(gs(.LSR))
-	rjmp .modify_abs
+        LDI_X(gs(.LSR))
+        rjmp .modify_abs
 .x56_LSR_zpx:
-	LDI_Z(gs(.LSR))
-	rjmp .modify_zpx
+        LDI_Z(gs(.LSR))
+        rjmp .modify_zpx
 .x5e_LSR_abx:
-	LDI_X(gs(.LSR))
-	rjmp .modify_abx
+        LDI_X(gs(.LSR))
+        rjmp .modify_abx
 .ROR:
-	lsr _C_	 ; carry <- C, C <- 0
-	ror _data_	 ; A <- [carry, A7 .. A2, A1], carry <- A0
-	rol _C_	 ; C <- carry
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	ret
+        lsr _C                  ; carry <- C, C <- 0
+        ror data                ; A <- [carry, A7 .. A2, A1], carry <- A0
+        rol _C                  ; C <- carry
+        mov _Z,data             ;
+        mov _N,data             ;
+        ret
 .x66_ROR_zpg:
-	LDI_Z(gs(.ROR))
-	rjmp .modify_zpg
+        LDI_Z(gs(.ROR))
+        rjmp .modify_zpg
 .x6e_ROR_abs:
-	LDI_X(gs(.ROR))
-	rjmp .modify_abs
+        LDI_X(gs(.ROR))
+        rjmp .modify_abs
 .x76_ROR_zpx:
-	LDI_Z(gs(.ROR))
-	rjmp .modify_zpx
+        LDI_Z(gs(.ROR))
+        rjmp .modify_zpx
 .x7e_ROR_abx:
-	LDI_X(gs(.ROR))
-	rjmp .modify_abx
+        LDI_X(gs(.ROR))
+        rjmp .modify_abx
 .DEC:
-	dec _data_	 ; data--
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	ret
+        dec data                ; data--
+        mov _Z,data             ;
+        mov _N,data             ;
+        ret
 .xc6_DEC_zpg:
-	LDI_Z(gs(.DEC))
-	rjmp .modify_zpg
+        LDI_Z(gs(.DEC))
+        rjmp .modify_zpg
 .xce_DEC_abs:
-	LDI_X(gs(.DEC))
-	rjmp .modify_abs
+        LDI_X(gs(.DEC))
+        rjmp .modify_abs
 .xd6_DEC_zpx:
-	LDI_Z(gs(.DEC))
-	rjmp .modify_zpx
+        LDI_Z(gs(.DEC))
+        rjmp .modify_zpx
 .xde_DEC_abx:
-	LDI_X(gs(.DEC))
-	rjmp .modify_abx
+        LDI_X(gs(.DEC))
+        rjmp .modify_abx
 .INC:
-	inc _data_	 ; data++
-	mov _Z_,_data_	 ;
-	mov _N_,_data_	 ;
-	ret
+        inc data                ; data++
+        mov _Z,data             ;
+        mov _N,data             ;
+        ret
 .xe6_INC_zpg:
-	LDI_Z(gs(.INC))
-	rjmp .modify_zpg
+        LDI_Z(gs(.INC))
+        rjmp .modify_zpg
 .xee_INC_abs:
-	LDI_X(gs(.INC))
-	rjmp .modify_abs
+        LDI_X(gs(.INC))
+        rjmp .modify_abs
 .xf6_INC_zpx:
-	LDI_Z(gs(.INC))
-	rjmp .modify_zpx
+        LDI_Z(gs(.INC))
+        rjmp .modify_zpx
 .xfe_INC_abx:
-	LDI_X(gs(.INC))
-	rjmp .modify_abx
+        LDI_X(gs(.INC))
+        rjmp .modify_abx
 
 .SLO:
-	/* ASL */
-	lsr _C_	 ; carry <- C <- 0
-	lsl _data_	 ; carry <- data.7 <- ... <- data.0 <- 0
-	rol _C_	 ; C <- carry <- 0
-	/* ORA */
-	or _A_,_data_	 ; A |= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	ret
+        ;; ASL
+        lsr _C                  ; carry <- C <- 0
+        lsl data                ; carry <- data.7 <- ... <- data.0 <- 0
+        rol _C                  ; C <- carry <- 0
+        ;; ORA
+        or _A,data              ; A |= data
+        mov _Z,_A
+        mov _N,_A
+        ret
 .x03_SLO_inx_undocumented:
-	LDI_Z(gs(.SLO))
-	rjmp .modify_inx
+        LDI_Z(gs(.SLO))
+        rjmp .modify_inx
 .x07_SLO_zpg_undocumented:
-	LDI_Z(gs(.SLO))
-	rjmp .modify_zpg
+        LDI_Z(gs(.SLO))
+        rjmp .modify_zpg
 .x0f_SLO_abs_undocumented:
-	LDI_Z(gs(.SLO))
-	rjmp .modify_abs
+        LDI_Z(gs(.SLO))
+        rjmp .modify_abs
 .x13_SLO_iny_undocumented:
-	LDI_Z(gs(.SLO))
-	rjmp .modify_iny
+        LDI_Z(gs(.SLO))
+        rjmp .modify_iny
 .x17_SLO_zpx_undocumented:
-	LDI_Z(gs(.SLO))
-	rjmp .modify_zpx
+        LDI_Z(gs(.SLO))
+        rjmp .modify_zpx
 .x1b_SLO_aby_undocumented:
-	LDI_Z(gs(.SLO))
-	rjmp .modify_aby
+        LDI_Z(gs(.SLO))
+        rjmp .modify_aby
 .x1f_SLO_abx_undocumented:
-	LDI_Z(gs(.SLO))
-	rjmp .modify_abx
+        LDI_Z(gs(.SLO))
+        rjmp .modify_abx
 .RLA:
-	/* ROL */
-	lsr _C_	 ; carry <- C <- 0
-	rol _data_	 ; carry <- data.7 <- ... <- data.0 <- carry
-	rol _C_	 ; C <- carry <- 0
-	/* AND */
-	and _A_,_data_	 ; A &= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	ret
+        /* ROL */
+        lsr _C                  ; carry <- C <- 0
+        rol data                ; carry <- data.7 <- ... <- data.0 <- carry
+        rol _C                  ; C <- carry <- 0
+        /* AND */
+        and _A,data             ; A &= data
+        mov _Z,_A
+        mov _N,_A
+        ret
 .x23_RLA_inx_undocumented:
-	LDI_Z(gs(.RLA))
-	rjmp .modify_inx
+        LDI_Z(gs(.RLA))
+        rjmp .modify_inx
 .x27_RLA_zpg_undocumented:
-	LDI_Z(gs(.RLA))
-	rjmp .modify_zpg
+        LDI_Z(gs(.RLA))
+        rjmp .modify_zpg
 .x2f_RLA_abs_undocumented:
-	LDI_Z(gs(.RLA))
-	rjmp .modify_abs
+        LDI_Z(gs(.RLA))
+        rjmp .modify_abs
 .x33_RLA_iny_undocumented:
-	LDI_Z(gs(.RLA))
-	rjmp .modify_iny
+        LDI_Z(gs(.RLA))
+        rjmp .modify_iny
 .x37_RLA_zpx_undocumented:
-	LDI_Z(gs(.RLA))
-	rjmp .modify_zpx
+        LDI_Z(gs(.RLA))
+        rjmp .modify_zpx
 .x3b_RLA_aby_undocumented:
-	LDI_Z(gs(.RLA))
-	rjmp .modify_aby
+        LDI_Z(gs(.RLA))
+        rjmp .modify_aby
 .x3f_RLA_abx_undocumented:
-	LDI_Z(gs(.RLA))
-	rjmp .modify_abx
+        LDI_Z(gs(.RLA))
+        rjmp .modify_abx
 .SRE:
-	/* LSR */
-	lsr _C_	 ; carry <- C <- 0
-	lsr _data_	 ; carry <- data.0 <- ... <- data.7 <- 0
-	rol _C_	 ; C <- carry <- 0
-	/* EOR */
-	eor _A_,_data_	 ; A ^= data
-	mov _Z_,_A_
-	mov _N_,_A_
-	ret
+        /* LSR */
+        lsr _C                  ; carry <- C <- 0
+        lsr data                ; carry <- data.0 <- ... <- data.7 <- 0
+        rol _C                  ; C <- carry <- 0
+        /* EOR */
+        eor _A,data             ; A ^= data
+        mov _Z,_A
+        mov _N,_A
+        ret
 .x43_SRE_inx_undocumented:
-	LDI_Z(gs(.SRE))
-	rjmp .modify_inx
+        LDI_Z(gs(.SRE))
+        rjmp .modify_inx
 .x47_SRE_zpg_undocumented:
-	LDI_Z(gs(.SRE))
-	rjmp .modify_zpg
+        LDI_Z(gs(.SRE))
+        rjmp .modify_zpg
 .x4f_SRE_abs_undocumented:
-	LDI_Z(gs(.SRE))
-	rjmp .modify_abs
+        LDI_Z(gs(.SRE))
+        rjmp .modify_abs
 .x53_SRE_iny_undocumented:
-	LDI_Z(gs(.SRE))
-	rjmp .modify_iny
+        LDI_Z(gs(.SRE))
+        rjmp .modify_iny
 .x57_SRE_zpx_undocumented:
-	LDI_Z(gs(.SRE))
-	rjmp .modify_zpx
+        LDI_Z(gs(.SRE))
+        rjmp .modify_zpx
 .x5b_SRE_aby_undocumented:
-	LDI_Z(gs(.SRE))
-	rjmp .modify_aby
+        LDI_Z(gs(.SRE))
+        rjmp .modify_aby
 .x5f_SRE_abx_undocumented:
-	LDI_Z(gs(.SRE))
-	rjmp .modify_abx
+        LDI_Z(gs(.SRE))
+        rjmp .modify_abx
 .RRA:
-	/* ROR */
-	lsr _C_	 ; carry <- C <- 0
-	ror _data_	 ; carry <- data.0 <- ... <- data.7 <- carry
-	/* ADC */
-	adc _A_,_data_	 ; (carry, A) <- A + data + carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	brvs .RRA_overflow	 ; branch on overflow
-	rol _C_	 ; C <- carry <- 0
-	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
-	ret
+        /* ROR */
+        lsr _C                  ; carry <- C <- 0
+        ror data                ; carry <- data.0 <- ... <- data.7 <- carry
+        /* ADC */
+        adc _A,data             ; (carry, A) <- A + data + carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        brvs .RRA_overflow      ; branch on overflow
+        rol _C                  ; C <- carry <- 0
+        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        ret
 .RRA_overflow:
-	rol _C_	 ; C <- carry <- 0
-	ori _P_,V_FLAG	 ; P |= V_FLAG
-	ret
+        rol _C                  ; C <- carry <- 0
+        ori _P,V_FLAG           ; P |= V_FLAG
+        ret
 .x63_RRA_inx_undocumented:
-	LDI_Z(gs(.RRA))
-	rjmp .modify_inx
+        LDI_Z(gs(.RRA))
+        rjmp .modify_inx
 .x67_RRA_zpg_undocumented:
-	LDI_Z(gs(.RRA))
-	rjmp .modify_zpg
+        LDI_Z(gs(.RRA))
+        rjmp .modify_zpg
 .x6f_RRA_abs_undocumented:
-	LDI_Z(gs(.RRA))
-	rjmp .modify_abs
+        LDI_Z(gs(.RRA))
+        rjmp .modify_abs
 .x73_RRA_iny_undocumented:
-	LDI_Z(gs(.RRA))
-	rjmp .modify_iny
+        LDI_Z(gs(.RRA))
+        rjmp .modify_iny
 .x77_RRA_zpx_undocumented:
-	LDI_Z(gs(.RRA))
-	rjmp .modify_zpx
+        LDI_Z(gs(.RRA))
+        rjmp .modify_zpx
 .x7b_RRA_aby_undocumented:
-	LDI_Z(gs(.RRA))
-	rjmp .modify_aby
+        LDI_Z(gs(.RRA))
+        rjmp .modify_aby
 .x7f_RRA_abx_undocumented:
-	LDI_Z(gs(.RRA))
-	rjmp .modify_abx
+        LDI_Z(gs(.RRA))
+        rjmp .modify_abx
 .DCP:
-	/* DEC */
-	dec _data_	 ; data--
-	/* CMP */
-	mov _Z_,_A_	 ; Z <- A
-	sub _Z_,_data_	 ; Z <- A - data
-	mov _N_,_Z_	 ; N <- A - data
-	clr _C_	 ;
-	brlo .DCP_carry	 ; branch if A < data
-	inc _C_	 ; C <- 1 if A >= data
+        /* DEC */
+        dec data                ; data--
+        /* CMP */
+        mov _Z,_A               ; Z <- A
+        sub _Z,data             ; Z <- A - data
+        mov _N,_Z               ; N <- A - data
+        clr _C                  ;
+        brlo .DCP_carry         ; branch if A < data
+        inc _C                  ; C <- 1 if A >= data
 .DCP_carry:
-	ret
+        ret
 .xc3_DCP_inx_undocumented:
-	LDI_Z(gs(.DCP))
-	rjmp .modify_inx
+        LDI_Z(gs(.DCP))
+        rjmp .modify_inx
 .xc7_DCP_zpg_undocumented:
-	LDI_Z(gs(.DCP))
-	rjmp .modify_zpg
+        LDI_Z(gs(.DCP))
+        rjmp .modify_zpg
 .xcf_DCP_abs_undocumented:
-	LDI_Z(gs(.DCP))
-	rjmp .modify_abs
+        LDI_Z(gs(.DCP))
+        rjmp .modify_abs
 .xd3_DCP_iny_undocumented:
-	LDI_Z(gs(.DCP))
-	rjmp .modify_iny
+        LDI_Z(gs(.DCP))
+        rjmp .modify_iny
 .xd7_DCP_zpx_undocumented:
-	LDI_Z(gs(.DCP))
-	rjmp .modify_zpx
+        LDI_Z(gs(.DCP))
+        rjmp .modify_zpx
 .xdb_DCP_aby_undocumented:
-	LDI_Z(gs(.DCP))
-	rjmp .modify_aby
+        LDI_Z(gs(.DCP))
+        rjmp .modify_aby
 .xdf_DCP_abx_undocumented:
-	LDI_Z(gs(.DCP))
-	rjmp .modify_abx
+        LDI_Z(gs(.DCP))
+        rjmp .modify_abx
 .ISB:
-	/* INC */
-	inc _data_	 ; data++
-	/* SBC */
-	com _C_	 ; toggle carry
-	lsr _C_	 ; carry <- ~C <- 0
-	sbc _A_,_data_	 ; (carry, A) <- A - data - carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	brvs .ISB_overflow	 ; branch on overflow
-	rol _C_	 ; ~C <- carry <- 0
-	com _C_	 ; un-toggle carry
-	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
-	ret
+        /* INC */
+        inc data                ; data++
+        /* SBC */
+        com _C                  ; toggle carry
+        lsr _C                  ; carry <- ~C <- 0
+        sbc _A,data             ; (carry, A) <- A - data - carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        brvs .ISB_overflow      ; branch on overflow
+        rol _C                  ; ~C <- carry <- 0
+        com _C                  ; un-toggle carry
+        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        ret
 .ISB_overflow:
-	rol _C_	 ; C <- carry <- 0
-	com _C_	 ; un-toggle carry
-	ori _P_,V_FLAG	 ; P |= V_FLAG
-	ret
+        rol _C                  ; C <- carry <- 0
+        com _C                  ; un-toggle carry
+        ori _P,V_FLAG           ; P |= V_FLAG
+        ret
 .xe3_ISB_inx_undocumented:
-	LDI_Z(gs(.ISB))
-	rjmp .modify_inx
+        LDI_Z(gs(.ISB))
+        rjmp .modify_inx
 .xe7_ISB_zpg_undocumented:
-	LDI_Z(gs(.ISB))
-	rjmp .modify_zpg
+        LDI_Z(gs(.ISB))
+        rjmp .modify_zpg
 .xef_ISB_abs_undocumented:
-	LDI_Z(gs(.ISB))
-	rjmp .modify_abs
+        LDI_Z(gs(.ISB))
+        rjmp .modify_abs
 .xf3_ISB_iny_undocumented:
-	LDI_Z(gs(.ISB))
-	rjmp .modify_iny
+        LDI_Z(gs(.ISB))
+        rjmp .modify_iny
 .xf7_ISB_zpx_undocumented:
-	LDI_Z(gs(.ISB))
-	rjmp .modify_zpx
+        LDI_Z(gs(.ISB))
+        rjmp .modify_zpx
 .xfb_ISB_aby_undocumented:
-	LDI_Z(gs(.ISB))
-	rjmp .modify_aby
+        LDI_Z(gs(.ISB))
+        rjmp .modify_aby
 .xff_ISB_abx_undocumented:
-	LDI_Z(gs(.ISB))
-	rjmp .modify_abx
+        LDI_Z(gs(.ISB))
+        rjmp .modify_abx
 
 /*
 input:  function pointer in ZH:ZL, to be used with icall
-        the function should use _data_ as input and output
+        the function should use data as input and output
 */
 .modify_zpg:
-	adiw _PCL_,2	 ; PC += 2
-	mov XL,_data_	 ;
-	ldi XH,ZERO_PAGE	 ;
-	ld _data_,X	 ; data <- zero_page
-	icall	 ; data <- f(data)
-	st X,_data_	 ; zero_page <- data
-	TICK(5)
+        adiw _PCL,2             ; PC += 2
+        mov XL,data             ;
+        ldi XH,ZERO_PAGE        ;
+        ld data,X               ; data <- zero_page
+        icall                   ; data <- f(data)
+        st X,data               ; zero_page <- data
+        TICK(5)
 .modify_zpx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	mov XL,_data_	 ;
-	ldi XH,ZERO_PAGE	 ;
-	ld _data_,X	 ; data <- ram[addr]
-	icall	 ; data <- f(data)
-	st X,_data_	 ; ram[addr] <- data
-	TICK(6)
+        adiw _PCL,2             ; PC += 2
+        add data,_X             ; data += X
+        mov XL,data             ;
+        ldi XH,ZERO_PAGE        ;
+        ld data,X               ; data <- ram[addr]
+        icall                   ; data <- f(data)
+        st X,data               ; ram[addr] <- data
+        TICK(6)
 .modify_abs:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	ldi _cycles_,6	 ; cycles <- 6
-.modify_mem:	 ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
-	cpi addr_hi,RAM_PAGES	 ; branch if addr is above RAM
-	brsh .modify_mem_hi	 ;
-	movw XL,addr_lo	 ;
-	subi XH,hi8(-(ram))	 ;
-	ld _data_,X	 ; data <- ram[addr_hi:addr_lo]
-	icall	 ; data <- f(data)
-	st X,_data_	 ; ram[addr_hi:addr_lo] <- data
-	rjmp .tick
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        ldi cycles,6            ; cycles <- 6
+.modify_mem:                    ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        cpi addr_hi,RAM_PAGES   ; branch if addr is above RAM
+        brsh .modify_mem_hi     ;
+        movw XL,addr_lo         ;
+        subi XH,hi8(-(ram))     ;
+        ld data,X               ; data <- ram[addr_hi:addr_lo]
+        icall                   ; data <- f(data)
+        st X,data               ; ram[addr_hi:addr_lo] <- data
+        rjmp .tick
 .modify_mem_hi:
-	cpi addr_hi,0xc0	 ; branch if addr_hi < 0xc0
-	brlo .modify_mem_io	 ;
-	movw XL,ZL	 ; save call address in X
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(dos1541-0xc000))	 ;
-	lpm _data_,Z	 ; data <- rom[addr - 0xc0000]
-	movw ZL,XL	 ; restore call address from X
-	icall	 ; data <- f(data)
-	rjmp .tick
+        cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
+        brlo .modify_mem_io     ;
+        movw XL,ZL              ; save call address in X
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm data,Z              ; data <- rom[addr - 0xc0000]
+        movw ZL,XL              ; restore call address from X
+        icall                   ; data <- f(data)
+        rjmp .tick
 .modify_mem_io:
-	/* TODO: read/write to IO memory */
-	ldi _data_,0xff	 ; other addresses return 0xff
-	icall	 ; data <- f(data)
-	rjmp .tick
+        /* TODO: read/write to IO memory */
+        ldi data,0xff           ; other addresses return 0xff
+        icall                   ; data <- f(data)
+        rjmp .tick
 .modify_abx:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_X_	 ; addr_hi:addr_lo += X
-	adc addr_hi,__zero_reg__	 ;
-	ldi _cycles_,7	 ; cycles <- 7
-	rjmp .modify_mem	 ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_X          ; addr_hi:addr_lo += X
+        adc addr_hi,__zero_reg__;
+        ldi cycles,7            ; cycles <- 7
+        rjmp .modify_mem        ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
 .modify_aby:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_Y_	 ; addr_hi:addr_lo += Y
-	adc addr_hi,__zero_reg__	 ;
-	ldi _cycles_,7	 ; cycles <- 7
-	rjmp .modify_mem	 ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        ldi cycles,7            ; cycles <- 7
+        rjmp .modify_mem        ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
 .modify_inx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	mov XL,_data_	 ;
-	ldi XH,ZERO_PAGE	 ;
-	ld addr_lo,X	 ; addr_lo <- ram[data]
-	inc XL	 ;
-	ld addr_hi,X	 ; addr_hi <- ram[data+1]
-	ldi _cycles_,8	 ; cycles <- 8
-	rjmp .modify_mem	 ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        adiw _PCL,2             ; PC += 2
+        add data,_X             ; data += X
+        mov XL,data             ;
+        ldi XH,ZERO_PAGE        ;
+        ld addr_lo,X            ; addr_lo <- ram[data]
+        inc XL                  ;
+        ld addr_hi,X            ; addr_hi <- ram[data+1]
+        ldi cycles,8            ; cycles <- 8
+        rjmp .modify_mem        ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
 .modify_iny:
-	adiw _PCL_,2	 ; PC += 2
-	mov XL,_data_	 ;
-	ldi XH,ZERO_PAGE	 ;
-	ld addr_lo,X	 ; addr_lo <- ram[data]
-	inc XL	 ;
-	ld addr_hi,X	 ; addr_hi <- ram[data+1]
-	add addr_lo,_Y_	 ; addr_hi:addr_lo += Y
-	adc addr_hi,__zero_reg__	 ;
-	ldi _cycles_,8	 ; cycles <- 5
-	rjmp .modify_mem	 ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        adiw _PCL,2             ; PC += 2
+        mov XL,data             ;
+        ldi XH,ZERO_PAGE        ;
+        ld addr_lo,X            ; addr_lo <- ram[data]
+        inc XL                  ;
+        ld addr_hi,X            ; addr_hi <- ram[data+1]
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        ldi cycles,8            ; cycles <- 5
+        rjmp .modify_mem        ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
 
 /***************************** WRITE INSTRUCTIONS *****************************/
 
 .x81_STA_inx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	LDW_ZERO_PAGE(addr_lo,_data_)	 ; addr_hi:addr_lo <- ram[data+1]:ram[data]
-	ldi _cycles_,6	 ; cycles <- 6
-	mov _value_,_A_	 ; value <- A
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,data), rjmp .tick
+        adiw _PCL,2            ; PC += 2
+        add data,_X            ; data += X
+        LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
+        ldi cycles,6            ; cycles <- 6
+        mov value,_A            ; value <- A
+        rjmp .write_mem         ; write(addr_hi:addr_lo,data), rjmp .tick
 .x84_STY_zpg:
-	adiw _PCL_,2	 ; PC += 2
-	ST_ZERO_PAGE(_data_,_Y_)	 ; ram[data] <- Y
-	TICK(3)
+        adiw _PCL,2             ; PC += 2
+        ST_ZERO_PAGE(data,_Y)   ; ram[data] <- Y
+        TICK(3)
 .x85_STA_zpg:
-	adiw _PCL_,2	 ; PC += 2
-	ST_ZERO_PAGE(_data_,_A_)	 ; ram[data] <- A
-	TICK(3)
+        adiw _PCL,2             ; PC += 2
+        ST_ZERO_PAGE(data,_A)   ; ram[data] <- A
+        TICK(3)
 .x86_STX_zpg:
-	adiw _PCL_,2	 ; PC += 2
-	ST_ZERO_PAGE(_data_,_X_)	 ; ram[data] <- X
-	TICK(3)
+        adiw _PCL,2             ; PC += 2
+        ST_ZERO_PAGE(data,_X)   ; ram[data] <- X
+        TICK(3)
 .x8c_STY_abs:
-	mov _value_,_Y_
-	rjmp .write_abs
+        mov value,_Y
+        rjmp .write_abs
 .x8d_STA_abs:
-	mov _value_,_A_
-	rjmp .write_abs
+        mov value,_A
+        rjmp .write_abs
 .x8e_STX_abs:
-	mov _value_,_X_
-	rjmp .write_abs
+        mov value,_X
+        rjmp .write_abs
 .x91_STA_iny:
-	adiw _PCL_,2	 ; PC += 2
-	LDW_ZERO_PAGE(addr_lo,_data_)	 ; addr_hi:addr_lo <- ram[data+1]:ram[data]
-	add addr_lo,_Y_	 ; addr_hi:addr_lo += Y
-	adc addr_hi,__zero_reg__	 ;
-	ldi _cycles_,6	 ; cycles <- 6
-	mov _value_,_A_	 ; value <- A
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        adiw _PCL,2             ; PC += 2
+        LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        ldi cycles,6            ; cycles <- 6
+        mov value,_A            ; value <- A
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 .x94_STY_zpx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	ST_ZERO_PAGE(_data_,_Y_)	 ; ram[data] <- Y
-	TICK(4)
+        adiw _PCL,2             ; PC += 2
+        add data,_X             ; data += X
+        ST_ZERO_PAGE(data,_Y)   ; ram[data] <- Y
+        TICK(4)
 .x95_STA_zpx:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	ST_ZERO_PAGE(_data_,_A_)	 ; ram[data] <- A
-	TICK(4)
+        adiw _PCL,2             ; PC += 2
+        add data,_X             ; data += X
+        ST_ZERO_PAGE(data,_A)   ; ram[data] <- A
+        TICK(4)
 .x96_STX_zpy:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_Y_	 ; data += Y
-	ST_ZERO_PAGE(_data_,_X_)	 ; ram[data] <- X
-	TICK(4)
+        adiw _PCL,2             ; PC += 2
+        add data,_Y             ; data += Y
+        ST_ZERO_PAGE(data,_X)   ; ram[data] <- X
+        TICK(4)
 .x99_STA_aby:
-	mov _value_,_A_
-	rjmp .write_aby
+        mov value,_A
+        rjmp .write_aby
 .x9d_STA_abx:
-	mov _value_,_A_
-	rjmp .write_abx
+        mov value,_A
+        rjmp .write_abx
 
 .x83_SAX_inx_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_X_	 ; data += X
-	LDW_ZERO_PAGE(addr_lo,_data_)	 ; addr_hi:addr_lo <- ram[data+1]:ram[data]
-	ldi _cycles_,6	 ; cycles <- 6
-	mov _value_,_A_	 ; value <- A
-	and _value_,_X_	 ; value <- A & X
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        adiw _PCL,2             ; PC += 2
+        add data,_X             ; data += X
+        LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
+        ldi cycles,6            ; cycles <- 6
+        mov value,_A            ; value <- A
+        and value,_X            ; value <- A & X
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 .x87_SAX_zpg_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	mov addr_lo,_A_
-	and addr_lo,_X_
-	ST_ZERO_PAGE(_data_,24)	 ; ram[data] <- A & X
-	TICK(3)
+        adiw _PCL,2             ; PC += 2
+        mov addr_lo,_A
+        and addr_lo,_X
+        ST_ZERO_PAGE(data,24)   ; ram[data] <- A & X
+        TICK(3)
 .x8f_SAX_abs_undocumented:
-	mov _value_,_A_
-	and _value_,_X_
-	rjmp .write_abs
+        mov value,_A
+        and value,_X
+        rjmp .write_abs
 .x97_SAX_zpy_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	add _data_,_Y_	 ; data += Y
-	mov addr_lo,_A_	 ; temp <- A
-	and addr_lo,_X_	 ; temp <- A & X
-	ST_ZERO_PAGE(_data_,24)	 ; ram[data] <- A & X
-	TICK(4)
+        adiw _PCL,2             ; PC += 2
+        add data,_Y             ; data += Y
+        mov addr_lo,_A          ; temp <- A
+        and addr_lo,_X          ; temp <- A & X
+        ST_ZERO_PAGE(data,24)   ; ram[data] <- A & X
+        TICK(4)
 .x93_SHA_iny_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	LDW_ZERO_PAGE(addr_lo,_data_)	 ; addr_hi:addr_lo <- ram[data+1]:ram[data]
-	add addr_lo,_Y_	 ; addr_hi:addr_lo += Y
-	adc addr_hi,__zero_reg__	 ;
-	ldi _cycles_,6	 ; cycles <- 6
-	mov _value_,addr_hi	 ; value <- addr_hi
-	inc _value_	 ; value += 1
-	and _value_,_X_	 ; value &= X
-	and _value_,_A_	 ; value &= A
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        adiw _PCL,2             ; PC += 2
+        LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        ldi cycles,6            ; cycles <- 6
+        mov value,addr_hi       ; value <- addr_hi
+        inc value               ; value += 1
+        and value,_X            ; value &= X
+        and value,_A            ; value &= A
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 .x9f_SHA_aby_undocumented:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_Y_	 ; addr_hi:addr_lo += Y
-	adc addr_hi,__zero_reg__	 ;
-	mov _value_,addr_hi	 ; value <- addr_hi
-	inc _value_	 ; value += 1
-	and _value_,_X_	 ; value &= X
-	and _value_,_A_	 ; value &= A
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        mov value,addr_hi       ; value <- addr_hi
+        inc value               ; value += 1
+        and value,_X            ; value &= X
+        and value,_A            ; value &= A
+        ldi cycles,5            ; cycles <- 5
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 .x9c_SHY_abx_undocumented:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_X_	 ; addr_hi:addr_lo += X
-	adc addr_hi,__zero_reg__	 ;
-	mov _value_,addr_hi	 ; value <- addr_hi
-	inc _value_	 ; value += 1
-	and _value_,_Y_	 ; value &= Y
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_X          ; addr_hi:addr_lo += X
+        adc addr_hi,__zero_reg__;
+        mov value,addr_hi       ; value <- addr_hi
+        inc value               ; value += 1
+        and value,_Y            ; value &= Y
+        ldi cycles,5            ; cycles <- 5
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 .x9e_SHX_aby_undocumented:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_Y_	 ; addr_hi:addr_lo += Y
-	adc addr_hi,__zero_reg__	 ;
-	mov _value_,addr_hi	 ; value <- addr_hi
-	inc _value_	 ; value += 1
-	and _value_,_X_	 ; value &= X
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        mov value,addr_hi       ; value <- addr_hi
+        inc value               ; value += 1
+        and value,_X            ; value &= X
+        ldi cycles,5            ; cycles <- 5
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 
 .write_abs:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	ldi _cycles_,4	 ; cycles <- 4
-.write_mem:	 ; write(addr_hi:addr_lo,value), rjmp .tick
-	cpi addr_hi,RAM_PAGES	 ;
-	brsh .write_mem_hi	 ; branch if address is above RAM
-	movw ZL,addr_lo	 ;
-	subi ZH,hi8(-(ram))	 ;
-	st Z,_value_	 ; ram[addr_hi:addr_lo] <- data
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        ldi cycles,4            ; cycles <- 4
+.write_mem:                     ; write(addr_hi:addr_lo,value), rjmp .tick
+        cpi addr_hi,RAM_PAGES   ;
+        brsh .write_mem_hi      ; branch if address is above RAM
+        movw ZL,addr_lo         ;
+        subi ZH,hi8(-(ram))     ;
+        st Z,value              ; ram[addr_hi:addr_lo] <- data
 .write_mem_hi:
-	cpi addr_hi,0x1c
-	breq .write_mem_via2
-	rjmp .tick
-	/* TODO: write io memory */
+        cpi addr_hi,0x1c
+        breq .write_mem_via2
+        rjmp .tick
+        ;; TODO: write io memory
 .write_mem_via2:
-	cpi addr_lo,0x0
-	brne .write_mem_done
-	sbi 4,5	 ; Set DDRB5 to 'output'
-	bst _value_,3	 ; bit 3 = LED output
-	brts .led_on
-	cbi 5,5	 ; Clear PORTB5 (pin 13, LED)
-	rjmp .tick
+        cpi addr_lo,0x0
+        brne .write_mem_done
+        sbi 4,5                 ; Set DDRB5 to 'output'
+        bst value,3             ; bit 3 = LED output
+        brts .led_on
+        cbi 5,5                 ; Clear PORTB5 (pin 13, LED)
+        rjmp .tick
 .led_on:
-	sbi 5,5	 ; Set PORTB5 (pin 13, LED)
-	rjmp .tick
+        sbi 5,5                 ; Set PORTB5 (pin 13, LED)
+        rjmp .tick
 .write_mem_done:
-	rjmp .tick
+        rjmp .tick
 .write_abx:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_X_	 ; addr_hi:addr_lo += X
-	adc addr_hi,__zero_reg__	 ;
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_X         ; addr_hi:addr_lo += X
+        adc addr_hi,__zero_reg__;
+        ldi cycles,5            ; cycles <- 5
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 .write_aby:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	add addr_lo,_Y_	 ; addr_hi:addr_lo += Y
-	adc addr_hi,__zero_reg__	 ;
-	ldi _cycles_,5	 ; cycles <- 5
-	rjmp .write_mem	 ; write(addr_hi:addr_lo,value), rjmp .tick
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        ldi cycles,5            ; cycles <- 5
+        rjmp .write_mem         ; write(addr_hi:addr_lo,value), rjmp .tick
 
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
 .x10_BPL:
-	adiw _PCL_,2	 ; PC += 2
-	tst _N_	 ; branch on N >= 0
-	brpl .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        tst _N                  ; branch on N >= 0
+        brpl .take_branch       ;
+        TICK(2)
 .x30_BMI:
-	adiw _PCL_,2	 ; PC += 2
-	tst _N_	 ; branch on N < 0
-	brmi .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        tst _N                  ; branch on N < 0
+        brmi .take_branch       ;
+        TICK(2)
 .x50_BVC:
-	adiw _PCL_,2	 ; PC += 2
-	bst _P_,6	 ; branch on P bit 6 = 0
-	brtc .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        bst _P,6                ; branch on P bit 6 = 0
+        brtc .take_branch       ;
+        TICK(2)
 .x70_BVS:
-	adiw _PCL_,2	 ; PC += 2
-	bst _P_,6	 ; branch on P bit 6 = 1
-	brts .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        bst _P,6                ; branch on P bit 6 = 1
+        brts .take_branch       ;
+        TICK(2)
 .take_branch:
-	add _PCL_,_data_	 ; PC += data
-        tst _data_
+        add _PCL,data           ; PC += data
+        tst data
         brcs .branch_carry
-        brpl .branch_same_page	 ; branch if offset is positive
-	dec _PCH_
-	TICK(4)	 ; 4 cycles for branch to previous page
+        brpl .branch_same_page  ; branch if offset is positive
+        dec _PCH
+        TICK(4)                 ; 4 cycles for branch to previous page
 .branch_carry:
-        brmi .branch_same_page	 ; branch if offset is negative
-	inc _PCH_	 ;
-	TICK(4)	 ; 4 cycles for branch to next page
+        brmi .branch_same_page  ; branch if offset is negative
+        inc _PCH                ;
+        TICK(4)                 ; 4 cycles for branch to next page
 .branch_same_page:
-	TICK(3)	 ; 3 cycles for branch to same page
+        TICK(3)                 ; 3 cycles for branch to same page
 .x90_BCC:
-	adiw _PCL_,2	 ; PC += 2
-	tst _C_	 ; branch on C = 0
-	breq .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        tst _C                  ; branch on C = 0
+        breq .take_branch       ;
+        TICK(2)
 .xb0_BCS:
-	adiw _PCL_,2	 ; PC += 2
-	tst _C_	 ; branch on C != 0
-	brne .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        tst _C                  ; branch on C = 1
+        brne .take_branch       ;
+        TICK(2)
 .xd0_BNE:
-	adiw _PCL_,2	 ; PC += 2
-	tst _Z_	 ; branch on Z != 0
-	brne .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        tst _Z                  ; branch on Z = 1
+        brne .take_branch       ;
+        TICK(2)
 .xf0_BEQ:
-	adiw _PCL_,2	 ; PC += 2
-	tst _Z_	 ; branch on Z = 0
-	breq .take_branch	 ;
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        tst _Z                  ; branch on Z = 0
+        breq .take_branch       ;
+        TICK(2)
 
 /***************************** FLAG INSTRUCTIONS ******************************/
 
 .x18_CLC:
-	adiw _PCL_,1	 ; PC++
-	clr _C_	 ; C <- 0
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        clr _C                  ; C <- 0
+        TICK(2)
 .x38_SEC:
-	adiw _PCL_,1	 ; PC++
-	clr _C_	 ;
-	inc _C_	 ; C <- 1
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        clr _C                  ;
+        inc _C                  ; C <- 1
+        TICK(2)
 .x58_CLI:
-	adiw _PCL_,1	 ; PC++
-	andi _P_,~I_FLAG	 ; P &= ~I_FLAG
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        andi _P,~I_FLAG         ; P &= ~I_FLAG
+        TICK(2)
 .x78_SEI:
-	adiw _PCL_,1	 ; PC++
-	ori _P_,I_FLAG	 ; P |= I_FLAG
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        ori _P,I_FLAG           ; P |= I_FLAG
+        TICK(2)
 .xb8_CLV:
-	adiw _PCL_,1	 ; PC++
-	andi _P_,~V_FLAG	 ; P &= ~V_FLAG
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        TICK(2)
 .xd8_CLD:
-	adiw _PCL_,1	 ; PC++
-	andi _P_,~D_FLAG	 ; P &= ~D_FLAG
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        andi _P,~D_FLAG         ; P &= ~D_FLAG
+        TICK(2)
 .xf8_SED:
-	adiw _PCL_,1	 ; PC++
-	ori _P_,D_FLAG	 ; P |= D_FLAG
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        ori _P,D_FLAG           ; P |= D_FLAG
+        TICK(2)
 
 /*************************** REGISTER INSTRUCTIONS ****************************/
 
 .xca_DEX:
-	adiw _PCL_,1	 ; PC++
-	dec _X_	 ; X--
-	mov _Z_,_X_	 ;
-	mov _N_,_X_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        dec _X                  ; X--
+        mov _Z,_X               ;
+        mov _N,_X               ;
+        TICK(2)
 .xe8_INX:
-	adiw _PCL_,1	 ; PC++
-	inc _X_	 ; X++
-	mov _Z_,_X_	 ;
-	mov _N_,_X_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        inc _X                  ; X++
+        mov _Z,_X               ;
+        mov _N,_X               ;
+        TICK(2)
 .x88_DEY:
-	adiw _PCL_,1	 ; PC++
-	dec _Y_	 ; Y--
-	mov _Z_,_Y_	 ;
-	mov _N_,_Y_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        dec _Y                  ; Y--
+        mov _Z,_Y               ;
+        mov _N,_Y               ;
+        TICK(2)
 .xc8_INY:
-	adiw _PCL_,1	 ; PC++
-	inc _Y_	 ; Y++
-	mov _Z_,_Y_	 ;
-	mov _N_,_Y_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        inc _Y                  ; Y++
+        mov _Z,_Y               ;
+        mov _N,_Y               ;
+        TICK(2)
 .x8a_TXA:
-	adiw _PCL_,1	 ; PC++
-	mov _A_,_X_	 ; A <- X
-	mov _Z_,_X_	 ;
-	mov _N_,_X_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        mov _A,_X               ; A <- X
+        mov _Z,_X               ;
+        mov _N,_X               ;
+        TICK(2)
 .xaa_TAX:
-	adiw _PCL_,1	 ; PC++
-	mov _X_,_A_	 ; X <- A
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        mov _X,_A               ; X <- A
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        TICK(2)
 .x98_TYA:
-	adiw _PCL_,1	 ; PC++
-	mov _A_,_Y_	 ; A <- Y
-	mov _Z_,_Y_	 ;
-	mov _N_,_Y_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        mov _A,_Y               ; A <- Y
+        mov _Z,_Y               ;
+        mov _N,_Y               ;
+        TICK(2)
 .xa8_TAY:
-	adiw _PCL_,1	 ; PC++
-	mov _Y_,_A_	 ; Y <- A
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        mov _Y,_A               ; Y <- A
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        TICK(2)
 .x9a_TXS:
-	adiw _PCL_,1	 ; PC++
-	mov _S_,_X_	 ; S <- X
-	mov _Z_,_X_	 ;
-	mov _N_,_X_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        mov _S,_X               ; S <- X
+        mov _Z,_X               ;
+        mov _N,_X               ;
+        TICK(2)
 .xba_TSX:
-	adiw _PCL_,1	 ; PC++
-	mov _X_,_S_	 ; X <- S
-	mov _Z_,_S_	 ;
-	mov _N_,_S_	 ;
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        mov _X,_S               ; X <- S
+        mov _Z,_S               ;
+        mov _N,_S               ;
+        TICK(2)
 .xea_NOP:
 .x1a_NOP_undocumented:
 .x3a_NOP_undocumented:
@@ -1948,123 +1951,123 @@ input:  function pointer in ZH:ZL, to be used with icall
 .x7a_NOP_undocumented:
 .xda_NOP_undocumented:
 .xfa_NOP_undocumented:
-	adiw _PCL_,1	 ; PC++
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        TICK(2)
 
 /*************************** STACK/PC INSTRUCTIONS ****************************/
 
 .x00_BRK:
-	adiw _PCL_,2	 ; PC += 2
-	PUSH(_PCH_)	 ; push address of the BRK instruction +2
-	PUSH(_PCL_)
-	rcall pack_flags	 ;
-	ori _P_,B_FLAG	 ; P |= B_FLAG
-	PUSH(_P_)	 ; stack[S--] <- P
-	ori _P_,I_FLAG	 ; P |= I_FLAG (disable interrupts)
-	ldi addr_lo,0xfe	 ;
-	ldi addr_hi,0xff	 ;
-	rcall mem_read_16	 ; PC <- mem_read(0xfffe)
-	TICK(7)
+        adiw _PCL,2             ; PC += 2
+        PUSH(_PCH)              ; push address of the BRK instruction +2
+        PUSH(_PCL)
+        rcall pack_flags        ;
+        ori _P,B_FLAG           ; P |= B_FLAG
+        PUSH(_P)                ; stack[S--] <- P
+        ori _P,I_FLAG           ; P |= I_FLAG (disable interrupts)
+        ldi addr_lo,0xfe        ;
+        ldi addr_hi,0xff        ;
+        rcall mem_read_16       ; PC <- mem_read(0xfffe)
+        TICK(7)
 .x20_JSR:
-	rcall addr_abs	 ;
-	sbiw _PCL_,1	 ; PC -= 1
-	PUSH(_PCH_)	 ; push address of next instruction - 1
-	PUSH(_PCL_)	 ;
-	movw _PCL_,addr_lo	 ; PC <- address
-	TICK(6)
+        rcall addr_abs          ;
+        sbiw _PCL,1             ; PC -= 1
+        PUSH(_PCH)              ; push address of next instruction - 1
+        PUSH(_PCL)              ;
+        movw _PCL,addr_lo       ; PC <- address
+        TICK(6)
 .x40_RTI:
-	PULL(_P_)	 ; P <- stack[++S]
-	rcall unpack_flags	 ;
-	PULL(_PCL_)	 ; PCL <- stack[++S]
-	PULL(_PCH_)	 ; PCH <- stack[++S]
-	TICK(6)
+        PULL(_P)                ; P <- stack[++S]
+        rcall unpack_flags      ;
+        PULL(_PCL)              ; PCL <- stack[++S]
+        PULL(_PCH)              ; PCH <- stack[++S]
+        TICK(6)
 .x60_RTS:
-	PULL(_PCL_)	 ; PCL <- stack[++S]
-	PULL(_PCH_)	 ; PCH <- stack[++S]
-	adiw _PCL_,1	 ; PC ++
-	TICK(6)
+        PULL(_PCL)              ; PCL <- stack[++S]
+        PULL(_PCH)              ; PCH <- stack[++S]
+        adiw _PCL,1             ; PC ++
+        TICK(6)
 .x4c_JMP_abs:
-	rcall addr_abs	 ;
-	movw _PCL_,addr_lo	 ;  reg_pc,
-	TICK(3)
+        rcall addr_abs          ;
+        movw _PCL,addr_lo       ; PC <- addr
+        TICK(3)
 .x6c_JMP_ind:
-	rcall addr_abs	 ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-	rcall mem_read_16	 ; PC <- mem_read(addr_hi:addr_lo)
-	TICK(5)
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        rcall mem_read_16       ; PC <- mem_read(addr_hi:addr_lo)
+        TICK(5)
 .x08_PHP:
-	adiw _PCL_,1	 ; PC++
-	rcall pack_flags	 ;
-	PUSH(_P_)	 ; stack[S--] <- P
-	TICK(3)
+        adiw _PCL,1             ; PC++
+        rcall pack_flags        ;
+        PUSH(_P)                ; stack[S--] <- P
+        TICK(3)
 .x28_PLP:
-	adiw _PCL_,1	 ; PC++
-	PULL(_P_)	 ; P <- stack[++S]
-	rcall unpack_flags	 ;
-	TICK(4)
+        adiw _PCL,1             ; PC++
+        PULL(_P)                ; P <- stack[++S]
+        rcall unpack_flags      ;
+        TICK(4)
 .x48_PHA:
-	adiw _PCL_,1	 ; PC++
-	PUSH(_A_)	 ; stack[S--] <- A
-	TICK(3)
+        adiw _PCL,1             ; PC++
+        PUSH(_A)                ; stack[S--] <- A
+        TICK(3)
 .x68_PLA:
-	adiw _PCL_,1	 ; PC++
-	PULL(_A_)	 ; A <- stack[++S]
-	mov _Z_,_A_	 ; Z <- A
-	mov _N_,_A_	 ; N <- A
-	TICK(4)
+        adiw _PCL,1             ; PC++
+        PULL(_A)                ; A <- stack[++S]
+        mov _Z,_A               ; Z <- A
+        mov _N,_A               ; N <- A
+        TICK(4)
 
 /******************************************************************************/
 
 .x0b_ANC_imm_undocumented:
 .x2b_ANC_imm_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	and _A_,_data_	 ; A &= data
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	bst _A_,7	 ;
-	bld _C_,0	 ; C <- A.7
-	TICK(2)
+        adiw _PCL,2             ; PC += 2
+        and _A,data             ; A &= data
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        bst _A,7                ;
+        bld _C,0                ; C <- A.7
+        TICK(2)
 .x4b_ASR_imm_undocumented:
-	/* AND + LSR */
-	adiw _PCL_,2	 ; PC += 2
-	and _A_,_data_	 ; A &= data
-	clr _C_	 ; C <- 0
-	lsr _A_	 ; A <- [0, A7, .. A2, A1], carry <- A0
-	rol _C_	 ; C <- carry
-	mov _Z_,_A_	 ;
-	mov _N_,_A_	 ;
-	TICK(2)
+        /* AND + LSR */
+        adiw _PCL,2             ; PC += 2
+        and _A,data             ; A &= data
+        clr _C                  ; C <- 0
+        lsr _A                  ; A <- [0, A7, .. A2, A1], carry <- A0
+        rol _C                  ; C <- carry
+        mov _Z,_A               ;
+        mov _N,_A               ;
+        TICK(2)
 .x6b:
-	adiw _PCL_,1	 ; PC++
-	/* TODO */
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        ;; TODO
+        TICK(2)
 .x8b:
-	adiw _PCL_,1	 ; PC++
-	/* TODO */
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        ;; TODO
+        TICK(2)
 .x9b:
-	adiw _PCL_,1	 ; PC++
-	/* TODO */
-	TICK(5)
+        adiw _PCL,1             ; PC++
+        ;; TODO
+        TICK(5)
 
 .xab:
-	adiw _PCL_,1	 ; PC++
-	/* TODO */
-	TICK(2)
+        adiw _PCL,1             ; PC++
+        ;; TODO
+        TICK(2)
 .xbb:
-	adiw _PCL_,1	 ; PC++
-	/* TODO */
-	TICK(4)
+        adiw _PCL,1             ; PC++
+        ;; TODO
+        TICK(4)
 .xcb_SBX_imm_undocumented:
-	adiw _PCL_,2	 ; PC += 2
-	and _X_,_A_	 ; X &= A
-	sub _X_,_data_	 ; X -= data
-	clr _C_	 ; C <- 0
-	brlo .L356	 ; branch if X & A < data
-	inc _C_	 ; C <- 1 if X & A >= data
+        adiw _PCL,2             ; PC += 2
+        and _X,_A               ; X &= A
+        sub _X,data             ; X -= data
+        clr _C                  ; C <- 0
+        brlo .L356              ; branch if X & A < data
+        inc _C                  ; C <- 1 if X & A >= data
 .L356:
-	mov _Z_,_X_	 ;
-	mov _N_,_X_	 ;
-	TICK(2)
+        mov _Z,_X               ;
+        mov _N,_X               ;
+        TICK(2)
 .x02:
 .x12:
 .x22:
@@ -2077,92 +2080,92 @@ input:  function pointer in ZH:ZL, to be used with icall
 .xb2:
 .xd2:
 .xf2:
-	TICK(128)	 ; loop in place, very slowly
+        TICK(128)               ; loop in place, very slowly
 
 /******************************************************************************/
 
 .L366:
 /* epilogue start */
-	sts reg_pc,_PCL_
-	sts reg_pc+1,_PCH_
-	sts reg_a,_A_
-	sts reg_x,_X_
-	sts reg_y,_Y_
-	sts reg_s,_S_
-	sts reg_p,_P_
-	sts flag_n,_N_
-	sts flag_z,_Z_
-	sts flag_c,_C_
-	sts time_left,_time0_
-	sts time_left+1,_time1_
-	sts time_left+2,_time2_
-	sts time_left+3,_time3_
-	pop _time3_
-	pop _time2_
-	pop _time1_
-	pop _time0_
-	pop _C_
-	pop _Z_
-	pop _N_
-	pop _P_
-	pop _S_
-	pop _Y_
-	pop _X_
-	pop _A_
-	pop _PCH_
-	pop _PCL_
-	ret
-	.size	cpu_main, .-cpu_main
-	.section	.bss.time_left,"aw",@nobits
-	.type	time_left, @object
-	.size	time_left, 4
+        sts reg_pc,_PCL
+        sts reg_pc+1,_PCH
+        sts reg_a,_A
+        sts reg_x,_X
+        sts reg_y,_Y
+        sts reg_s,_S
+        sts reg_p,_P
+        sts flag_n,_N
+        sts flag_z,_Z
+        sts flag_c,_C
+        sts time_left,time0
+        sts time_left+1,time1
+        sts time_left+2,time2
+        sts time_left+3,time3
+        pop time3
+        pop time2
+        pop time1
+        pop time0
+        pop _C
+        pop _Z
+        pop _N
+        pop _P
+        pop _S
+        pop _Y
+        pop _X
+        pop _A
+        pop _PCH
+        pop _PCL
+        ret
+        .size        cpu_main, .-cpu_main
+        .section        .bss.time_left,"aw",@nobits
+        .type        time_left, @object
+        .size        time_left, 4
 time_left:
-	.zero	4
-	.comm	stack,2,1
-	.section	.bss.flag_c,"aw",@nobits
-	.type	flag_c, @object
-	.size	flag_c, 1
+        .zero        4
+        .comm        stack,2,1
+        .section        .bss.flag_c,"aw",@nobits
+        .type        flag_c, @object
+        .size        flag_c, 1
 flag_c:
-	.zero	1
-	.section	.bss.flag_z,"aw",@nobits
-	.type	flag_z, @object
-	.size	flag_z, 1
+        .zero        1
+        .section        .bss.flag_z,"aw",@nobits
+        .type        flag_z, @object
+        .size        flag_z, 1
 flag_z:
-	.zero	1
-	.section	.bss.flag_n,"aw",@nobits
-	.type	flag_n, @object
-	.size	flag_n, 1
+        .zero        1
+        .section        .bss.flag_n,"aw",@nobits
+        .type        flag_n, @object
+        .size        flag_n, 1
 flag_n:
-	.zero	1
-	.section	.bss.reg_p,"aw",@nobits
-	.type	reg_p, @object
-	.size	reg_p, 1
+        .zero        1
+        .section        .bss.reg_p,"aw",@nobits
+        .type        reg_p, @object
+        .size        reg_p, 1
 reg_p:
-	.zero	1
-	.section	.bss.reg_s,"aw",@nobits
-	.type	reg_s, @object
-	.size	reg_s, 1
+        .zero        1
+        .section        .bss.reg_s,"aw",@nobits
+        .type        reg_s, @object
+        .size        reg_s, 1
 reg_s:
-	.zero	1
-	.section	.bss.reg_y,"aw",@nobits
-	.type	reg_y, @object
-	.size	reg_y, 1
+        .zero        1
+        .section        .bss.reg_y,"aw",@nobits
+        .type        reg_y, @object
+        .size        reg_y, 1
 reg_y:
-	.zero	1
-	.section	.bss.reg_x,"aw",@nobits
-	.type	reg_x, @object
-	.size	reg_x, 1
+        .zero        1
+        .section        .bss.reg_x,"aw",@nobits
+        .type        reg_x, @object
+        .size        reg_x, 1
 reg_x:
-	.zero	1
-	.section	.bss.reg_a,"aw",@nobits
-	.type	reg_a, @object
-	.size	reg_a, 1
+        .zero        1
+        .section        .bss.reg_a,"aw",@nobits
+        .type        reg_a, @object
+        .size        reg_a, 1
 reg_a:
-	.zero	1
-	.section	.bss.reg_pc,"aw",@nobits
-	.type	reg_pc, @object
-	.size	reg_pc, 2
+        .zero        1
+        .section        .bss.reg_pc,"aw",@nobits
+        .type        reg_pc, @object
+        .size        reg_pc, 2
 reg_pc:
-	.zero	2
-	.ident	"GCC: (GNU) 4.8.1"
+        .zero        2
+        .ident        "GCC: (GNU) 4.8.1"
 .global __do_clear_bss
