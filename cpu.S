@@ -701,33 +701,33 @@ x1d_ORA_abx:
         LDI_X(gs(ORA))
         rjmp read_abx
 x21_AND_inx:
-        LDI_X(gs(_AND))
+        LDI_X(gs(AND))
         rjmp read_inx
 x25_AND_zpg:
-        LDI_Z(gs(_AND))
+        LDI_Z(gs(AND))
         rjmp read_zpg
 x29_AND_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
-_AND:
+AND:
         and _A,data             ; A &= data
         mov _Z,_A
         mov _N,_A
         rjmp tick
 x2d_AND_abs:
-        LDI_X(gs(_AND))
+        LDI_X(gs(AND))
         rjmp read_abs
 x31_AND_iny:
-        LDI_X(gs(_AND))
+        LDI_X(gs(AND))
         rjmp read_iny
 x35_AND_zpx:
-        LDI_Z(gs(_AND))
+        LDI_Z(gs(AND))
         rjmp read_zpx
 x39_AND_aby:
-        LDI_X(gs(_AND))
+        LDI_X(gs(AND))
         rjmp read_aby
 x3d_AND_abx:
-        LDI_X(gs(_AND))
+        LDI_X(gs(AND))
         rjmp read_abx
 x41_EOR_inx:
         LDI_X(gs(EOR))
