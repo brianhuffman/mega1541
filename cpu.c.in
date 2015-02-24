@@ -18,8 +18,6 @@ static word reg_pc;
 static byte reg_a, reg_x, reg_y, reg_s, reg_p;
 static byte flag_n, flag_z, flag_c;
 
-byte *stack;
-
 /***************************/
 /**** Utility functions ****/
 /***************************/

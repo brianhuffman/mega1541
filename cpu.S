@@ -2117,7 +2117,6 @@ input:  function pointer in ZH:ZL, to be used with icall
         .size        time_left, 4
 time_left:
         .zero        4
-        .comm        stack,2,1
         .section        .bss.reg_p,"aw",@nobits
         .type        reg_p, @object
         .size        reg_p, 1
