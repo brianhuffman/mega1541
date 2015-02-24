@@ -359,9 +359,7 @@ cpu_main:
         lds _Y,reg_y
         lds _S,reg_s
         lds _P,reg_p
-        lds _N,flag_n
-        lds _Z,flag_z
-        lds _C,flag_c
+        call unpack_flags       ; load N, Z, and C from P
         lds time0,time_left
         lds time1,time_left+1
         lds time2,time_left+2
@@ -2086,6 +2084,7 @@ input:  function pointer in ZH:ZL, to be used with icall
 
 .L366:
 /* epilogue start */
+        call pack_flags         ; save N, Z, and C into P
         sts reg_pc,_PCL
         sts reg_pc+1,_PCH
         sts reg_a,_A
@@ -2093,9 +2092,6 @@ input:  function pointer in ZH:ZL, to be used with icall
         sts reg_y,_Y
         sts reg_s,_S
         sts reg_p,_P
-        sts flag_n,_N
-        sts flag_z,_Z
-        sts flag_c,_C
         sts time_left,time0
         sts time_left+1,time1
         sts time_left+2,time2
@@ -2122,21 +2118,6 @@ input:  function pointer in ZH:ZL, to be used with icall
 time_left:
         .zero        4
         .comm        stack,2,1
-        .section        .bss.flag_c,"aw",@nobits
-        .type        flag_c, @object
-        .size        flag_c, 1
-flag_c:
-        .zero        1
-        .section        .bss.flag_z,"aw",@nobits
-        .type        flag_z, @object
-        .size        flag_z, 1
-flag_z:
-        .zero        1
-        .section        .bss.flag_n,"aw",@nobits
-        .type        flag_n, @object
-        .size        flag_n, 1
-flag_n:
-        .zero        1
         .section        .bss.reg_p,"aw",@nobits
         .type        reg_p, @object
         .size        reg_p, 1
