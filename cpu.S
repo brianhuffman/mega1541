@@ -207,13 +207,13 @@ pack_flags:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-        andi _P,~(B_FLAG|C_FLAG)       ; clear B and C flags
+        cbr _P,B_FLAG|C_FLAG    ; clear B and C flags
         or _P,_C                ; P.0 <- C.0
         bst _N,7                ;
         bld _P,7                ; P.7 <- N.7
-        ori _P,Z_FLAG|0x20      ; set Z flag and 1 flag
+        sbr _P,Z_FLAG|0x20      ; set Z flag and 1 flag
         cpse _Z,__zero_reg__    ; skip if Z = 0
-        andi _P,~Z_FLAG         ; clear Z flag if Z != 0
+        cbr _P,Z_FLAG           ; clear Z flag if Z != 0
         ret
         .size        pack_flags, .-pack_flags
         .section        .text.addr_abs,"ax",@progbits
@@ -307,7 +307,7 @@ cpu_irq:
         PUSH(_PCL)
         rcall pack_flags        ;
         PUSH(_P)                ; stack[S--] <- P
-        ori _P,I_FLAG           ; set I flag
+        sbr _P,I_FLAG           ; set I flag
         ldi addr_lo,0xfe        ;
         ldi addr_hi,0xff        ;
         rcall mem_read_16       ; PC <- mem_read(0xfffe)
@@ -924,13 +924,13 @@ SBC:
         mov _N,_A               ;
         brvs SBC_overflow       ; branch on overflow
         rol _C                  ; C <- carry <- 0
-        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        cbr _P,V_FLAG           ; P &= ~V_FLAG
         sbrc _P,3               ; skip if decimal mode is clear
         rjmp SBC_dec1           ; jump if decimal mode is set
         rjmp tick
 SBC_overflow:
         rol _C                  ; C <- carry <- 0
-        ori _P,V_FLAG           ; P |= V_FLAG
+        sbr _P,V_FLAG           ; P |= V_FLAG
         sbrs _P,3               ; skip if decimal mode is set
         rjmp tick
 SBC_dec1:
@@ -1444,11 +1444,11 @@ RRA:
         mov _N,_A               ;
         brvs RRA_overflow       ; branch on overflow
         rol _C                  ; C <- carry <- 0
-        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        cbr _P,V_FLAG           ; P &= ~V_FLAG
         ret
 RRA_overflow:
         rol _C                  ; C <- carry <- 0
-        ori _P,V_FLAG           ; P |= V_FLAG
+        sbr _P,V_FLAG           ; P |= V_FLAG
         ret
 x63_RRA_inx_undocumented:
         LDI_Z(gs(RRA))
@@ -1516,12 +1516,12 @@ ISB:
         brvs ISB_overflow       ; branch on overflow
         rol _C                  ; ~C <- carry <- 0
         com _C                  ; un-toggle carry
-        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        cbr _P,V_FLAG           ; P &= ~V_FLAG
         ret
 ISB_overflow:
         rol _C                  ; C <- carry <- 0
         com _C                  ; un-toggle carry
-        ori _P,V_FLAG           ; P |= V_FLAG
+        sbr _P,V_FLAG           ; P |= V_FLAG
         ret
 xe3_ISB_inx_undocumented:
         LDI_Z(gs(ISB))
@@ -1861,23 +1861,23 @@ x38_SEC:
         TICK(2)
 x58_CLI:
         adiw _PCL,1             ; PC++
-        andi _P,~I_FLAG         ; P &= ~I_FLAG
+        cbr _P,I_FLAG           ; P &= ~I_FLAG
         TICK(2)
 x78_SEI:
         adiw _PCL,1             ; PC++
-        ori _P,I_FLAG           ; P |= I_FLAG
+        sbr _P,I_FLAG           ; P |= I_FLAG
         TICK(2)
 xb8_CLV:
         adiw _PCL,1             ; PC++
-        andi _P,~V_FLAG         ; P &= ~V_FLAG
+        cbr _P,V_FLAG           ; P &= ~V_FLAG
         TICK(2)
 xd8_CLD:
         adiw _PCL,1             ; PC++
-        andi _P,~D_FLAG         ; P &= ~D_FLAG
+        cbr _P,D_FLAG           ; P &= ~D_FLAG
         TICK(2)
 xf8_SED:
         adiw _PCL,1             ; PC++
-        ori _P,D_FLAG           ; P |= D_FLAG
+        sbr _P,D_FLAG           ; P |= D_FLAG
         TICK(2)
 
 /*************************** REGISTER INSTRUCTIONS ****************************/
@@ -1959,9 +1959,9 @@ x00_BRK:
         PUSH(_PCH)              ; push address of the BRK instruction +2
         PUSH(_PCL)
         rcall pack_flags        ;
-        ori _P,B_FLAG           ; P |= B_FLAG
+        sbr _P,B_FLAG           ; P |= B_FLAG
         PUSH(_P)                ; stack[S--] <- P
-        ori _P,I_FLAG           ; P |= I_FLAG (disable interrupts)
+        sbr _P,I_FLAG           ; P |= I_FLAG (disable interrupts)
         ldi addr_lo,0xfe        ;
         ldi addr_hi,0xff        ;
         rcall mem_read_16       ; PC <- mem_read(0xfffe)
