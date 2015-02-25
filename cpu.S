@@ -225,26 +225,20 @@ addr_abs:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
-/* cycles (ram): 9+ret = 13 */
-/* cycles (rom): 13+ret = 17 */
+/* cycles: 9+ret = 13 */
 .L__stack_usage = 0
         adiw _PCL,2             ; PC += 2
         mov addr_lo,data        ; addr_lo <- data
-        movw ZL,_PCL            ;
+        movw ZL,_PCL            ; Z <- PC
         adiw _PCL,1             ; PC++
-        cpi ZH,RAM_PAGES        ; branch if address is above RAM
-        brsh addr_abs_hi        ;
-        subi ZH,hi8(-(ram))     ;
-        ld addr_hi,Z            ; load from ram[addr]
-        ret
+        brpl addr_abs_lo        ;
 addr_abs_hi:
-        cpi ZH,0xc0             ; branch if PCH < 0xc0
-        brlo addr_abs_io        ;
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm addr_hi,Z           ; addr_hi <- rom[PC - 0xc0000]
         ret
-addr_abs_io:
-        ldi addr_hi,0xff        ; other addresses return 0xff
+addr_abs_lo:
+        subi ZH,hi8(-(ram))     ;
+        ld addr_hi,Z            ; load from ram[addr]
         ret
         .size        addr_abs, .-addr_abs
         .section        .text.cpu_reset,"ax",@progbits
