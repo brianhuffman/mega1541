@@ -382,26 +382,19 @@ ticked:
 load_opcode:
         movw ZL,_PCL            ;
         cpi ZH,0xc0             ;
-        brlo pc_no_rom          ; branch if PC < 0xc000 */
-pc_in_rom:
+        brlo load_opcode_ram    ; branch if PC < 0xc000
+load_opcode_rom:
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm opcode,Z+           ; opcode <- rom[PC - 0xc0000]
         lpm data,Z+             ; data <- rom[PC+1 - 0xc0000]
         movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
         ijmp                    ; jmp (opcode_table + opcode)
-pc_no_rom:
-        cpi ZH,RAM_PAGES        ;
-        brsh pc_no_ram          ; branch if PC is above RAM
-pc_in_ram:
+load_opcode_ram:
         subi ZH,hi8(-(ram))     ;
         ld opcode,Z+            ; opcode <- ram[PC]
         ld data,Z               ; data <- ram[PC+1]
         movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
         ijmp                    ; jmp (opcode_table + opcode)
-pc_no_ram:
-        ldi opcode,0xff         ; other addresses return 0xff
-        ldi data,0xff           ; other addresses return 0xff
-        rjmp xff_ISB_abx_undocumented
 
 /* align to 256-word (512-byte) boundary */
 .p2align 9
