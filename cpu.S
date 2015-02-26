@@ -954,7 +954,7 @@ xa2_LDX_imm:
         ldi cycles,2            ; cycles <- 2
 LDX:
         mov _X,data             ; X <- data
-        sub _Z,data             ;
+        mov _Z,data             ;
         mov _N,data             ;
         rjmp tick               ;
 xa6_LDX_zpg:
@@ -974,7 +974,7 @@ xa0_LDY_imm:
         ldi cycles,2            ; cycles <- 2
 LDY:
         mov _Y,data             ; Y <- data
-        sub _Z,data             ;
+        mov _Z,data             ;
         mov _N,data             ;
         rjmp tick               ;
 xa4_LDY_zpg:
