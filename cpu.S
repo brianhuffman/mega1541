@@ -11,9 +11,7 @@ _X = 5
 _Y = 6
 _S = 7
 _P = 17
-_N = 9
-_Z = 10
-_C = 11
+_NZC = 8
 _PCL = 28
 _PCH = 29
 time0 = 18
@@ -39,6 +37,10 @@ temp1 = 27
 temp2 = 20
 temp3 = 25
 temp4 = 30
+
+;;; Format of status flag (6502 vs AVR)
+;;; 6502: NV1BDIZC
+;;; AVR:  ITHSVNZC
 
 /* Status flags */
 C_FLAG = 0x01
@@ -192,12 +194,12 @@ unpack_flags:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-        mov _N,_P               ; N <- P
-        bst _P,0                ; t <- P.0
-        bld _C,0                ; C <- t
-        clr _Z                  ; Z <- 0
-        sbrs _P,1               ; skip if P.1 is set
-        inc _Z                  ; Z++ if P.1 is clear
+        bst _P,0                ; C <- P.0
+        bld _NZC,0
+        bst _P,1                ; Z <- P.1
+        bld _NZC,1
+        bst _P,7                ; N <- P.7
+        bld _NZC,2
         ret
         .size        unpack_flags, .-unpack_flags
         .section        .text.pack_flags,"ax",@progbits
@@ -207,13 +209,14 @@ pack_flags:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-        cbr _P,B_FLAG|C_FLAG    ; clear B and C flags
-        or _P,_C                ; P.0 <- C.0
-        bst _N,7                ;
-        bld _P,7                ; P.7 <- N.7
-        sbr _P,Z_FLAG|0x20      ; set Z flag and 1 flag
-        cpse _Z,__zero_reg__    ; skip if Z = 0
-        cbr _P,Z_FLAG           ; clear Z flag if Z != 0
+        bst _NZC,0              ; P.0 <- C
+        bld _P,0
+        bst _NZC,1              ; P.1 <- Z
+        bld _P,1
+        bst _NZC,2              ; P.7 <- N
+        bld _P,7
+        cbr _P,B_FLAG           ; clear B flag
+        sbr _P,0x20             ; set 1 flag
         ret
         .size        pack_flags, .-pack_flags
         .section        .text.addr_abs,"ax",@progbits
@@ -339,9 +342,7 @@ cpu_main:
         push _Y
         push _S
         push _P
-        push _N
-        push _Z
-        push _C
+        push _NZC
         push time0
         push time1
         push time2
@@ -353,6 +354,7 @@ cpu_main:
         lds _Y,reg_y
         lds _S,reg_s
         lds _P,reg_p
+        in _NZC,__SREG__        ; copy upper bits of _NZC from AVR status
         call unpack_flags       ; load N, Z, and C from P
         lds time0,time_left
         lds time1,time_left+1
@@ -668,9 +670,9 @@ x09_ORA_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 ORA:
+        out __SREG__,_NZC
         or _A,data              ; A |= data
-        mov _Z,_A
-        mov _N,_A
+        in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 x0d_ORA_abs:
         LDI_X(gs(ORA))
@@ -697,9 +699,9 @@ x29_AND_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 AND:
+        out __SREG__,_NZC
         and _A,data             ; A &= data
-        mov _Z,_A
-        mov _N,_A
+        in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 x2d_AND_abs:
         LDI_X(gs(AND))
@@ -726,9 +728,9 @@ x49_EOR_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 EOR:
+        out __SREG__,_NZC
         eor _A,data             ; A ^= data
-        mov _Z,_A
-        mov _N,_A
+        in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 x4d_EOR_abs:
         LDI_X(gs(EOR))
@@ -758,19 +760,15 @@ ADC:
         sbrc _P,3               ; skip if decimal mode is clear
         rjmp ADC_dec            ; jump if decimal mode is set
 ADC_bin:
-        lsr _C                  ; carry <- C <- 0
+        out __SREG__,_NZC       ; carry <- C
         adc _A,data             ; (carry, A) <- A + data + carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
-        brvs ADC_bin_overflow   ; branch on overflow
-        rol _C                  ; C <- carry <- 0
-        cbr _P,V_FLAG           ; P &= ~V_FLAG
-        rjmp tick
-ADC_bin_overflow:
-        rol _C                  ; C <- carry <- 0
-        sbr _P,V_FLAG           ; P |= V_FLAG
+        in _NZC,__SREG__        ; save N,Z,C
+        bst _NZC,3              ; P.6 <- overflow
+        bld _P,6
         rjmp tick
 ADC_dec:
+        rjmp ADC_bin
+/*
         mov temp4,_A            ; temp4 <- A
         mov temp0,_A            ; total <- A
         ldi temp1,0             ;
@@ -815,6 +813,7 @@ ADC_dec:
         inc _C                  ; C <- 1 if temp1 > 0
         mov _A,temp0            ; A <- lo8(total)
         rjmp tick
+*/
 x6d_ADC_abs:
         LDI_X(gs(ADC))
         rjmp read_abs
@@ -840,9 +839,10 @@ xa9_LDA_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 LDA:
+        out __SREG__,_NZC       ; carry <- C
         mov _A,data             ; A <- data
-        sub _Z,data             ;
-        mov _N,data             ;
+        tst _A
+        in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 xad_LDA_abs:
         LDI_X(gs(LDA))
@@ -869,13 +869,10 @@ xc9_CMP_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 CMP:
-        mov _Z,_A               ; Z <- A
-        sub _Z,data             ; Z <- A - data
-        mov _N,_Z               ; N <- A - data
-        clr _C                  ;
-        brlo CMP_carry          ; branch if A < data
-        inc _C                  ; C <- 1 if A >= data
-CMP_carry:
+        cp _A,data              ; A - data
+        in _NZC,__SREG__        ; save N,Z,C
+        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
+        eor _NZC,temp0
         rjmp tick
 xcd_CMP_abs:
         LDI_X(gs(CMP))
@@ -905,19 +902,11 @@ xeb_SBC_imm_undocumented:
 SBC:
         ;; N, V, Z, C are set the same in decimal and binary mode
         com data                ; data <- ~data
-        lsr _C                  ; carry <- C <- 0
+        out __SREG__,_NZC       ; carry <- C
         adc _A,data             ; (carry, A) <- A + data + carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
-        brvs SBC_overflow       ; branch on overflow
-        rol _C                  ; C <- carry <- 0
-        cbr _P,V_FLAG           ; P &= ~V_FLAG
-        sbrc _P,3               ; skip if decimal mode is clear
-        rjmp SBC_dec1           ; jump if decimal mode is set
-        rjmp tick
-SBC_overflow:
-        rol _C                  ; C <- carry <- 0
-        sbr _P,V_FLAG           ; P |= V_FLAG
+        in _NZC,__SREG__        ; save N,Z,C
+        bst _NZC,3              ; P.6 <- overflow
+        bld _P,6
         sbrs _P,3               ; skip if decimal mode is set
         rjmp tick
 SBC_dec1:
@@ -930,8 +919,8 @@ SBC_dec1:
         subi temp0,-16          ; A += 16 if subi underflowed low nybble
 SBC_dec2:
         ;; fix up upper nybble
-        sbrs _C,0               ; skip if C.0 = 1
-        subi temp0,0x60         ; if C.0 = 0, then A -= 0x60
+        sbrs _NZC,0             ; skip if C = 1
+        subi temp0,0x60         ; if C = 0, then A -= 0x60
         mov _A,temp0            ; A <- temp
         rjmp tick
 xed_SBC_abs:
@@ -953,9 +942,10 @@ xa2_LDX_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 LDX:
+        out __SREG__,_NZC       ; carry <- C
         mov _X,data             ; X <- data
-        mov _Z,data             ;
-        mov _N,data             ;
+        tst _X
+        in _NZC,__SREG__        ; save N,Z,C
         rjmp tick               ;
 xa6_LDX_zpg:
         LDI_Z(gs(LDX))
@@ -973,9 +963,10 @@ xa0_LDY_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 LDY:
+        out __SREG__,_NZC       ; carry <- C
         mov _Y,data             ; Y <- data
-        mov _Z,data             ;
-        mov _N,data             ;
+        tst _Y
+        in _NZC,__SREG__        ; save N,Z,C
         rjmp tick               ;
 xa4_LDY_zpg:
         LDI_Z(gs(LDY))
@@ -993,13 +984,10 @@ xe0_CPX_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 CPX:
-        mov _Z,_X               ; Z <- X
-        sub _Z,data             ; Z <- X - data
-        mov _N,_Z               ; N <- X - data
-        clr _C                  ; C <- 0
-        brlo CPX_carry          ; branch if X < data
-        inc _C                  ; C <- 1 if X >= data
-CPX_carry:
+        cp _X,data              ; X - data
+        in _NZC,__SREG__        ; save N,Z,C
+        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
+        eor _NZC,temp0
         rjmp tick
 xe4_CPX_zpg:
         LDI_Z(gs(CPX))
@@ -1011,13 +999,10 @@ xc0_CPY_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 CPY:
-        mov _Z,_Y               ; Z <- Y
-        sub _Z,data             ; Z <- Y - data
-        mov _N,_Z               ; N <- Y - data
-        clr _C                  ; C <- 0
-        brlo CPY_carry          ; branch if Y < data
-        inc _C                  ; C <- 1 if Y >= data
-CPY_carry:
+        cp _Y,data              ; Y - data
+        in _NZC,__SREG__        ; save N,Z,C
+        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
+        eor _NZC,temp0
         rjmp tick
 xc4_CPY_zpg:
         LDI_Z(gs(CPY))
@@ -1032,18 +1017,22 @@ x2c_BIT_abs:
         LDI_X(gs(BIT))
         rjmp read_abs
 BIT:
-        bst data,6              ;
-        bld _P,6                ; V <- data.6
-        mov _N,data             ; N <- data.7
-        and data,_A             ;
-        mov _Z,data             ; Z <- data & A
+        bst data,7              ; N <- data.7
+        bld _NZC,2
+        bst data,6              ; P.6 <- data.6
+        bld _P,6
+        and data,_A             ; Z <- data & A
+        in temp0,__SREG__
+        bst temp0,1
+        bld _NZC,1
         rjmp tick
 
 /* Undocumented read instructions */
 
 LAX:
-        mov _Z,data             ;
-        mov _N,data             ;
+        out __SREG__,_NZC       ; carry <- C
+        tst data
+        in _NZC,__SREG__        ; save N,Z,C
         mov _X,data             ;
         mov _A,data             ;
         rjmp tick
@@ -1186,43 +1175,30 @@ read_iny_carry:
 
 x0a_ASL_acc:
         adiw _PCL,1             ; PC++
-        clr _C                  ; C <- 0
         lsl _A                  ; A <- A << 1, carry <- A bit 7
-        rol _C                  ; C <- carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x2a_ROL_acc:
         adiw _PCL,1             ; PC++
-        lsr _C                  ; carry <- C, C <- 0
+        out __SREG__,_NZC       ; carry <- C
         rol _A                  ; carry <- A7, A <- [A6, A5 .. A0, carry]
-        rol _C                  ; C <- carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x4a_LSR_acc:
         adiw _PCL,1             ; PC++
-        clr _C                  ; C <- 0
         lsr _A                  ; A <- [0, A7, .. A2, A1], carry <- A0
-        rol _C                  ; C <- carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x6a_ROR_acc:
         adiw _PCL,1             ; PC++
-        lsr _C                  ; carry <- C, C <- 0
+        out __SREG__,_NZC       ; carry <- C
         ror _A                  ; A <- [carry, A7 .. A2, A1], carry <- A0
-        rol _C                  ; C <- carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 
 ASL:
-        clr _C                  ; C <- 0
         lsl data                ; A <- A << 1, carry <- A bit 7
-        rol _C                  ; C <- carry
-        mov _Z,data             ;
-        mov _N,data             ;
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 x06_ASL_zpg:
         LDI_Z(gs(ASL))
@@ -1237,11 +1213,9 @@ x1e_ASL_abx:
         LDI_X(gs(ASL))
         rjmp modify_abx
 ROL:
-        lsr _C                  ; carry <- C, C <- 0
+        out __SREG__,_NZC       ; carry <- C
         rol data                ; carry <- A7, A <- [A6, A5 .. A0, carry]
-        rol _C                  ; C <- carry
-        mov _Z,data             ;
-        mov _N,data             ;
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 x26_ROL_zpg:
         LDI_Z(gs(ROL))
@@ -1256,11 +1230,8 @@ x3e_ROL_abx:
         LDI_X(gs(ROL))
         rjmp modify_abx
 LSR:
-        clr _C                  ; C <- 0
         lsr data                ; A <- [0, A7, .. A2, A1], carry <- A0
-        rol _C                  ; C <- carry
-        mov _Z,data             ;
-        mov _N,data             ;
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 x46_LSR_zpg:
         LDI_Z(gs(LSR))
@@ -1275,11 +1246,9 @@ x5e_LSR_abx:
         LDI_X(gs(LSR))
         rjmp modify_abx
 ROR:
-        lsr _C                  ; carry <- C, C <- 0
+        out __SREG__,_NZC       ; carry <- C
         ror data                ; A <- [carry, A7 .. A2, A1], carry <- A0
-        rol _C                  ; C <- carry
-        mov _Z,data             ;
-        mov _N,data             ;
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 x66_ROR_zpg:
         LDI_Z(gs(ROR))
@@ -1294,9 +1263,9 @@ x7e_ROR_abx:
         LDI_X(gs(ROR))
         rjmp modify_abx
 DEC:
+        out __SREG__,_NZC       ; carry <- C
         dec data                ; data--
-        mov _Z,data             ;
-        mov _N,data             ;
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 xc6_DEC_zpg:
         LDI_Z(gs(DEC))
@@ -1311,9 +1280,9 @@ xde_DEC_abx:
         LDI_X(gs(DEC))
         rjmp modify_abx
 INC:
+        out __SREG__,_NZC       ; carry <- C
         inc data                ; data++
-        mov _Z,data             ;
-        mov _N,data             ;
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 xe6_INC_zpg:
         LDI_Z(gs(INC))
@@ -1329,14 +1298,10 @@ xfe_INC_abx:
         rjmp modify_abx
 
 SLO:
-        ;; ASL
-        lsr _C                  ; carry <- C <- 0
+        ;; ASL + ORA
         lsl data                ; carry <- data.7 <- ... <- data.0 <- 0
-        rol _C                  ; C <- carry <- 0
-        ;; ORA
         or _A,data              ; A |= data
-        mov _Z,_A
-        mov _N,_A
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 x03_SLO_inx_undocumented:
         LDI_Z(gs(SLO))
@@ -1360,14 +1325,11 @@ x1f_SLO_abx_undocumented:
         LDI_Z(gs(SLO))
         rjmp modify_abx
 RLA:
-        /* ROL */
-        lsr _C                  ; carry <- C <- 0
+        ;; ROL + AND
+        out __SREG__,_NZC       ; carry <- C
         rol data                ; carry <- data.7 <- ... <- data.0 <- carry
-        rol _C                  ; C <- carry <- 0
-        /* AND */
         and _A,data             ; A &= data
-        mov _Z,_A
-        mov _N,_A
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 x23_RLA_inx_undocumented:
         LDI_Z(gs(RLA))
@@ -1391,14 +1353,10 @@ x3f_RLA_abx_undocumented:
         LDI_Z(gs(RLA))
         rjmp modify_abx
 SRE:
-        /* LSR */
-        lsr _C                  ; carry <- C <- 0
+        ;; LSR + EOR
         lsr data                ; carry <- data.0 <- ... <- data.7 <- 0
-        rol _C                  ; C <- carry <- 0
-        /* EOR */
         eor _A,data             ; A ^= data
-        mov _Z,_A
-        mov _N,_A
+        in _NZC,__SREG__        ; save N,Z,C
         ret
 x43_SRE_inx_undocumented:
         LDI_Z(gs(SRE))
@@ -1422,20 +1380,13 @@ x5f_SRE_abx_undocumented:
         LDI_Z(gs(SRE))
         rjmp modify_abx
 RRA:
-        /* ROR */
-        lsr _C                  ; carry <- C <- 0
+        ;; ROR + ADC
+        out __SREG__,_NZC       ; carry <- C
         ror data                ; carry <- data.0 <- ... <- data.7 <- carry
-        /* ADC */
         adc _A,data             ; (carry, A) <- A + data + carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
-        brvs RRA_overflow       ; branch on overflow
-        rol _C                  ; C <- carry <- 0
-        cbr _P,V_FLAG           ; P &= ~V_FLAG
-        ret
-RRA_overflow:
-        rol _C                  ; C <- carry <- 0
-        sbr _P,V_FLAG           ; P |= V_FLAG
+        in _NZC,__SREG__        ; save N,Z,C
+        bst _NZC,3              ; P.6 <- overflow
+        bld _P,6
         ret
 x63_RRA_inx_undocumented:
         LDI_Z(gs(RRA))
@@ -1459,16 +1410,12 @@ x7f_RRA_abx_undocumented:
         LDI_Z(gs(RRA))
         rjmp modify_abx
 DCP:
-        /* DEC */
+        ;; DEC + CMP
         dec data                ; data--
-        /* CMP */
-        mov _Z,_A               ; Z <- A
-        sub _Z,data             ; Z <- A - data
-        mov _N,_Z               ; N <- A - data
-        clr _C                  ;
-        brlo DCP_carry          ; branch if A < data
-        inc _C                  ; C <- 1 if A >= data
-DCP_carry:
+        cp _A,data              ; A - data
+        in _NZC,__SREG__        ; save N,Z,C
+        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
+        eor _NZC,temp0
         ret
 xc3_DCP_inx_undocumented:
         LDI_Z(gs(DCP))
@@ -1492,23 +1439,15 @@ xdf_DCP_abx_undocumented:
         LDI_Z(gs(DCP))
         rjmp modify_abx
 ISB:
-        /* INC */
+        ;; INC + SBC
         inc data                ; data++
-        /* SBC */
-        com _C                  ; toggle carry
-        lsr _C                  ; carry <- ~C <- 0
-        sbc _A,data             ; (carry, A) <- A - data - carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
-        brvs ISB_overflow       ; branch on overflow
-        rol _C                  ; ~C <- carry <- 0
-        com _C                  ; un-toggle carry
-        cbr _P,V_FLAG           ; P &= ~V_FLAG
-        ret
-ISB_overflow:
-        rol _C                  ; C <- carry <- 0
-        com _C                  ; un-toggle carry
-        sbr _P,V_FLAG           ; P |= V_FLAG
+        com data                ; data <- ~data
+        out __SREG__,_NZC       ; carry <- C
+        adc _A,data             ; (carry, A) <- A + data + carry
+        in _NZC,__SREG__        ; save N,Z,C
+        bst _NZC,3              ; P.6 <- overflow
+        bld _P,6
+        com data                ; data <- ~data
         ret
 xe3_ISB_inx_undocumented:
         LDI_Z(gs(ISB))
@@ -1783,13 +1722,13 @@ write_aby:
 
 x10_BPL:
         adiw _PCL,2             ; PC += 2
-        tst _N                  ; branch on N >= 0
-        brpl take_branch        ;
+        bst _NZC,2              ; branch on N clear
+        brtc take_branch
         TICK(2)
 x30_BMI:
         adiw _PCL,2             ; PC += 2
-        tst _N                  ; branch on N < 0
-        brmi take_branch        ;
+        bst _NZC,2              ; branch on N set
+        brts take_branch
         TICK(2)
 x50_BVC:
         adiw _PCL,2             ; PC += 2
@@ -1816,35 +1755,36 @@ branch_same_page:
         TICK(3)                 ; 3 cycles for branch to same page
 x90_BCC:
         adiw _PCL,2             ; PC += 2
-        tst _C                  ; branch on C = 0
-        breq take_branch        ;
+        bst _NZC,0              ; branch on C clear
+        brtc take_branch
         TICK(2)
 xb0_BCS:
         adiw _PCL,2             ; PC += 2
-        tst _C                  ; branch on C = 1
-        brne take_branch        ;
+        bst _NZC,0              ; branch on C set
+        brts take_branch
         TICK(2)
 xd0_BNE:
         adiw _PCL,2             ; PC += 2
-        tst _Z                  ; branch on Z != 0
-        brne take_branch        ;
+        bst _NZC,1              ; branch on Z clear
+        brtc take_branch
         TICK(2)
 xf0_BEQ:
         adiw _PCL,2             ; PC += 2
-        tst _Z                  ; branch on Z = 0
-        breq take_branch        ;
+        bst _NZC,1              ; branch on Z set
+        brts take_branch
         TICK(2)
 
 /***************************** FLAG INSTRUCTIONS ******************************/
 
 x18_CLC:
         adiw _PCL,1             ; PC++
-        clr _C                  ; C <- 0
+        clt                     ; C <- 0
+        bld _NZC,0
         TICK(2)
 x38_SEC:
         adiw _PCL,1             ; PC++
-        clr _C                  ;
-        inc _C                  ; C <- 1
+        set                     ; C <- 1
+        bld _NZC,0
         TICK(2)
 x58_CLI:
         adiw _PCL,1             ; PC++
@@ -1871,63 +1811,69 @@ xf8_SED:
 
 xca_DEX:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         dec _X                  ; X--
-        mov _Z,_X               ;
-        mov _N,_X               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 xe8_INX:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         inc _X                  ; X++
-        mov _Z,_X               ;
-        mov _N,_X               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x88_DEY:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         dec _Y                  ; Y--
-        mov _Z,_Y               ;
-        mov _N,_Y               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 xc8_INY:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         inc _Y                  ; Y++
-        mov _Z,_Y               ;
-        mov _N,_Y               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x8a_TXA:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         mov _A,_X               ; A <- X
-        mov _Z,_X               ;
-        mov _N,_X               ;
+        tst _A
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 xaa_TAX:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         mov _X,_A               ; X <- A
-        mov _Z,_A               ;
-        mov _N,_A               ;
+        tst _X
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x98_TYA:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         mov _A,_Y               ; A <- Y
-        mov _Z,_Y               ;
-        mov _N,_Y               ;
+        tst _A
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 xa8_TAY:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         mov _Y,_A               ; Y <- A
-        mov _Z,_A               ;
-        mov _N,_A               ;
+        tst _Y
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x9a_TXS:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         mov _S,_X               ; S <- X
-        mov _Z,_X               ;
-        mov _N,_X               ;
+        tst _S
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 xba_TSX:
         adiw _PCL,1             ; PC++
+        out __SREG__,_NZC       ; carry <- C
         mov _X,_S               ; X <- S
-        mov _Z,_S               ;
-        mov _N,_S               ;
+        tst _X
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 xea_NOP:
 x1a_NOP_undocumented:
@@ -1996,8 +1942,9 @@ x48_PHA:
 x68_PLA:
         adiw _PCL,1             ; PC++
         PULL(_A)                ; A <- stack[++S]
-        mov _Z,_A               ; Z <- A
-        mov _N,_A               ; N <- A
+        out __SREG__,_NZC       ; carry <- C
+        tst _A
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(4)
 
 /******************************************************************************/
@@ -2006,20 +1953,16 @@ x0b_ANC_imm_undocumented:
 x2b_ANC_imm_undocumented:
         adiw _PCL,2             ; PC += 2
         and _A,data             ; A &= data
-        mov _Z,_A               ;
-        mov _N,_A               ;
-        bst _A,7                ;
-        bld _C,0                ; C <- A.7
+        in _NZC,__SREG__        ; save N,Z,C
+        bst _A,7                ; C <- A.7
+        bld _NZC,0
         TICK(2)
 x4b_ASR_imm_undocumented:
-        /* AND + LSR */
+        ;; AND + LSR
         adiw _PCL,2             ; PC += 2
         and _A,data             ; A &= data
-        clr _C                  ; C <- 0
         lsr _A                  ; A <- [0, A7, .. A2, A1], carry <- A0
-        rol _C                  ; C <- carry
-        mov _Z,_A               ;
-        mov _N,_A               ;
+        in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x6b:
         adiw _PCL,1             ; PC++
@@ -2046,12 +1989,9 @@ xcb_SBX_imm_undocumented:
         adiw _PCL,2             ; PC += 2
         and _X,_A               ; X &= A
         sub _X,data             ; X -= data
-        clr _C                  ; C <- 0
-        brlo .L356              ; branch if X & A < data
-        inc _C                  ; C <- 1 if X & A >= data
-.L356:
-        mov _Z,_X               ;
-        mov _N,_X               ;
+        in _NZC,__SREG__        ; save N,Z,C
+        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
+        eor _NZC,temp0
         TICK(2)
 x02:
 x12:
@@ -2087,9 +2027,7 @@ xf2:
         pop time2
         pop time1
         pop time0
-        pop _C
-        pop _Z
-        pop _N
+        pop _NZC
         pop _P
         pop _S
         pop _Y
