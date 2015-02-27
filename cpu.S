@@ -20,8 +20,8 @@ time2 = 14
 time3 = 15
 /* Loop-local register variables */
 cycles = 16
-opcode = 20
-opcode_pointer = 21
+opcode = 10
+opcode_pointer = 11
 data = 22
 value = 2
 addr_lo = 24
@@ -364,7 +364,9 @@ cpu_main:
 /* frame size = 0 */
 /* stack size = 14 */
 .L__stack_usage = 14
-        ldi opcode_pointer,hi8(gs(opcode_table))     ;
+        ;; initialize constant registers
+        ldi r30,hi8(gs(opcode_table))
+        mov opcode_pointer,r30
         add time0,r22           ; time_left += cycles
         adc time1,r23           ;
         adc time2,r24           ;
