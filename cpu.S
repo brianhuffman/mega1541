@@ -6,7 +6,7 @@ __tmp_reg__ = 0
 __zero_reg__ = 1
 
 /* Static register variables */
-_A = 4
+_A = 20
 _X = 5
 _Y = 6
 _S = 7
@@ -875,17 +875,15 @@ SBC:
         rjmp tick
 SBC_dec1:
         ;; fix up lower nybble
-        mov temp0,_A            ; temp <- A
         brhs SBC_dec2           ; branch if adc half-carried
         ;; permute lower nybble: [6..f,0..9] -> [0..9,a..f]
-        subi temp0,6            ; A -= 6 if adc did not half-carry
+        subi _A,6               ; A -= 6 if adc did not half-carry
         brhc SBC_dec2           ; branch unless subi underflowed low nybble
-        subi temp0,-16          ; A += 16 if subi underflowed low nybble
+        subi _A,-16             ; A += 16 if subi underflowed low nybble
 SBC_dec2:
         ;; fix up upper nybble
         sbrs _NZC,0             ; skip if C = 1
-        subi temp0,0x60         ; if C = 0, then A -= 0x60
-        mov _A,temp0            ; A <- temp
+        subi _A,0x60            ; if C = 0, then A -= 0x60
         rjmp tick
 xed_SBC_abs:
         LDI_X(gs(SBC))
