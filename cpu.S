@@ -734,53 +734,69 @@ ADC_bin:
         bld _P,6
         rjmp tick
 ADC_dec:
-        rjmp ADC_bin
-/*
-        mov temp4,_A            ; temp4 <- A
-        mov temp0,_A            ; total <- A
-        ldi temp1,0             ;
-        add temp0,_C            ; total += C
-        adc temp1,__zero_reg__  ;
-        add temp0,data          ; total += data
-        adc temp1,__zero_reg__  ;
-        mov _Z,temp0            ; Z <- lo8(total)
-        mov temp3,_A            ; temp3 <- A
-        andi temp3,0x0f         ; temp3 <- A & 0x0f
-        add temp3,_C            ; temp3 += C
-        mov temp2,data          ; temp2 <- data
-        andi temp2,0x0f         ; temp2 <- data & 0x0f
-        add temp3,temp2         ; temp3 += temp2
-        cpi temp3,10            ;
-        brlo .L12               ; branch if temp3 < 10
-        cpi temp3,26            ;
-        brsh .L13               ; branch if temp3 < 26
-        subi temp0,-6           ; total += 6
-        sbci temp1,-1           ;
-        rjmp .L12               ;
-.L13:
-        subi temp0,10           ; total -= 10
-        sbc temp1,__zero_reg__  ;
-.L12:
-        ;; set N, V after low nybble fixup
-        mov _N,temp0            ; N <- lo8(total)
-        eor data,temp0          ; data <- (data ^ total) & (A ^ total)
-        eor temp4,temp0         ;
-        and data,temp4          ;
-        bst data,7              ; t <- (data ^ total) & (A ^ total) bit 7
-        bld _P,6                ; P.overflow <- t
-        ;; high nybble fixup
-        cpi temp0,0xa0          ; total
-        cpc temp1,__zero_reg__  ; total
-        brlo .L16               ; branch if total < 0xa0
-        subi temp0,-96          ; total += 0x60
-        sbci temp1,-1           ;
-.L16:
-        clr _C                  ; C <- 0
-        cpse temp1,__zero_reg__ ;
-        inc _C                  ; C <- 1 if temp1 > 0
-        mov _A,temp0            ; A <- lo8(total)
+        out __SREG__,_NZC       ; carry <- C
+        adc _A,data             ; A <- A + data + carry, branch if no half-carry
+        brhc ADC_dec_a
+        ;; sum of low nybbles >= 0x10
+        brcs ADC_dec_b
+        ;; sum of bytes < 0x100
+        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
+        brhs ADC_dec_d
+        ;; sum of low nybbles >= 0x1a
+        brcs ADC_dec_f
+        ;; 0x9a <= sum of bytes < 0x100 (keep high nybble fixup)
+        subi _A,0x10            ; A -= 0x10 (otherwise +6 would make low nybble carry twice)
+        in _NZC,__SREG__        ; save N,Z,C
+        eor _NZC,const_one      ; set C iff subi did not borrow
         rjmp tick
-*/
+ADC_dec_a:
+        ;; sum of low nybbles < 0x10
+        brcs ADC_dec_c
+        ;; sum of bytes < 0x100
+        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
+        brhc ADC_dec_d
+        ;; sum of low nybbles < 0x0a (undo low fixup)
+        brcc ADC_dec_g
+        ;; sum of bytes < 0x9a (undo high fixup)
+        subi _A,0x66            ; A -= 0x66 (undo all BCD fixup)
+        cbr _NZC,1              ; C <- 0
+        rjmp tick
+ADC_dec_b:
+        ;; sum of low nybbles >= 0x10, sum of bytes >= 0x100
+        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
+        brhs ADC_dec_e
+        ;; sum of low nybbles >= 0x1a
+        subi _A,0x10            ; A -= 0x10 (otherwise +6 would make low nybble carry twice)
+        in _NZC,__SREG__        ; save N,Z,C
+        eor _NZC,const_one      ; set C iff subi did not borrow
+        rjmp tick
+ADC_dec_c:
+        ;; sum of low nybbles < 0x10, sum of bytes >= 0x100
+        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
+        brhc ADC_dec_e
+ADC_dec_g:
+        ;; sum of low nybbles < 0x0a, sum of bytes >= 0x9a (undo low nybble fixup only)
+        subi _A,0x06            ; A -= 0x06
+        sbr _NZC,1              ; C <- 1
+        rjmp tick
+ADC_dec_d:
+        ;; 0x0a <= sum of low nybbles < 0x1a, sum of bytes < 0x100
+        brcc ADC_dec_e
+        ;; sum of bytes < 0x9a (undo high nybble fixup)
+        subi _A,0x60            ; A -= 0x60
+        cbr _NZC,1              ; C <- 0
+        rjmp tick
+ADC_dec_e:
+        ;; 0x0a <= sum of low nybbles < 0x1a, sum of bytes >= 0x9a (keep all BCD fixup)
+        sbr _NZC,1              ; C <- 1
+        rjmp tick
+ADC_dec_f:
+        ;; sum of low nybbles >= 0x1a, sum of bytes < 0x9a (undo high nybble fixup)
+        ;; 0x9a <= sum of bytes < 0x100 (keep high nybble fixup)
+        subi _A,0x70            ; A -= 0x60 + 0x10 (undo high fixup and cancel 2nd low carry)
+        cbr _NZC,1              ; C <- 0
+        rjmp tick
+
 x6d_ADC_abs:
         LDI_X(gs(ADC))
         rjmp read_abs
