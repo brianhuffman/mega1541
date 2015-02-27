@@ -1713,19 +1713,6 @@ x70_BVS:
         bst _P,6                ; branch on P bit 6 = 1
         brts take_branch        ;
         TICK(2)
-take_branch:
-        add _PCL,data           ; PC += data
-        tst data
-        brcs branch_carry
-        brpl branch_same_page   ; branch if offset is positive
-        dec _PCH
-        TICK(4)                 ; 4 cycles for branch to previous page
-branch_carry:
-        brmi branch_same_page   ; branch if offset is negative
-        inc _PCH                ;
-        TICK(4)                 ; 4 cycles for branch to next page
-branch_same_page:
-        TICK(3)                 ; 3 cycles for branch to same page
 x90_BCC:
         adiw _PCL,2             ; PC += 2
         bst _NZC,0              ; branch on C clear
@@ -1746,6 +1733,19 @@ xf0_BEQ:
         bst _NZC,1              ; branch on Z set
         brts take_branch
         TICK(2)
+take_branch:
+        add _PCL,data           ; PC += data
+        tst data
+        brcs branch_carry
+        brpl branch_same_page   ; branch if offset is positive
+        dec _PCH
+        TICK(4)                 ; 4 cycles for branch to previous page
+branch_carry:
+        brmi branch_same_page   ; branch if offset is negative
+        inc _PCH                ;
+        TICK(4)                 ; 4 cycles for branch to next page
+branch_same_page:
+        TICK(3)                 ; 3 cycles for branch to same page
 
 /***************************** FLAG INSTRUCTIONS ******************************/
 
