@@ -102,34 +102,6 @@ N_FLAG = 0x80
         ldi ZL,lo8(value)       $ \
         ldi ZH,hi8(value)
 
-        .section        .text.mem_read,"ax",@progbits
-.global        mem_read
-        .type        mem_read, @function
-mem_read:
-/* input: addr_hi:addr_lo */
-/* output: data */
-/* touches: ZH, ZL */
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-        cpi addr_hi,RAM_PAGES   ; branch if addr_hi is above RAM
-        brsh mem_L6             ;
-        movw ZL,addr_lo         ;
-        subi ZH,hi8(-(ram))     ;
-        ld data,Z               ; load from ram[addr]
-        ret
-mem_L6:
-        cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
-        brlo mem_L9             ;
-        movw ZL,addr_lo         ;
-        subi ZH,hi8(-(dos1541-0xc000))  ;
-        lpm data,Z              ; load from rom[addr - 0xc0000]
-        ret
-mem_L9:
-        ldi data,0xff           ; other addresses return 0xff
-        ret
-        .size        mem_read, .-mem_read
         .section        .text.mem_read_16,"ax",@progbits
 .global        mem_read_16
         .type        mem_read_16, @function
@@ -143,9 +115,6 @@ mem_read_16:
 /* cycles (ram): 10+ret = 14 */
 /* cycles (rom): 15+ret = 19 */
 .L__stack_usage = 0
-        cpi addr_lo,0xff        ;
-        breq mem_L11            ; branch if addr_lo = $ff
-mem_16_ram:
         cpi addr_hi,RAM_PAGES   ;
         brsh mem_16_L6          ; branch if addr_hi is above RAM
         movw ZL,addr_lo         ;
@@ -165,13 +134,6 @@ mem_16_rom:
 mem_16_L9:
         ldi _PCL,0xff           ; other addresses return 0xff
         ldi _PCH,0xff           ; other addresses return 0xff
-        ret
-mem_L11:
-        rcall mem_read          ; data <- mem_read(addr)
-        mov _PCL,data           ; PCL <- data
-        adiw addr_lo,1          ; addr++
-        rcall mem_read          ; data <- mem_read(addr+1)
-        mov _PCH,data           ; PCH <- data
         ret
         .size        mem_read_16, .-mem_read_16
         .section        .text.clock_advance,"ax",@progbits
