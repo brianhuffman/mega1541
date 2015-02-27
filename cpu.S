@@ -1751,13 +1751,11 @@ branch_same_page:
 
 x18_CLC:
         adiw _PCL,1             ; PC++
-        clt                     ; C <- 0
-        bld _NZC,0
+        cbr _NZC,0x01           ; C <- 0
         TICK(2)
 x38_SEC:
         adiw _PCL,1             ; PC++
-        set                     ; C <- 1
-        bld _NZC,0
+        sbr _NZC,0x01           ; C <- 1
         TICK(2)
 x58_CLI:
         adiw _PCL,1             ; PC++
