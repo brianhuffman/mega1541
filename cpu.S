@@ -34,10 +34,6 @@ YH = 29
 ZL = 30
 ZH = 31
 temp0 = 26
-temp1 = 27
-temp2 = 20
-temp3 = 25
-temp4 = 30
 
 ;;; Format of status flag (6502 vs AVR)
 ;;; 6502: NV1BDIZC
