@@ -8,11 +8,11 @@ const_one = 2
 
 /* Static register variables */
 _A = 20
-_X = 5
-_Y = 6
-_S = 7
-_P = 17
-_NZC = 8
+_X = 4
+_Y = 5
+_S = 6
+_P = 16
+_NZC = 17
 _PCL = 28
 _PCH = 29
 time0 = 18
@@ -21,9 +21,9 @@ time2 = 14
 time3 = 15
 /* Loop-local register variables */
 value = 3
-cycles = 16
 opcode = 10
 opcode_pointer = 11
+cycles = 21
 data = 22
 addr_lo = 24
 addr_hi = 25
@@ -109,7 +109,7 @@ N_FLAG = 0x80
 mem_read_16:
 /* input: addr_hi:addr_lo */
 /* output: _PCH:_PCL */
-/* touches: ZH, ZL, data */
+/* touches: ZH, ZL */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
