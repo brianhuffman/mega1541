@@ -4,6 +4,7 @@ __SP_L__ = 0x3d
 __SREG__ = 0x3f
 __tmp_reg__ = 0
 __zero_reg__ = 1
+const_one = 2
 
 /* Static register variables */
 _A = 20
@@ -19,11 +20,11 @@ time1 = 19
 time2 = 14
 time3 = 15
 /* Loop-local register variables */
+value = 3
 cycles = 16
 opcode = 10
 opcode_pointer = 11
 data = 22
-value = 2
 addr_lo = 24
 addr_hi = 25
 XL = 26
@@ -327,6 +328,8 @@ cpu_main:
 /* stack size = 14 */
 .L__stack_usage = 14
         ;; initialize constant registers
+        ldi r30,1
+        mov const_one,r30
         ldi r30,hi8(gs(opcode_table))
         mov opcode_pointer,r30
         add time0,r22           ; time_left += cycles
@@ -835,8 +838,7 @@ xc9_CMP_imm:
 CMP:
         cp _A,data              ; A - data
         in _NZC,__SREG__        ; save N,Z,C
-        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
-        eor _NZC,temp0
+        eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         rjmp tick
 xcd_CMP_abs:
         LDI_X(gs(CMP))
@@ -948,8 +950,7 @@ xe0_CPX_imm:
 CPX:
         cp _X,data              ; X - data
         in _NZC,__SREG__        ; save N,Z,C
-        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
-        eor _NZC,temp0
+        eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         rjmp tick
 xe4_CPX_zpg:
         LDI_Z(gs(CPX))
@@ -963,8 +964,7 @@ xc0_CPY_imm:
 CPY:
         cp _Y,data              ; Y - data
         in _NZC,__SREG__        ; save N,Z,C
-        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
-        eor _NZC,temp0
+        eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         rjmp tick
 xc4_CPY_zpg:
         LDI_Z(gs(CPY))
@@ -1376,8 +1376,7 @@ DCP:
         dec data                ; data--
         cp _A,data              ; A - data
         in _NZC,__SREG__        ; save N,Z,C
-        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
-        eor _NZC,temp0
+        eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         ret
 xc3_DCP_inx_undocumented:
         LDI_Z(gs(DCP))
@@ -1952,8 +1951,7 @@ xcb_SBX_imm_undocumented:
         and _X,_A               ; X &= A
         sub _X,data             ; X -= data
         in _NZC,__SREG__        ; save N,Z,C
-        ldi temp0,1             ; invert C (AVR and 6502 have opposite convention for compare)
-        eor _NZC,temp0
+        eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         TICK(2)
 x02:
 x12:
