@@ -623,12 +623,51 @@ opcode_table:
 
 /***************************** READ INSTRUCTIONS ******************************/
 
-x01_ORA_inx:
-        LDI_X(gs(ORA))
-        rjmp read_inx
-x05_ORA_zpg:
-        LDI_Z(gs(ORA))
+#define READ_ZPG(label)           \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
         rjmp read_zpg
+
+#define READ_ZPX(label)           \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp read_zpx
+
+#define READ_ZPY(label)           \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp read_zpy
+
+#define READ_ABS(label)           \
+        ldi XL,lo8(gs(label))   $ \
+        ldi XH,hi8(gs(label))   $ \
+        rjmp read_abs
+
+#define READ_ABX(label)           \
+        ldi XL,lo8(gs(label))   $ \
+        ldi XH,hi8(gs(label))   $ \
+        rjmp read_abx
+
+#define READ_ABY(label)           \
+        ldi XL,lo8(gs(label))   $ \
+        ldi XH,hi8(gs(label))   $ \
+        rjmp read_aby
+
+#define READ_INX(label)           \
+        ldi XL,lo8(gs(label))   $ \
+        ldi XH,hi8(gs(label))   $ \
+        rjmp read_inx
+
+#define READ_INY(label)           \
+        ldi XL,lo8(gs(label))   $ \
+        ldi XH,hi8(gs(label))   $ \
+        rjmp read_iny
+
+
+x01_ORA_inx:
+        READ_INX(ORA)
+x05_ORA_zpg:
+        READ_ZPG(ORA)
 x09_ORA_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -638,26 +677,19 @@ ORA:
         in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 x0d_ORA_abs:
-        LDI_X(gs(ORA))
-        rjmp read_abs
+        READ_ABS(ORA)
 x11_ORA_iny:
-        LDI_X(gs(ORA))
-        rjmp read_iny
+        READ_INY(ORA)
 x15_ORA_zpx:
-        LDI_Z(gs(ORA))
-        rjmp read_zpx
+        READ_ZPX(ORA)
 x19_ORA_aby:
-        LDI_X(gs(ORA))
-        rjmp read_aby
+        READ_ABY(ORA)
 x1d_ORA_abx:
-        LDI_X(gs(ORA))
-        rjmp read_abx
+        READ_ABX(ORA)
 x21_AND_inx:
-        LDI_X(gs(AND))
-        rjmp read_inx
+        READ_INX(AND)
 x25_AND_zpg:
-        LDI_Z(gs(AND))
-        rjmp read_zpg
+        READ_ZPG(AND)
 x29_AND_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -667,26 +699,19 @@ AND:
         in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 x2d_AND_abs:
-        LDI_X(gs(AND))
-        rjmp read_abs
+        READ_ABS(AND)
 x31_AND_iny:
-        LDI_X(gs(AND))
-        rjmp read_iny
+        READ_INY(AND)
 x35_AND_zpx:
-        LDI_Z(gs(AND))
-        rjmp read_zpx
+        READ_ZPX(AND)
 x39_AND_aby:
-        LDI_X(gs(AND))
-        rjmp read_aby
+        READ_ABY(AND)
 x3d_AND_abx:
-        LDI_X(gs(AND))
-        rjmp read_abx
+        READ_ABX(AND)
 x41_EOR_inx:
-        LDI_X(gs(EOR))
-        rjmp read_inx
+        READ_INX(EOR)
 x45_EOR_zpg:
-        LDI_Z(gs(EOR))
-        rjmp read_zpg
+        READ_ZPG(EOR)
 x49_EOR_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -696,26 +721,19 @@ EOR:
         in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 x4d_EOR_abs:
-        LDI_X(gs(EOR))
-        rjmp read_abs
+        READ_ABS(EOR)
 x51_EOR_iny:
-        LDI_X(gs(EOR))
-        rjmp read_iny
+        READ_INY(EOR)
 x55_EOR_zpx:
-        LDI_Z(gs(EOR))
-        rjmp read_zpx
+        READ_ZPX(EOR)
 x59_EOR_aby:
-        LDI_X(gs(EOR))
-        rjmp read_aby
+        READ_ABY(EOR)
 x5d_EOR_abx:
-        LDI_X(gs(EOR))
-        rjmp read_abx
+        READ_ABX(EOR)
 x61_ADC_inx:
-        LDI_X(gs(ADC))
-        rjmp read_inx
+        READ_INX(ADC)
 x65_ADC_zpg:
-        LDI_Z(gs(ADC))
-        rjmp read_zpg
+        READ_ZPG(ADC)
 x69_ADC_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -794,26 +812,19 @@ ADC_dec_f:
         rjmp tick
 
 x6d_ADC_abs:
-        LDI_X(gs(ADC))
-        rjmp read_abs
+        READ_ABS(ADC)
 x71_ADC_iny:
-        LDI_X(gs(ADC))
-        rjmp read_iny
+        READ_INY(ADC)
 x75_ADC_zpx:
-        LDI_Z(gs(ADC))
-        rjmp read_zpx
+        READ_ZPX(ADC)
 x79_ADC_aby:
-        LDI_X(gs(ADC))
-        rjmp read_aby
+        READ_ABY(ADC)
 x7d_ADC_abx:
-        LDI_X(gs(ADC))
-        rjmp read_abx
+        READ_ABX(ADC)
 xa1_LDA_inx:
-        LDI_X(gs(LDA))
-        rjmp read_inx
+        READ_INX(LDA)
 xa5_LDA_zpg:
-        LDI_Z(gs(LDA))
-        rjmp read_zpg
+        READ_ZPG(LDA)
 xa9_LDA_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -824,26 +835,19 @@ LDA:
         in _NZC,__SREG__        ; save N,Z,C
         rjmp tick
 xad_LDA_abs:
-        LDI_X(gs(LDA))
-        rjmp read_abs
+        READ_ABS(LDA)
 xb1_LDA_iny:
-        LDI_X(gs(LDA))
-        rjmp read_iny
+        READ_INY(LDA)
 xb5_LDA_zpx:
-        LDI_Z(gs(LDA))
-        rjmp read_zpx
+        READ_ZPX(LDA)
 xb9_LDA_aby:
-        LDI_X(gs(LDA))
-        rjmp read_aby
+        READ_ABY(LDA)
 xbd_LDA_abx:
-        LDI_X(gs(LDA))
-        rjmp read_abx
+        READ_ABX(LDA)
 xc1_CMP_inx:
-        LDI_X(gs(CMP))
-        rjmp read_inx
+        READ_INX(CMP)
 xc5_CMP_zpg:
-        LDI_Z(gs(CMP))
-        rjmp read_zpg
+        READ_ZPG(CMP)
 xc9_CMP_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -853,26 +857,19 @@ CMP:
         eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         rjmp tick
 xcd_CMP_abs:
-        LDI_X(gs(CMP))
-        rjmp read_abs
+        READ_ABS(CMP)
 xd1_CMP_iny:
-        LDI_X(gs(CMP))
-        rjmp read_iny
+        READ_INY(CMP)
 xd5_CMP_zpx:
-        LDI_Z(gs(CMP))
-        rjmp read_zpx
+        READ_ZPX(CMP)
 xd9_CMP_aby:
-        LDI_X(gs(CMP))
-        rjmp read_aby
+        READ_ABY(CMP)
 xdd_CMP_abx:
-        LDI_X(gs(CMP))
-        rjmp read_abx
+        READ_ABX(CMP)
 xe1_SBC_inx:
-        LDI_X(gs(SBC))
-        rjmp read_inx
+        READ_INX(SBC)
 xe5_SBC_zpg:
-        LDI_Z(gs(SBC))
-        rjmp read_zpg
+        READ_ZPG(SBC)
 xe9_SBC_imm:
 xeb_SBC_imm_undocumented:
         adiw _PCL,2             ; PC += 2
@@ -900,20 +897,15 @@ SBC_dec2:
         subi _A,0x60            ; if C = 0, then A -= 0x60
         rjmp tick
 xed_SBC_abs:
-        LDI_X(gs(SBC))
-        rjmp read_abs
+        READ_ABS(SBC)
 xf1_SBC_iny:
-        LDI_X(gs(SBC))
-        rjmp read_iny
+        READ_INY(SBC)
 xf5_SBC_zpx:
-        LDI_Z(gs(SBC))
-        rjmp read_zpx
+        READ_ZPX(SBC)
 xf9_SBC_aby:
-        LDI_X(gs(SBC))
-        rjmp read_aby
+        READ_ABY(SBC)
 xfd_SBC_abx:
-        LDI_X(gs(SBC))
-        rjmp read_abx
+        READ_ABX(SBC)
 xa2_LDX_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -924,17 +916,13 @@ LDX:
         in _NZC,__SREG__        ; save N,Z,C
         rjmp tick               ;
 xa6_LDX_zpg:
-        LDI_Z(gs(LDX))
-        rjmp read_zpg
+        READ_ZPG(LDX)
 xae_LDX_abs:
-        LDI_X(gs(LDX))
-        rjmp read_abs
+        READ_ABS(LDX)
 xb6_LDX_zpy:
-        LDI_Z(gs(LDX))
-        rjmp read_zpy
+        READ_ZPY(LDX)
 xbe_LDX_aby:
-        LDI_X(gs(LDX))
-        rjmp read_aby
+        READ_ABY(LDX)
 xa0_LDY_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -945,17 +933,13 @@ LDY:
         in _NZC,__SREG__        ; save N,Z,C
         rjmp tick               ;
 xa4_LDY_zpg:
-        LDI_Z(gs(LDY))
-        rjmp read_zpg
+        READ_ZPG(LDY)
 xac_LDY_abs:
-        LDI_X(gs(LDY))
-        rjmp read_abs
+        READ_ABS(LDY)
 xb4_LDY_zpx:
-        LDI_Z(gs(LDY))
-        rjmp read_zpx
+        READ_ZPX(LDY)
 xbc_LDY_abx:
-        LDI_X(gs(LDY))
-        rjmp read_abx
+        READ_ABX(LDY)
 xe0_CPX_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -965,11 +949,9 @@ CPX:
         eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         rjmp tick
 xe4_CPX_zpg:
-        LDI_Z(gs(CPX))
-        rjmp read_zpg
+        READ_ZPG(CPX)
 xec_CPX_abs:
-        LDI_X(gs(CPX))
-        rjmp read_abs
+        READ_ABS(CPX)
 xc0_CPY_imm:
         adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
@@ -979,17 +961,13 @@ CPY:
         eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         rjmp tick
 xc4_CPY_zpg:
-        LDI_Z(gs(CPY))
-        rjmp read_zpg
+        READ_ZPG(CPY)
 xcc_CPY_abs:
-        LDI_X(gs(CPY))
-        rjmp read_abs
+        READ_ABS(CPY)
 x24_BIT_zpg:
-        LDI_Z(gs(BIT))
-        rjmp read_zpg
+        READ_ZPG(BIT)
 x2c_BIT_abs:
-        LDI_X(gs(BIT))
-        rjmp read_abs
+        READ_ABS(BIT)
 BIT:
         bst data,7              ; N <- data.7
         bld _NZC,2
@@ -1011,23 +989,17 @@ LAX:
         mov _A,data             ;
         rjmp tick
 xa3_LAX_inx_undocumented:
-        LDI_X(gs(LAX))
-        rjmp read_inx
+        READ_INX(LAX)
 xa7_LAX_zpg_undocumented:
-        LDI_Z(gs(LAX))
-        rjmp read_zpg
+        READ_ZPG(LAX)
 xaf_LAX_abs_undocumented:
-        LDI_X(gs(LAX))
-        rjmp read_abs
+        READ_ABS(LAX)
 xb3_LAX_iny_undocumented:
-        LDI_X(gs(LAX))
-        rjmp read_iny
+        READ_INY(LAX)
 xb7_LAX_zpy_undocumented:
-        LDI_Z(gs(LAX))
-        rjmp read_zpy
+        READ_ZPY(LAX)
 xbf_LAX_aby_undocumented:
-        LDI_X(gs(LAX))
-        rjmp read_aby
+        READ_ABY(LAX)
 
 x80_NOP_imm_undocumented:
 x82_NOP_imm_undocumented:
@@ -1041,27 +1013,23 @@ NOP:
 x04_NOP_zpg_undocumented:
 x44_NOP_zpg_undocumented:
 x64_NOP_zpg_undocumented:
-        LDI_Z(gs(NOP))
-        rjmp read_zpg
+        READ_ZPG(NOP)
 x0c_NOP_abs_undocumented:
-        LDI_X(gs(NOP))
-        rjmp read_abs
+        READ_ABS(NOP)
 x14_NOP_zpx_undocumented:
 x34_NOP_zpx_undocumented:
 x54_NOP_zpx_undocumented:
 x74_NOP_zpx_undocumented:
 xd4_NOP_zpx_undocumented:
 xf4_NOP_zpx_undocumented:
-        LDI_Z(gs(NOP))
-        rjmp read_zpx
+        READ_ZPX(NOP)
 x1c_NOP_abx_undocumented:
 x3c_NOP_abx_undocumented:
 x5c_NOP_abx_undocumented:
 x7c_NOP_abx_undocumented:
 xdc_NOP_abx_undocumented:
 xfc_NOP_abx_undocumented:
-        LDI_X(gs(NOP))
-        rjmp read_abx
+        READ_ABX(NOP)
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
