@@ -69,12 +69,6 @@ N_FLAG = 0x80
         ldi ZH, STACK_PAGE      $ \
         ld (reg), Z
 
-/* reg <- ram[addr] */
-#define LD_ZERO_PAGE(reg,addr)    \
-        mov XL,(addr)           $ \
-        ldi XH,ZERO_PAGE        $ \
-        ld (reg),X
-
 /* reg+1:reg <- ram[addr+1]:ram[addr] */
 #define LDW_ZERO_PAGE(reg,addr)   \
         mov ZL,(addr)           $ \
@@ -624,19 +618,30 @@ opcode_table:
 /***************************** READ INSTRUCTIONS ******************************/
 
 #define READ_ZPG(label)           \
-        ldi ZL,lo8(gs(label))   $ \
-        ldi ZH,hi8(gs(label))   $ \
-        rjmp read_zpg
+        adiw _PCL,2             $ \
+        mov XL,data             $ \
+        ldi XH,ZERO_PAGE        $ \
+        ld data,X               $ \
+        ldi cycles,3            $ \
+        rjmp label
 
 #define READ_ZPX(label)           \
-        ldi ZL,lo8(gs(label))   $ \
-        ldi ZH,hi8(gs(label))   $ \
-        rjmp read_zpx
+        adiw _PCL,2             $ \
+        add data,_X             $ \
+        mov XL,data             $ \
+        ldi XH,ZERO_PAGE        $ \
+        ld data,X               $ \
+        ldi cycles,4            $ \
+        rjmp label
 
 #define READ_ZPY(label)           \
-        ldi ZL,lo8(gs(label))   $ \
-        ldi ZH,hi8(gs(label))   $ \
-        rjmp read_zpy
+        adiw _PCL,2             $ \
+        add data,_Y             $ \
+        mov XL,data             $ \
+        ldi XH,ZERO_PAGE        $ \
+        ld data,X               $ \
+        ldi cycles,4            $ \
+        rjmp label
 
 #define READ_ABS(label)           \
         ldi XL,lo8(gs(label))   $ \
@@ -1033,30 +1038,9 @@ xfc_NOP_abx_undocumented:
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
-input:  return address in XH:XL (ZH:ZL for imm/zpg/zpx/zpy)
+input:  return address in XH:XL
 output: data value in data, tick count in cycles
 */
-read_imm:
-        adiw _PCL,2             ; PC += 2
-        ldi cycles,2            ; cycles <- 2
-        ijmp
-read_zpg:
-        adiw _PCL,2             ; PC += 2
-        LD_ZERO_PAGE(data,data) ; data <- ram[data]
-        ldi cycles,3            ; cycles <- 3
-        ijmp
-read_zpx:
-        adiw _PCL,2             ; PC += 2
-        add data,_X             ; data += X
-        LD_ZERO_PAGE(data,data) ; data <- ram[data]
-        ldi cycles,4            ; cycles <- 4
-        ijmp
-read_zpy:
-        adiw _PCL,2             ; PC += 2
-        add data,_Y             ; data += Y
-        LD_ZERO_PAGE(data,data) ; data <- ram[data]
-        ldi cycles,4            ; cycles <- 4
-        ijmp
 read_abs:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
 read_abs_no_carry:
