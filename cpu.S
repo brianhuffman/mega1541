@@ -24,7 +24,7 @@ value = 3
 opcode = 10
 opcode_pointer = 11
 cycles = 21
-data = 22
+data = 24
 addr_lo = 24
 addr_hi = 25
 XL = 26
@@ -177,14 +177,13 @@ pack_flags:
         .type        addr_abs, @function
 addr_abs:
 /* addr_hi:addr_lo <- mem_read(++PC), PC += 2 */
-/* assumes that mem(PC+1) is already in data */
+/* assumes that mem(PC+1) is already in data/addr_lo */
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
-/* cycles: 9+ret = 13 */
+/* cycles: 8+ret = 12 */
 .L__stack_usage = 0
         adiw _PCL,2             ; PC += 2
-        mov addr_lo,data        ; addr_lo <- data
         movw ZL,_PCL            ; Z <- PC
         adiw _PCL,1             ; PC++
         brpl addr_abs_lo        ;
