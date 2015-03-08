@@ -1701,6 +1701,14 @@ xf8_SED:
 
 /*************************** REGISTER INSTRUCTIONS ****************************/
 
+#define TRANSFER(src,dest)        \
+        adiw _PCL,1             $ \
+        out __SREG__,_NZC       $ \
+        mov (dest),(src)        $ \
+        tst (dest)              $ \
+        in _NZC,__SREG__        $ \
+        TICK(2)
+
 xca_DEX:
         adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
@@ -1726,47 +1734,17 @@ xc8_INY:
         in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x8a_TXA:
-        adiw _PCL,1             ; PC++
-        out __SREG__,_NZC       ; carry <- C
-        mov _A,_X               ; A <- X
-        tst _A
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TRANSFER(_X,_A)
 xaa_TAX:
-        adiw _PCL,1             ; PC++
-        out __SREG__,_NZC       ; carry <- C
-        mov _X,_A               ; X <- A
-        tst _X
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TRANSFER(_A,_X)
 x98_TYA:
-        adiw _PCL,1             ; PC++
-        out __SREG__,_NZC       ; carry <- C
-        mov _A,_Y               ; A <- Y
-        tst _A
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TRANSFER(_Y,_A)
 xa8_TAY:
-        adiw _PCL,1             ; PC++
-        out __SREG__,_NZC       ; carry <- C
-        mov _Y,_A               ; Y <- A
-        tst _Y
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TRANSFER(_A,_Y)
 x9a_TXS:
-        adiw _PCL,1             ; PC++
-        out __SREG__,_NZC       ; carry <- C
-        mov _S,_X               ; S <- X
-        tst _S
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TRANSFER(_X,_S)
 xba_TSX:
-        adiw _PCL,1             ; PC++
-        out __SREG__,_NZC       ; carry <- C
-        mov _X,_S               ; X <- S
-        tst _X
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TRANSFER(_S,_X)
 xea_NOP:
 x1a_NOP_undocumented:
 x3a_NOP_undocumented:
