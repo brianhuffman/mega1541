@@ -83,16 +83,6 @@ N_FLAG = 0x80
         ldi ZH,ZERO_PAGE        $ \
         st Z,(reg)
 
-/* XH:XL <- value */
-#define LDI_X(value)              \
-        ldi XL,lo8(value)       $ \
-        ldi XH,hi8(value)
-
-/* ZH:ZL <- value */
-#define LDI_Z(value)              \
-        ldi ZL,lo8(value)       $ \
-        ldi ZH,hi8(value)
-
         .section        .text.mem_read_16,"ax",@progbits
 .global        mem_read_16
         .type        mem_read_16, @function
