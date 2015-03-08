@@ -1098,6 +1098,41 @@ read_iny_carry:
 
 /*********************** READ-MODIFY-WRITE INSTRUCTIONS ***********************/
 
+#define MODIFY_ZPG(label)         \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp modify_zpg
+
+#define MODIFY_ZPX(label)         \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp modify_zpx
+
+#define MODIFY_ABS(label)         \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp modify_abs
+
+#define MODIFY_ABX(label)         \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp modify_abx
+
+#define MODIFY_ABY(label)         \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp modify_aby
+
+#define MODIFY_INX(label)         \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp modify_inx
+
+#define MODIFY_INY(label)         \
+        ldi ZL,lo8(gs(label))   $ \
+        ldi ZH,hi8(gs(label))   $ \
+        rjmp modify_iny
+
 x0a_ASL_acc:
         adiw _PCL,1             ; PC++
         lsl _A                  ; A <- A << 1, carry <- A bit 7
@@ -1126,101 +1161,77 @@ ASL:
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x06_ASL_zpg:
-        LDI_Z(gs(ASL))
-        rjmp modify_zpg
+        MODIFY_ZPG(ASL)
 x0e_ASL_abs:
-        LDI_X(gs(ASL))
-        rjmp modify_abs
+        MODIFY_ABS(ASL)
 x16_ASL_zpx:
-        LDI_Z(gs(ASL))
-        rjmp modify_zpx
+        MODIFY_ZPX(ASL)
 x1e_ASL_abx:
-        LDI_X(gs(ASL))
-        rjmp modify_abx
+        MODIFY_ABX(ASL)
 ROL:
         out __SREG__,_NZC       ; carry <- C
         rol data                ; carry <- A7, A <- [A6, A5 .. A0, carry]
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x26_ROL_zpg:
-        LDI_Z(gs(ROL))
-        rjmp modify_zpg
+        MODIFY_ZPG(ROL)
 x2e_ROL_abs:
-        LDI_X(gs(ROL))
-        rjmp modify_abs
+        MODIFY_ABS(ROL)
 x36_ROL_zpx:
-        LDI_Z(gs(ROL))
-        rjmp modify_zpx
+        MODIFY_ZPX(ROL)
 x3e_ROL_abx:
-        LDI_X(gs(ROL))
-        rjmp modify_abx
+        MODIFY_ABX(ROL)
 LSR:
         lsr data                ; A <- [0, A7, .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x46_LSR_zpg:
-        LDI_Z(gs(LSR))
-        rjmp modify_zpg
+        MODIFY_ZPG(LSR)
 x4e_LSR_abs:
-        LDI_X(gs(LSR))
-        rjmp modify_abs
+        MODIFY_ABS(LSR)
 x56_LSR_zpx:
-        LDI_Z(gs(LSR))
-        rjmp modify_zpx
+        MODIFY_ZPX(LSR)
 x5e_LSR_abx:
-        LDI_X(gs(LSR))
-        rjmp modify_abx
+        MODIFY_ABX(LSR)
 ROR:
         out __SREG__,_NZC       ; carry <- C
         ror data                ; A <- [carry, A7 .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x66_ROR_zpg:
-        LDI_Z(gs(ROR))
-        rjmp modify_zpg
+        MODIFY_ZPG(ROR)
 x6e_ROR_abs:
-        LDI_X(gs(ROR))
-        rjmp modify_abs
+        MODIFY_ABS(ROR)
 x76_ROR_zpx:
-        LDI_Z(gs(ROR))
-        rjmp modify_zpx
+        MODIFY_ZPX(ROR)
 x7e_ROR_abx:
-        LDI_X(gs(ROR))
-        rjmp modify_abx
+        MODIFY_ABX(ROR)
 DEC:
         out __SREG__,_NZC       ; carry <- C
         dec data                ; data--
         in _NZC,__SREG__        ; save N,Z,C
         ret
 xc6_DEC_zpg:
-        LDI_Z(gs(DEC))
-        rjmp modify_zpg
+        MODIFY_ZPG(DEC)
 xce_DEC_abs:
-        LDI_X(gs(DEC))
-        rjmp modify_abs
+        MODIFY_ABS(DEC)
 xd6_DEC_zpx:
-        LDI_Z(gs(DEC))
-        rjmp modify_zpx
+        MODIFY_ZPX(DEC)
 xde_DEC_abx:
-        LDI_X(gs(DEC))
-        rjmp modify_abx
+        MODIFY_ABX(DEC)
 INC:
         out __SREG__,_NZC       ; carry <- C
         inc data                ; data++
         in _NZC,__SREG__        ; save N,Z,C
         ret
 xe6_INC_zpg:
-        LDI_Z(gs(INC))
-        rjmp modify_zpg
+        MODIFY_ZPG(INC)
 xee_INC_abs:
-        LDI_X(gs(INC))
-        rjmp modify_abs
+        MODIFY_ABS(INC)
 xf6_INC_zpx:
-        LDI_Z(gs(INC))
-        rjmp modify_zpx
+        MODIFY_ZPX(INC)
 xfe_INC_abx:
-        LDI_X(gs(INC))
-        rjmp modify_abx
+        MODIFY_ABX(INC)
 
 SLO:
         ;; ASL + ORA
@@ -1229,26 +1240,19 @@ SLO:
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x03_SLO_inx_undocumented:
-        LDI_Z(gs(SLO))
-        rjmp modify_inx
+        MODIFY_INX(SLO)
 x07_SLO_zpg_undocumented:
-        LDI_Z(gs(SLO))
-        rjmp modify_zpg
+        MODIFY_ZPG(SLO)
 x0f_SLO_abs_undocumented:
-        LDI_Z(gs(SLO))
-        rjmp modify_abs
+        MODIFY_ABS(SLO)
 x13_SLO_iny_undocumented:
-        LDI_Z(gs(SLO))
-        rjmp modify_iny
+        MODIFY_INY(SLO)
 x17_SLO_zpx_undocumented:
-        LDI_Z(gs(SLO))
-        rjmp modify_zpx
+        MODIFY_ZPX(SLO)
 x1b_SLO_aby_undocumented:
-        LDI_Z(gs(SLO))
-        rjmp modify_aby
+        MODIFY_ABY(SLO)
 x1f_SLO_abx_undocumented:
-        LDI_Z(gs(SLO))
-        rjmp modify_abx
+        MODIFY_ABX(SLO)
 RLA:
         ;; ROL + AND
         out __SREG__,_NZC       ; carry <- C
@@ -1257,26 +1261,19 @@ RLA:
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x23_RLA_inx_undocumented:
-        LDI_Z(gs(RLA))
-        rjmp modify_inx
+        MODIFY_INX(RLA)
 x27_RLA_zpg_undocumented:
-        LDI_Z(gs(RLA))
-        rjmp modify_zpg
+        MODIFY_ZPG(RLA)
 x2f_RLA_abs_undocumented:
-        LDI_Z(gs(RLA))
-        rjmp modify_abs
+        MODIFY_ABS(RLA)
 x33_RLA_iny_undocumented:
-        LDI_Z(gs(RLA))
-        rjmp modify_iny
+        MODIFY_INY(RLA)
 x37_RLA_zpx_undocumented:
-        LDI_Z(gs(RLA))
-        rjmp modify_zpx
+        MODIFY_ZPX(RLA)
 x3b_RLA_aby_undocumented:
-        LDI_Z(gs(RLA))
-        rjmp modify_aby
+        MODIFY_ABY(RLA)
 x3f_RLA_abx_undocumented:
-        LDI_Z(gs(RLA))
-        rjmp modify_abx
+        MODIFY_ABX(RLA)
 SRE:
         ;; LSR + EOR
         lsr data                ; carry <- data.0 <- ... <- data.7 <- 0
@@ -1284,26 +1281,19 @@ SRE:
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x43_SRE_inx_undocumented:
-        LDI_Z(gs(SRE))
-        rjmp modify_inx
+        MODIFY_INX(SRE)
 x47_SRE_zpg_undocumented:
-        LDI_Z(gs(SRE))
-        rjmp modify_zpg
+        MODIFY_ZPG(SRE)
 x4f_SRE_abs_undocumented:
-        LDI_Z(gs(SRE))
-        rjmp modify_abs
+        MODIFY_ABS(SRE)
 x53_SRE_iny_undocumented:
-        LDI_Z(gs(SRE))
-        rjmp modify_iny
+        MODIFY_INY(SRE)
 x57_SRE_zpx_undocumented:
-        LDI_Z(gs(SRE))
-        rjmp modify_zpx
+        MODIFY_ZPX(SRE)
 x5b_SRE_aby_undocumented:
-        LDI_Z(gs(SRE))
-        rjmp modify_aby
+        MODIFY_ABY(SRE)
 x5f_SRE_abx_undocumented:
-        LDI_Z(gs(SRE))
-        rjmp modify_abx
+        MODIFY_ABX(SRE)
 RRA:
         ;; ROR + ADC
         out __SREG__,_NZC       ; carry <- C
@@ -1314,26 +1304,19 @@ RRA:
         bld _P,6
         ret
 x63_RRA_inx_undocumented:
-        LDI_Z(gs(RRA))
-        rjmp modify_inx
+        MODIFY_INX(RRA)
 x67_RRA_zpg_undocumented:
-        LDI_Z(gs(RRA))
-        rjmp modify_zpg
+        MODIFY_ZPG(RRA)
 x6f_RRA_abs_undocumented:
-        LDI_Z(gs(RRA))
-        rjmp modify_abs
+        MODIFY_ABS(RRA)
 x73_RRA_iny_undocumented:
-        LDI_Z(gs(RRA))
-        rjmp modify_iny
+        MODIFY_INY(RRA)
 x77_RRA_zpx_undocumented:
-        LDI_Z(gs(RRA))
-        rjmp modify_zpx
+        MODIFY_ZPX(RRA)
 x7b_RRA_aby_undocumented:
-        LDI_Z(gs(RRA))
-        rjmp modify_aby
+        MODIFY_ABY(RRA)
 x7f_RRA_abx_undocumented:
-        LDI_Z(gs(RRA))
-        rjmp modify_abx
+        MODIFY_ABX(RRA)
 DCP:
         ;; DEC + CMP
         dec data                ; data--
@@ -1342,26 +1325,19 @@ DCP:
         eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         ret
 xc3_DCP_inx_undocumented:
-        LDI_Z(gs(DCP))
-        rjmp modify_inx
+        MODIFY_INX(DCP)
 xc7_DCP_zpg_undocumented:
-        LDI_Z(gs(DCP))
-        rjmp modify_zpg
+        MODIFY_ZPG(DCP)
 xcf_DCP_abs_undocumented:
-        LDI_Z(gs(DCP))
-        rjmp modify_abs
+        MODIFY_ABS(DCP)
 xd3_DCP_iny_undocumented:
-        LDI_Z(gs(DCP))
-        rjmp modify_iny
+        MODIFY_INY(DCP)
 xd7_DCP_zpx_undocumented:
-        LDI_Z(gs(DCP))
-        rjmp modify_zpx
+        MODIFY_ZPX(DCP)
 xdb_DCP_aby_undocumented:
-        LDI_Z(gs(DCP))
-        rjmp modify_aby
+        MODIFY_ABY(DCP)
 xdf_DCP_abx_undocumented:
-        LDI_Z(gs(DCP))
-        rjmp modify_abx
+        MODIFY_ABX(DCP)
 ISB:
         ;; INC + SBC
         inc data                ; data++
@@ -1374,26 +1350,19 @@ ISB:
         com data                ; data <- ~data
         ret
 xe3_ISB_inx_undocumented:
-        LDI_Z(gs(ISB))
-        rjmp modify_inx
+        MODIFY_INX(ISB)
 xe7_ISB_zpg_undocumented:
-        LDI_Z(gs(ISB))
-        rjmp modify_zpg
+        MODIFY_ZPG(ISB)
 xef_ISB_abs_undocumented:
-        LDI_Z(gs(ISB))
-        rjmp modify_abs
+        MODIFY_ABS(ISB)
 xf3_ISB_iny_undocumented:
-        LDI_Z(gs(ISB))
-        rjmp modify_iny
+        MODIFY_INY(ISB)
 xf7_ISB_zpx_undocumented:
-        LDI_Z(gs(ISB))
-        rjmp modify_zpx
+        MODIFY_ZPX(ISB)
 xfb_ISB_aby_undocumented:
-        LDI_Z(gs(ISB))
-        rjmp modify_aby
+        MODIFY_ABY(ISB)
 xff_ISB_abx_undocumented:
-        LDI_Z(gs(ISB))
-        rjmp modify_abx
+        MODIFY_ABX(ISB)
 
 /*
 input:  function pointer in ZH:ZL, to be used with icall
