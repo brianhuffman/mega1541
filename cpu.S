@@ -1685,18 +1685,19 @@ xf0_BEQ:
         brts take_branch
         TICK(2)
 take_branch:
-        add _PCL,data           ; PC += data
-        tst data
-        brcs branch_carry
-        brpl branch_same_page   ; branch if offset is positive
-        dec _PCH
+        subi _PCL,0x80          ; PCL += 0x80
+        add _PCL,data           ; PCL += data
+        brvs branch_page        ; jump if branching to different page
+        subi _PCL,0x80          ; PCL -= 0x80
+        TICK(3)                 ; 3 cycles for branch to same page
+branch_page:
+        subi _PCL,0x80          ; PCL -= 0x80
+        brpl branch_next_page   ; branch if offset is negative
+        dec _PCH                ;
         TICK(4)                 ; 4 cycles for branch to previous page
-branch_carry:
-        brmi branch_same_page   ; branch if offset is negative
+branch_next_page:
         inc _PCH                ;
         TICK(4)                 ; 4 cycles for branch to next page
-branch_same_page:
-        TICK(3)                 ; 3 cycles for branch to same page
 
 /***************************** FLAG INSTRUCTIONS ******************************/
 
