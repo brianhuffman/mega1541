@@ -894,3 +894,15 @@ void cpu_main (long cycles)
    JSR, LDA, LDX, LDY, LSR, NOP, ORA, PHA, PHP, PLA, PLP, ROL, ROR, RTI,
    RTS, SBC, SEC, SED, SEI, STA, STX, STY, TAX, TAY, TSX, TXA, TXS, TYA
 */
+
+String cpu_state_string (void) {
+  update_p();
+  String state = "PC=$" + String(reg_pc, HEX)
+               + ",A=$" + String(reg_a, HEX)
+               + ",X=$" + String(reg_x, HEX)
+               + ",Y=$" + String(reg_y, HEX)
+               + ",S=$" + String(reg_s, HEX)
+               + ",P=" + String(reg_p, BIN);
+  return state;
+}
+
