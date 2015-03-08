@@ -1516,9 +1516,9 @@ x83_SAX_inx_undocumented:
         rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
 x87_SAX_zpg_undocumented:
         adiw _PCL,2             ; PC += 2
-        mov addr_lo,_A
-        and addr_lo,_X
-        ST_ZERO_PAGE(data,24)   ; ram[data] <- A & X
+        mov value,_A
+        and value,_X
+        ST_ZERO_PAGE(data,value); ram[data] <- A & X
         TICK(3)
 x8f_SAX_abs_undocumented:
         mov value,_A
@@ -1527,9 +1527,9 @@ x8f_SAX_abs_undocumented:
 x97_SAX_zpy_undocumented:
         adiw _PCL,2             ; PC += 2
         add data,_Y             ; data += Y
-        mov addr_lo,_A          ; temp <- A
-        and addr_lo,_X          ; temp <- A & X
-        ST_ZERO_PAGE(data,24)   ; ram[data] <- A & X
+        mov value,_A            ; value <- A
+        and value,_X            ; value <- A & X
+        ST_ZERO_PAGE(data,value); ram[data] <- A & X
         TICK(4)
 x93_SHA_iny_undocumented:
         adiw _PCL,2             ; PC += 2
