@@ -1762,7 +1762,7 @@ x08_PHP:
         TICK1(3)
 x28_PLP:
         PULL(_P)                ; P <- stack[++S]
-        call unpack_flags       ;
+        rcall unpack_flags      ;
         TICK1(4)
 x48_PHA:
         PUSH(_A)                ; stack[S--] <- A
