@@ -1045,17 +1045,22 @@ xfc_NOP_abx_undocumented:
 input:  return address in XH:XL
 output: data value in data, tick count in cycles
 */
-read_abs:
+
+.macro READ_ADDR_HI             ; addr_hi <- read(PC++)
         movw ZL,_PCL            ; Z <- PC
         adiw _PCL,1             ; PC++
-        brmi read_abs_hi        ; branch if address in rom area
-read_abs_lo:
+        brmi 1f                 ; branch if address in rom area
         subi ZH,hi8(-(ram))     ;
-        ld addr_hi,Z            ; load from ram[addr]
-        rjmp read_abs_no_carry
-read_abs_hi:
+        ld addr_hi,Z            ; addr_hi <- ram[addr]
+        rjmp 2f
+1:
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm addr_hi,Z           ; addr_hi <- rom[PC - 0xc0000]
+2:
+.endm
+
+read_abs:
+        READ_ADDR_HI            ; addr_hi <- read(PC++)
 read_abs_no_carry:
         ldi cycles,4            ; cycles <- 4
 read_mem:                       ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
@@ -1080,34 +1085,14 @@ read_mem_L9:
         ijmp
 
 read_abx:
-        movw ZL,_PCL            ; Z <- PC
-        adiw _PCL,1             ; PC++
-        brmi read_abx_hi        ; branch if address in rom area
-read_abx_lo:
-        subi ZH,hi8(-(ram))     ;
-        ld addr_hi,Z            ; load from ram[addr]
-        rjmp read_abx_offset
-read_abx_hi:
-        subi ZH,hi8(-(dos1541-0xc000))  ;
-        lpm addr_hi,Z           ; addr_hi <- rom[PC - 0xc0000]
-read_abx_offset:
+        READ_ADDR_HI            ; addr_hi <- read(PC++)
         add addr_lo,_X          ; addr_lo += X
         brcc read_abs_no_carry  ; branch unless addr_lo+X carries
         inc addr_hi             ; addr_hi++
         ldi cycles,5            ; cycles <- 5
         rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 read_aby:
-        movw ZL,_PCL            ; Z <- PC
-        adiw _PCL,1             ; PC++
-        brmi read_aby_hi        ; branch if address in rom area
-read_aby_lo:
-        subi ZH,hi8(-(ram))     ;
-        ld addr_hi,Z            ; load from ram[addr]
-        rjmp read_aby_offset
-read_aby_hi:
-        subi ZH,hi8(-(dos1541-0xc000))  ;
-        lpm addr_hi,Z           ; addr_hi <- rom[PC - 0xc0000]
-read_aby_offset:
+        READ_ADDR_HI            ; addr_hi <- read(PC++)
         add addr_lo,_Y          ; addr_lo += Y
         brcc read_abs_no_carry  ; branch unless addr_lo+Y carries
         inc addr_hi             ; addr_hi++
