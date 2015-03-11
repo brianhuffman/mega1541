@@ -1856,6 +1856,31 @@ xf2:
         pop _PCL
         ret
         .size        cpu_main, .-cpu_main
+        .section        .text.cpu_get_regs,"ax",@progbits
+.global        cpu_get_state
+        .type        cpu_get_state, @function
+cpu_get_state:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+        movw r30,r24
+        lds r24,reg_pc
+        st Z+,r24
+        lds r24,reg_pc+1
+        st Z+,r24
+        lds r24,reg_a
+        st Z+,r24
+        lds r24,reg_x
+        st Z+,r24
+        lds r24,reg_y
+        st Z+,r24
+        lds r24,reg_s
+        st Z+,r24
+        lds r24,reg_p
+        st Z+,r24
+        ret
+        .size        cpu_get_state, .-cpu_get_state
         .section        .bss.time_left,"aw",@nobits
         .type        time_left, @object
         .size        time_left, 4

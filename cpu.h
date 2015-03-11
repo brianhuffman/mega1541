@@ -13,7 +13,19 @@ void cpu_irq (void);
 void cpu_nmi (void);
 //void cpu_brk (void);
 
+struct cpu_state {
+  word pc;
+  byte a;
+  byte x;
+  byte y;
+  byte s;
+  byte p;
+};
+
 word cpu_get_pc (void);
+
 unsigned long cpu_get_regs (void);
+
+void cpu_get_state (struct cpu_state*);
 
 #endif
