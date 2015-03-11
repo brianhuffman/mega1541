@@ -1669,6 +1669,18 @@ xf8_SED:
 
 /*************************** REGISTER INSTRUCTIONS ****************************/
 
+#define DECREMENT(reg)            \
+        out __SREG__,_NZC       $ \
+        dec (reg)               $ \
+        in _NZC,__SREG__        $ \
+        TICK1(2)
+
+#define INCREMENT(reg)            \
+        out __SREG__,_NZC       $ \
+        inc (reg)               $ \
+        in _NZC,__SREG__        $ \
+        TICK1(2)
+
 #define TRANSFER(src,dest)        \
         out __SREG__,_NZC       $ \
         mov (dest),(src)        $ \
@@ -1677,25 +1689,13 @@ xf8_SED:
         TICK1(2)
 
 xca_DEX:
-        out __SREG__,_NZC       ; carry <- C
-        dec _X                  ; X--
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK1(2)
+        DECREMENT(_X)
 xe8_INX:
-        out __SREG__,_NZC       ; carry <- C
-        inc _X                  ; X++
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK1(2)
+        INCREMENT(_X)
 x88_DEY:
-        out __SREG__,_NZC       ; carry <- C
-        dec _Y                  ; Y--
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK1(2)
+        DECREMENT(_Y)
 xc8_INY:
-        out __SREG__,_NZC       ; carry <- C
-        inc _Y                  ; Y++
-        in _NZC,__SREG__        ; save N,Z,C
-        TICK1(2)
+        INCREMENT(_Y)
 x8a_TXA:
         TRANSFER(_X,_A)
 xaa_TAX:
