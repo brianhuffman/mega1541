@@ -53,6 +53,10 @@ N_FLAG = 0x80
         subi time0,(n) $ \
         rjmp ticked
 
+#define TICK1(n) \
+        subi time0,(n) $ \
+        rjmp ticked1
+
 #define ZERO_PAGE hi8(ram)
 #define STACK_PAGE hi8(ram+256)
 #define RAM_PAGES 4 /* should be 8 if we have more than 2k of SRAM available */
@@ -340,6 +344,35 @@ load_opcode_rom:
 load_opcode_ram:
         subi ZH,hi8(-(ram))     ;
         ld opcode,Z+            ; opcode <- ram[PC]
+        ld data,Z               ; data <- ram[PC+1]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (opcode_table + opcode)
+
+tick_carry1:
+        sbc time1,__zero_reg__  ;
+        sbc time2,__zero_reg__  ;
+        sbc time3,__zero_reg__  ;
+        brpl load_opcode1       ; continue if time >= 0
+        rjmp .L366              ; save state and exit
+tick1:
+        sub time0,cycles        ; time_left -= cycles
+ticked1:
+        brcs tick_carry1        ; abort early if no carry
+load_opcode1:
+        movw ZL,_PCL            ;
+        cpi ZH,0xc0             ;
+        brlo load_opcode_ram1   ; branch if PC < 0xc000
+load_opcode_rom1:
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        mov opcode,data         ; opcode <- prefetched data from before
+        adiw ZL,1               ; Z++
+        lpm data,Z              ; data <- rom[PC+1 - 0xc0000]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (opcode_table + opcode)
+load_opcode_ram1:
+        subi ZH,hi8(-(ram))     ;
+        mov opcode,data         ; opcode <- prefetched data from before
+        adiw ZL,1               ; Z++
         ld data,Z               ; data <- ram[PC+1]
         movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
         ijmp                    ; jmp (opcode_table + opcode)
@@ -1127,24 +1160,24 @@ x0a_ASL_acc:
         adiw _PCL,1             ; PC++
         lsl _A                  ; A <- A << 1, carry <- A bit 7
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 x2a_ROL_acc:
         adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         rol _A                  ; carry <- A7, A <- [A6, A5 .. A0, carry]
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 x4a_LSR_acc:
         adiw _PCL,1             ; PC++
         lsr _A                  ; A <- [0, A7, .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 x6a_ROR_acc:
         adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         ror _A                  ; A <- [carry, A7 .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 
 ASL:
         lsl data                ; A <- A << 1, carry <- A bit 7
@@ -1663,31 +1696,31 @@ branch_next_page:
 x18_CLC:
         adiw _PCL,1             ; PC++
         cbr _NZC,0x01           ; C <- 0
-        TICK(2)
+        TICK1(2)
 x38_SEC:
         adiw _PCL,1             ; PC++
         sbr _NZC,0x01           ; C <- 1
-        TICK(2)
+        TICK1(2)
 x58_CLI:
         adiw _PCL,1             ; PC++
         cbr _P,I_FLAG           ; P &= ~I_FLAG
-        TICK(2)
+        TICK1(2)
 x78_SEI:
         adiw _PCL,1             ; PC++
         sbr _P,I_FLAG           ; P |= I_FLAG
-        TICK(2)
+        TICK1(2)
 xb8_CLV:
         adiw _PCL,1             ; PC++
         cbr _P,V_FLAG           ; P &= ~V_FLAG
-        TICK(2)
+        TICK1(2)
 xd8_CLD:
         adiw _PCL,1             ; PC++
         cbr _P,D_FLAG           ; P &= ~D_FLAG
-        TICK(2)
+        TICK1(2)
 xf8_SED:
         adiw _PCL,1             ; PC++
         sbr _P,D_FLAG           ; P |= D_FLAG
-        TICK(2)
+        TICK1(2)
 
 /*************************** REGISTER INSTRUCTIONS ****************************/
 
@@ -1697,32 +1730,32 @@ xf8_SED:
         mov (dest),(src)        $ \
         tst (dest)              $ \
         in _NZC,__SREG__        $ \
-        TICK(2)
+        TICK1(2)
 
 xca_DEX:
         adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         dec _X                  ; X--
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 xe8_INX:
         adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         inc _X                  ; X++
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 x88_DEY:
         adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         dec _Y                  ; Y--
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 xc8_INY:
         adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         inc _Y                  ; Y++
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(2)
+        TICK1(2)
 x8a_TXA:
         TRANSFER(_X,_A)
 xaa_TAX:
@@ -1743,7 +1776,7 @@ x7a_NOP_undocumented:
 xda_NOP_undocumented:
 xfa_NOP_undocumented:
         adiw _PCL,1             ; PC++
-        TICK(2)
+        TICK1(2)
 
 /*************************** STACK/PC INSTRUCTIONS ****************************/
 
@@ -1789,23 +1822,23 @@ x08_PHP:
         adiw _PCL,1             ; PC++
         rcall pack_flags        ;
         PUSH(_P)                ; stack[S--] <- P
-        TICK(3)
+        TICK1(3)
 x28_PLP:
         adiw _PCL,1             ; PC++
         PULL(_P)                ; P <- stack[++S]
         rcall unpack_flags      ;
-        TICK(4)
+        TICK1(4)
 x48_PHA:
         adiw _PCL,1             ; PC++
         PUSH(_A)                ; stack[S--] <- A
-        TICK(3)
+        TICK1(3)
 x68_PLA:
         adiw _PCL,1             ; PC++
         PULL(_A)                ; A <- stack[++S]
         out __SREG__,_NZC       ; carry <- C
         tst _A
         in _NZC,__SREG__        ; save N,Z,C
-        TICK(4)
+        TICK1(4)
 
 /******************************************************************************/
 
@@ -1827,24 +1860,24 @@ x4b_ASR_imm_undocumented:
 x6b:
         adiw _PCL,1             ; PC++
         ;; TODO
-        TICK(2)
+        TICK1(2)
 x8b:
         adiw _PCL,1             ; PC++
         ;; TODO
-        TICK(2)
+        TICK1(2)
 x9b:
         adiw _PCL,1             ; PC++
         ;; TODO
-        TICK(5)
+        TICK1(5)
 
 xab:
         adiw _PCL,1             ; PC++
         ;; TODO
-        TICK(2)
+        TICK1(2)
 xbb:
         adiw _PCL,1             ; PC++
         ;; TODO
-        TICK(4)
+        TICK1(4)
 xcb_SBX_imm_undocumented:
         adiw _PCL,2             ; PC += 2
         and _X,_A               ; X &= A
