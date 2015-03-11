@@ -333,8 +333,7 @@ ticked:
 load_opcode:
         movw ZL,_PCL            ;
         adiw _PCL,2             ; PC += 2
-        cpi ZH,0xc0             ;
-        brlo load_opcode_ram    ; branch if PC < 0xc000
+        brpl load_opcode_ram    ; branch if PC < 0x8000
 load_opcode_rom:
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm opcode,Z+           ; opcode <- rom[PC - 0xc0000]
@@ -363,10 +362,9 @@ load_opcode1:
         ;; At this point, PC points to the the byte AFTER the upcoming opcode
         ;; The upcoming opcode was prefetched last time and stored in `data`
         movw ZL,_PCL            ;
-        adiw _PCL,1             ; PC ++
         mov opcode,data         ; opcode <- prefetched data from before
-        cpi ZH,0xc0             ;
-        brlo load_opcode_ram1   ; branch if PC < 0xc000
+        adiw _PCL,1             ; PC ++
+        brpl load_opcode_ram1   ; branch if PC < 0x8000
 load_opcode_rom1:
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm data,Z              ; data <- rom[PC+1 - 0xc0000]
