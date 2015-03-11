@@ -354,13 +354,11 @@ tick_carry1:
         brpl load_opcode1       ; continue if time >= 0
         sbiw _PCL,1             ; restore PC to proper location
         rjmp .L366              ; save state and exit
-tick1:
-        sub time0,cycles        ; time_left -= cycles
 ticked1:
-        brcs tick_carry1        ; abort early if no carry
-load_opcode1:
         ;; At this point, PC points to the the byte AFTER the upcoming opcode
         ;; The upcoming opcode was prefetched last time and stored in `data`
+        brcs tick_carry1        ; abort early if no carry
+load_opcode1:
         movw ZL,_PCL            ;
         mov opcode,data         ; opcode <- prefetched data from before
         adiw _PCL,1             ; PC ++
