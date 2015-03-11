@@ -765,69 +765,15 @@ ADC_bin:
         bld _P,6
         rjmp tick
 ADC_dec:
+        subi data,0x9a          ; data += 0x66 (valid BCD won't overflow)
         out __SREG__,_NZC       ; carry <- C
-        adc _A,data             ; A <- A + data + carry, branch if no half-carry
-        brhc ADC_dec_a
-        ;; sum of low nybbles >= 0x10
-        brcs ADC_dec_b
-        ;; sum of bytes < 0x100
-        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
-        brhs ADC_dec_d
-        ;; sum of low nybbles >= 0x1a
-        brcs ADC_dec_f
-        ;; 0x9a <= sum of bytes < 0x100 (keep high nybble fixup)
-        subi _A,0x10            ; A -= 0x10 (otherwise +6 would make low nybble carry twice)
+        adc _A,data             ; (carry, A) <- A + data + carry
         in _NZC,__SREG__        ; save N,Z,C
-        eor _NZC,const_one      ; set C iff subi did not borrow
+        sbrs _NZC,5             ; if no half-carry, then A -= 0x06
+        subi _A,0x06
+        sbrs _NZC,0             ; if no carry, then A -= 0x60
+        subi _A,0x60
         rjmp tick
-ADC_dec_a:
-        ;; sum of low nybbles < 0x10
-        brcs ADC_dec_c
-        ;; sum of bytes < 0x100
-        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
-        brhc ADC_dec_d
-        ;; sum of low nybbles < 0x0a (undo low fixup)
-        brcc ADC_dec_g
-        ;; sum of bytes < 0x9a (undo high fixup)
-        subi _A,0x66            ; A -= 0x66 (undo all BCD fixup)
-        cbr _NZC,1              ; C <- 0
-        rjmp tick
-ADC_dec_b:
-        ;; sum of low nybbles >= 0x10, sum of bytes >= 0x100
-        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
-        brhs ADC_dec_e
-        ;; sum of low nybbles >= 0x1a
-        subi _A,0x10            ; A -= 0x10 (otherwise +6 would make low nybble carry twice)
-        in _NZC,__SREG__        ; save N,Z,C
-        eor _NZC,const_one      ; set C iff subi did not borrow
-        rjmp tick
-ADC_dec_c:
-        ;; sum of low nybbles < 0x10, sum of bytes >= 0x100
-        subi _A,0x9a            ; A += 0x66, or A -= 0x9a
-        brhc ADC_dec_e
-ADC_dec_g:
-        ;; sum of low nybbles < 0x0a, sum of bytes >= 0x9a (undo low nybble fixup only)
-        subi _A,0x06            ; A -= 0x06
-        sbr _NZC,1              ; C <- 1
-        rjmp tick
-ADC_dec_d:
-        ;; 0x0a <= sum of low nybbles < 0x1a, sum of bytes < 0x100
-        brcc ADC_dec_e
-        ;; sum of bytes < 0x9a (undo high nybble fixup)
-        subi _A,0x60            ; A -= 0x60
-        cbr _NZC,1              ; C <- 0
-        rjmp tick
-ADC_dec_e:
-        ;; 0x0a <= sum of low nybbles < 0x1a, sum of bytes >= 0x9a (keep all BCD fixup)
-        sbr _NZC,1              ; C <- 1
-        rjmp tick
-ADC_dec_f:
-        ;; sum of low nybbles >= 0x1a, sum of bytes < 0x9a (undo high nybble fixup)
-        ;; 0x9a <= sum of bytes < 0x100 (keep high nybble fixup)
-        subi _A,0x70            ; A -= 0x60 + 0x10 (undo high fixup and cancel 2nd low carry)
-        cbr _NZC,1              ; C <- 0
-        rjmp tick
-
 x6d_ADC_abs:
         READ_ABS(ADC)
 x71_ADC_iny:
@@ -898,17 +844,11 @@ SBC:
         bld _P,6
         sbrs _P,3               ; skip if decimal mode is set
         rjmp tick
-SBC_dec1:
-        ;; fix up lower nybble
-        brhs SBC_dec2           ; branch if adc half-carried
-        ;; permute lower nybble: [6..f,0..9] -> [0..9,a..f]
-        subi _A,6               ; A -= 6 if adc did not half-carry
-        brhc SBC_dec2           ; branch unless subi underflowed low nybble
-        subi _A,-16             ; A += 16 if subi underflowed low nybble
-SBC_dec2:
-        ;; fix up upper nybble
-        sbrs _NZC,0             ; skip if C = 1
-        subi _A,0x60            ; if C = 0, then A -= 0x60
+SBC_dec:
+        sbrs _NZC,5             ; if no half-carry, then A -= 0x06
+        subi _A,0x06
+        sbrs _NZC,0             ; if no carry, then A -= 0x60
+        subi _A,0x60
         rjmp tick
 xed_SBC_abs:
         READ_ABS(SBC)
