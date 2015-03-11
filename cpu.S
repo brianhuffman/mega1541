@@ -177,7 +177,6 @@ addr_abs:
 /* stack size = 0 */
 /* cycles: 8+ret = 12 */
 .L__stack_usage = 0
-        adiw _PCL,2             ; PC += 2
         movw ZL,_PCL            ; Z <- PC
         adiw _PCL,1             ; PC++
         brpl addr_abs_lo        ;
@@ -333,6 +332,7 @@ ticked:
         brcs tick_carry         ; abort early if no carry
 load_opcode:
         movw ZL,_PCL            ;
+        adiw _PCL,2             ; PC += 2
         cpi ZH,0xc0             ;
         brlo load_opcode_ram    ; branch if PC < 0xc000
 load_opcode_rom:
@@ -353,26 +353,27 @@ tick_carry1:
         sbc time2,__zero_reg__  ;
         sbc time3,__zero_reg__  ;
         brpl load_opcode1       ; continue if time >= 0
+        sbiw _PCL,1             ; restore PC to proper location
         rjmp .L366              ; save state and exit
 tick1:
         sub time0,cycles        ; time_left -= cycles
 ticked1:
         brcs tick_carry1        ; abort early if no carry
 load_opcode1:
+        ;; At this point, PC points to the the byte AFTER the upcoming opcode
+        ;; The upcoming opcode was prefetched last time and stored in `data`
         movw ZL,_PCL            ;
+        adiw _PCL,1             ; PC ++
+        mov opcode,data         ; opcode <- prefetched data from before
         cpi ZH,0xc0             ;
         brlo load_opcode_ram1   ; branch if PC < 0xc000
 load_opcode_rom1:
         subi ZH,hi8(-(dos1541-0xc000))  ;
-        mov opcode,data         ; opcode <- prefetched data from before
-        adiw ZL,1               ; Z++
         lpm data,Z              ; data <- rom[PC+1 - 0xc0000]
         movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
         ijmp                    ; jmp (opcode_table + opcode)
 load_opcode_ram1:
         subi ZH,hi8(-(ram))     ;
-        mov opcode,data         ; opcode <- prefetched data from before
-        adiw ZL,1               ; Z++
         ld data,Z               ; data <- ram[PC+1]
         movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
         ijmp                    ; jmp (opcode_table + opcode)
@@ -640,7 +641,6 @@ opcode_table:
 /***************************** READ INSTRUCTIONS ******************************/
 
 #define READ_ZPG(label)           \
-        adiw _PCL,2             $ \
         mov XL,data             $ \
         ldi XH,ZERO_PAGE        $ \
         ld data,X               $ \
@@ -648,7 +648,6 @@ opcode_table:
         rjmp label
 
 #define READ_ZPX(label)           \
-        adiw _PCL,2             $ \
         add data,_X             $ \
         mov XL,data             $ \
         ldi XH,ZERO_PAGE        $ \
@@ -657,7 +656,6 @@ opcode_table:
         rjmp label
 
 #define READ_ZPY(label)           \
-        adiw _PCL,2             $ \
         add data,_Y             $ \
         mov XL,data             $ \
         ldi XH,ZERO_PAGE        $ \
@@ -696,7 +694,6 @@ x01_ORA_inx:
 x05_ORA_zpg:
         READ_ZPG(ORA)
 x09_ORA_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 ORA:
         out __SREG__,_NZC
@@ -718,7 +715,6 @@ x21_AND_inx:
 x25_AND_zpg:
         READ_ZPG(AND)
 x29_AND_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 AND:
         out __SREG__,_NZC
@@ -740,7 +736,6 @@ x41_EOR_inx:
 x45_EOR_zpg:
         READ_ZPG(EOR)
 x49_EOR_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 EOR:
         out __SREG__,_NZC
@@ -762,7 +757,6 @@ x61_ADC_inx:
 x65_ADC_zpg:
         READ_ZPG(ADC)
 x69_ADC_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 ADC:
         sbrc _P,3               ; skip if decimal mode is clear
@@ -853,7 +847,6 @@ xa1_LDA_inx:
 xa5_LDA_zpg:
         READ_ZPG(LDA)
 xa9_LDA_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 LDA:
         out __SREG__,_NZC       ; carry <- C
@@ -876,7 +869,6 @@ xc1_CMP_inx:
 xc5_CMP_zpg:
         READ_ZPG(CMP)
 xc9_CMP_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 CMP:
         cp _A,data              ; A - data
@@ -899,7 +891,6 @@ xe5_SBC_zpg:
         READ_ZPG(SBC)
 xe9_SBC_imm:
 xeb_SBC_imm_undocumented:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 SBC:
         ;; N, V, Z, C are set the same in decimal and binary mode
@@ -934,7 +925,6 @@ xf9_SBC_aby:
 xfd_SBC_abx:
         READ_ABX(SBC)
 xa2_LDX_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 LDX:
         out __SREG__,_NZC       ; carry <- C
@@ -951,7 +941,6 @@ xb6_LDX_zpy:
 xbe_LDX_aby:
         READ_ABY(LDX)
 xa0_LDY_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 LDY:
         out __SREG__,_NZC       ; carry <- C
@@ -968,7 +957,6 @@ xb4_LDY_zpx:
 xbc_LDY_abx:
         READ_ABX(LDY)
 xe0_CPX_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 CPX:
         cp _X,data              ; X - data
@@ -980,7 +968,6 @@ xe4_CPX_zpg:
 xec_CPX_abs:
         READ_ABS(CPX)
 xc0_CPY_imm:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 CPY:
         cp _Y,data              ; Y - data
@@ -1033,7 +1020,6 @@ x82_NOP_imm_undocumented:
 x89_NOP_imm_undocumented:
 xc2_NOP_imm_undocumented:
 xe2_NOP_imm_undocumented:
-        adiw _PCL,2             ; PC += 2
         ldi cycles,2            ; cycles <- 2
 NOP:
         rjmp tick               ;
@@ -1102,13 +1088,11 @@ read_aby:
         ldi cycles,5            ; cycles <- 5
         rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 read_inx:
-        adiw _PCL,2             ; PC += 2
         add data,_X             ; data += X
         LDW_ZERO_PAGE(addr_lo,data)   ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         ldi cycles,6            ; cycles <- 6
         rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 read_iny:
-        adiw _PCL,2             ; PC += 2
         LDW_ZERO_PAGE(addr_lo,data)   ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         add addr_lo,_Y          ; addr_lo += Y
         brcs read_iny_carry     ; branch if addr_lo+Y carries
@@ -1157,23 +1141,19 @@ read_iny_carry:
         rjmp modify_iny
 
 x0a_ASL_acc:
-        adiw _PCL,1             ; PC++
         lsl _A                  ; A <- A << 1, carry <- A bit 7
         in _NZC,__SREG__        ; save N,Z,C
         TICK1(2)
 x2a_ROL_acc:
-        adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         rol _A                  ; carry <- A7, A <- [A6, A5 .. A0, carry]
         in _NZC,__SREG__        ; save N,Z,C
         TICK1(2)
 x4a_LSR_acc:
-        adiw _PCL,1             ; PC++
         lsr _A                  ; A <- [0, A7, .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
         TICK1(2)
 x6a_ROR_acc:
-        adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         ror _A                  ; A <- [carry, A7 .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
@@ -1392,7 +1372,6 @@ input:  function pointer in ZH:ZL, to be used with icall
         the function should use data as input and output
 */
 modify_zpg:
-        adiw _PCL,2             ; PC += 2
         mov XL,data             ;
         ldi XH,ZERO_PAGE        ;
         ld data,X               ; data <- zero_page
@@ -1400,7 +1379,6 @@ modify_zpg:
         st X,data               ; zero_page <- data
         TICK(5)
 modify_zpx:
-        adiw _PCL,2             ; PC += 2
         add data,_X             ; data += X
         mov XL,data             ;
         ldi XH,ZERO_PAGE        ;
@@ -1448,7 +1426,6 @@ modify_aby:
         ldi cycles,7            ; cycles <- 7
         rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
 modify_inx:
-        adiw _PCL,2             ; PC += 2
         add data,_X             ; data += X
         mov XL,data             ;
         ldi XH,ZERO_PAGE        ;
@@ -1458,7 +1435,6 @@ modify_inx:
         ldi cycles,8            ; cycles <- 8
         rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
 modify_iny:
-        adiw _PCL,2             ; PC += 2
         mov XL,data             ;
         ldi XH,ZERO_PAGE        ;
         ld addr_lo,X            ; addr_lo <- ram[data]
@@ -1472,22 +1448,18 @@ modify_iny:
 /***************************** WRITE INSTRUCTIONS *****************************/
 
 x81_STA_inx:
-        adiw _PCL,2             ; PC += 2
         add data,_X             ; data += X
         LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         ldi cycles,6            ; cycles <- 6
         mov value,_A            ; value <- A
         rjmp write_mem          ; write(addr_hi:addr_lo,data), rjmp tick
 x84_STY_zpg:
-        adiw _PCL,2             ; PC += 2
         ST_ZERO_PAGE(data,_Y)   ; ram[data] <- Y
         TICK(3)
 x85_STA_zpg:
-        adiw _PCL,2             ; PC += 2
         ST_ZERO_PAGE(data,_A)   ; ram[data] <- A
         TICK(3)
 x86_STX_zpg:
-        adiw _PCL,2             ; PC += 2
         ST_ZERO_PAGE(data,_X)   ; ram[data] <- X
         TICK(3)
 x8c_STY_abs:
@@ -1500,7 +1472,6 @@ x8e_STX_abs:
         mov value,_X
         rjmp write_abs
 x91_STA_iny:
-        adiw _PCL,2             ; PC += 2
         LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         add addr_lo,_Y          ; addr_hi:addr_lo += Y
         adc addr_hi,__zero_reg__;
@@ -1508,17 +1479,14 @@ x91_STA_iny:
         mov value,_A            ; value <- A
         rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
 x94_STY_zpx:
-        adiw _PCL,2             ; PC += 2
         add data,_X             ; data += X
         ST_ZERO_PAGE(data,_Y)   ; ram[data] <- Y
         TICK(4)
 x95_STA_zpx:
-        adiw _PCL,2             ; PC += 2
         add data,_X             ; data += X
         ST_ZERO_PAGE(data,_A)   ; ram[data] <- A
         TICK(4)
 x96_STX_zpy:
-        adiw _PCL,2             ; PC += 2
         add data,_Y             ; data += Y
         ST_ZERO_PAGE(data,_X)   ; ram[data] <- X
         TICK(4)
@@ -1530,7 +1498,6 @@ x9d_STA_abx:
         rjmp write_abx
 
 x83_SAX_inx_undocumented:
-        adiw _PCL,2             ; PC += 2
         add data,_X             ; data += X
         LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         ldi cycles,6            ; cycles <- 6
@@ -1538,7 +1505,6 @@ x83_SAX_inx_undocumented:
         and value,_X            ; value <- A & X
         rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
 x87_SAX_zpg_undocumented:
-        adiw _PCL,2             ; PC += 2
         mov value,_A
         and value,_X
         ST_ZERO_PAGE(data,value); ram[data] <- A & X
@@ -1548,14 +1514,12 @@ x8f_SAX_abs_undocumented:
         and value,_X
         rjmp write_abs
 x97_SAX_zpy_undocumented:
-        adiw _PCL,2             ; PC += 2
         add data,_Y             ; data += Y
         mov value,_A            ; value <- A
         and value,_X            ; value <- A & X
         ST_ZERO_PAGE(data,value); ram[data] <- A & X
         TICK(4)
 x93_SHA_iny_undocumented:
-        adiw _PCL,2             ; PC += 2
         LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         add addr_lo,_Y          ; addr_hi:addr_lo += Y
         adc addr_hi,__zero_reg__;
@@ -1637,42 +1601,34 @@ write_aby:
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
 x10_BPL:
-        adiw _PCL,2             ; PC += 2
         bst _NZC,2              ; branch on N clear
         brtc take_branch
         TICK(2)
 x30_BMI:
-        adiw _PCL,2             ; PC += 2
         bst _NZC,2              ; branch on N set
         brts take_branch
         TICK(2)
 x50_BVC:
-        adiw _PCL,2             ; PC += 2
         bst _P,6                ; branch on P bit 6 = 0
         brtc take_branch        ;
         TICK(2)
 x70_BVS:
-        adiw _PCL,2             ; PC += 2
         bst _P,6                ; branch on P bit 6 = 1
         brts take_branch        ;
         TICK(2)
 x90_BCC:
-        adiw _PCL,2             ; PC += 2
         bst _NZC,0              ; branch on C clear
         brtc take_branch
         TICK(2)
 xb0_BCS:
-        adiw _PCL,2             ; PC += 2
         bst _NZC,0              ; branch on C set
         brts take_branch
         TICK(2)
 xd0_BNE:
-        adiw _PCL,2             ; PC += 2
         bst _NZC,1              ; branch on Z clear
         brtc take_branch
         TICK(2)
 xf0_BEQ:
-        adiw _PCL,2             ; PC += 2
         bst _NZC,1              ; branch on Z set
         brts take_branch
         TICK(2)
@@ -1694,38 +1650,30 @@ branch_next_page:
 /***************************** FLAG INSTRUCTIONS ******************************/
 
 x18_CLC:
-        adiw _PCL,1             ; PC++
         cbr _NZC,0x01           ; C <- 0
         TICK1(2)
 x38_SEC:
-        adiw _PCL,1             ; PC++
         sbr _NZC,0x01           ; C <- 1
         TICK1(2)
 x58_CLI:
-        adiw _PCL,1             ; PC++
         cbr _P,I_FLAG           ; P &= ~I_FLAG
         TICK1(2)
 x78_SEI:
-        adiw _PCL,1             ; PC++
         sbr _P,I_FLAG           ; P |= I_FLAG
         TICK1(2)
 xb8_CLV:
-        adiw _PCL,1             ; PC++
         cbr _P,V_FLAG           ; P &= ~V_FLAG
         TICK1(2)
 xd8_CLD:
-        adiw _PCL,1             ; PC++
         cbr _P,D_FLAG           ; P &= ~D_FLAG
         TICK1(2)
 xf8_SED:
-        adiw _PCL,1             ; PC++
         sbr _P,D_FLAG           ; P |= D_FLAG
         TICK1(2)
 
 /*************************** REGISTER INSTRUCTIONS ****************************/
 
 #define TRANSFER(src,dest)        \
-        adiw _PCL,1             $ \
         out __SREG__,_NZC       $ \
         mov (dest),(src)        $ \
         tst (dest)              $ \
@@ -1733,25 +1681,21 @@ xf8_SED:
         TICK1(2)
 
 xca_DEX:
-        adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         dec _X                  ; X--
         in _NZC,__SREG__        ; save N,Z,C
         TICK1(2)
 xe8_INX:
-        adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         inc _X                  ; X++
         in _NZC,__SREG__        ; save N,Z,C
         TICK1(2)
 x88_DEY:
-        adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         dec _Y                  ; Y--
         in _NZC,__SREG__        ; save N,Z,C
         TICK1(2)
 xc8_INY:
-        adiw _PCL,1             ; PC++
         out __SREG__,_NZC       ; carry <- C
         inc _Y                  ; Y++
         in _NZC,__SREG__        ; save N,Z,C
@@ -1775,13 +1719,11 @@ x5a_NOP_undocumented:
 x7a_NOP_undocumented:
 xda_NOP_undocumented:
 xfa_NOP_undocumented:
-        adiw _PCL,1             ; PC++
         TICK1(2)
 
 /*************************** STACK/PC INSTRUCTIONS ****************************/
 
 x00_BRK:
-        adiw _PCL,2             ; PC += 2
         PUSH(_PCH)              ; push address of the BRK instruction +2
         PUSH(_PCL)
         rcall pack_flags        ;
@@ -1819,21 +1761,17 @@ x6c_JMP_ind:
         rcall mem_read_16       ; PC <- mem_read(addr_hi:addr_lo)
         TICK(5)
 x08_PHP:
-        adiw _PCL,1             ; PC++
         rcall pack_flags        ;
         PUSH(_P)                ; stack[S--] <- P
         TICK1(3)
 x28_PLP:
-        adiw _PCL,1             ; PC++
         PULL(_P)                ; P <- stack[++S]
-        rcall unpack_flags      ;
+        call unpack_flags       ;
         TICK1(4)
 x48_PHA:
-        adiw _PCL,1             ; PC++
         PUSH(_A)                ; stack[S--] <- A
         TICK1(3)
 x68_PLA:
-        adiw _PCL,1             ; PC++
         PULL(_A)                ; A <- stack[++S]
         out __SREG__,_NZC       ; carry <- C
         tst _A
@@ -1844,7 +1782,6 @@ x68_PLA:
 
 x0b_ANC_imm_undocumented:
 x2b_ANC_imm_undocumented:
-        adiw _PCL,2             ; PC += 2
         and _A,data             ; A &= data
         in _NZC,__SREG__        ; save N,Z,C
         bst _A,7                ; C <- A.7
@@ -1852,34 +1789,27 @@ x2b_ANC_imm_undocumented:
         TICK(2)
 x4b_ASR_imm_undocumented:
         ;; AND + LSR
-        adiw _PCL,2             ; PC += 2
         and _A,data             ; A &= data
         lsr _A                  ; A <- [0, A7, .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
         TICK(2)
 x6b:
-        adiw _PCL,1             ; PC++
         ;; TODO
         TICK1(2)
 x8b:
-        adiw _PCL,1             ; PC++
         ;; TODO
         TICK1(2)
 x9b:
-        adiw _PCL,1             ; PC++
         ;; TODO
         TICK1(5)
 
 xab:
-        adiw _PCL,1             ; PC++
         ;; TODO
         TICK1(2)
 xbb:
-        adiw _PCL,1             ; PC++
         ;; TODO
         TICK1(4)
 xcb_SBX_imm_undocumented:
-        adiw _PCL,2             ; PC += 2
         and _X,_A               ; X &= A
         sub _X,data             ; X -= data
         in _NZC,__SREG__        ; save N,Z,C
@@ -1897,6 +1827,7 @@ x92:
 xb2:
 xd2:
 xf2:
+        sbiw _PCL,2
         TICK(128)               ; loop in place, very slowly
 
 /******************************************************************************/
