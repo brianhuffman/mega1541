@@ -103,18 +103,17 @@ mem_read_16:
 /* cycles (ram): 10+ret = 14 */
 /* cycles (rom): 15+ret = 19 */
 .L__stack_usage = 0
-        cpi addr_hi,RAM_PAGES   ;
-        brsh mem_16_L6          ; branch if addr_hi is above RAM
         movw ZL,addr_lo         ;
+        cpi ZH,RAM_PAGES        ;
+        brsh mem_16_L6          ; branch if addr_hi is above RAM
         subi ZH,hi8(-(ram))     ;
         ld _PCL,Z+              ; addr_lo <- ram[addr]
         ld _PCH,Z               ; addr_hi <- ram[addr+1]
         ret
 mem_16_L6:
-        cpi addr_hi,0xc0        ;
+        cpi ZH,0xc0             ;
         brlo mem_16_L9          ; branch if addr_hi < 0xc0
 mem_16_rom:
-        movw ZL,addr_lo         ;
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm _PCL,Z+             ; addr_lo <- rom[addr - 0xc0000]
         lpm _PCH,Z              ; addr_hi <- rom[addr+1 - 0xc0000]
@@ -1016,17 +1015,16 @@ read_abs:
 read_abs_no_carry:
         ldi cycles,4            ; cycles <- 4
 read_mem:                       ; data <- read(addr_hi:addr_lo), ijmp (ret)
-        cpi addr_hi,RAM_PAGES   ; branch if addr is above RAM
-        brsh read_mem_L6        ;
         movw ZL,addr_lo         ;
+        cpi ZH,RAM_PAGES        ; branch if addr is above RAM
+        brsh read_mem_L6        ;
         subi ZH,hi8(-(ram))     ;
         ld data,Z               ; load from ram[addr]
         movw ZL,fptr_lo
         ijmp
 read_mem_L6:
-        cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
+        cpi ZH,0xc0             ; branch if addr_hi < 0xc0
         brlo read_mem_L9        ;
-        movw ZL,addr_lo         ;
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm data,Z              ; load from rom[addr - 0xc0000]
         movw ZL,fptr_lo
