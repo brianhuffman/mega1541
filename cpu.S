@@ -61,6 +61,7 @@ N_FLAG = 0x80
 
 #define ZERO_PAGE hi8(ram)
 #define STACK_PAGE hi8(ram+256)
+#define ROM_PAGE_FF hi8(dos1541-0xc000+0xff00)
 #define RAM_PAGES 4 /* should be 8 if we have more than 2k of SRAM available */
 
 #define PUSH(reg)                 \
@@ -199,11 +200,12 @@ cpu_reset:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-        ldi addr_lo,0xfc        ;
-        ldi addr_hi,0xff        ;
-        rcall mem_read_16       ; PC <- mem_read(0xfffc)
-        sts reg_pc,_PCL
-        sts reg_pc+1,_PCH
+        ldi ZL,0xfc
+        ldi ZH,ROM_PAGE_FF
+        lpm r24,Z+              ; PCL <- rom[0xfffc]
+        sts reg_pc,r24
+        lpm r24,Z               ; PCH <- rom[0xfffd]
+        sts reg_pc+1,r24
         ldi r24,0xff
         sts time_left,r24
         sts time_left+1,r24
@@ -252,9 +254,10 @@ cpu_irq:
         rcall pack_flags        ;
         PUSH(_P)                ; stack[S--] <- P
         sbr _P,I_FLAG           ; set I flag
-        ldi addr_lo,0xfe        ;
-        ldi addr_hi,0xff        ;
-        rcall mem_read_16       ; PC <- mem_read(0xfffe)
+        ldi ZL,0xfe
+        ldi ZH,ROM_PAGE_FF
+        lpm _PCL,Z+             ; PCL <- rom[0xfffe]
+        lpm _PCH,Z              ; PCH <- rom[0xffff]
         ldi cycles,7            ; 7 cycles
         rjmp clock_advance      ;
         ret
@@ -271,9 +274,10 @@ cpu_nmi:
         PUSH(_PCL)
         rcall pack_flags        ;
         PUSH(_P)                ; stack[S--] <- P
-        ldi addr_lo,0xfa        ;
-        ldi addr_hi,0xff        ;
-        rcall mem_read_16       ; PC <- mem_read(0xfffa)
+        ldi ZL,0xfa
+        ldi ZH,ROM_PAGE_FF
+        lpm _PCL,Z+             ; PCL <- rom[0xfffa]
+        lpm _PCH,Z              ; PCH <- rom[0xfffb]
         ldi cycles,7            ; 7 cycles
         rjmp clock_advance      ;
         ret
@@ -1689,9 +1693,10 @@ x00_BRK:
         sbr _P,B_FLAG           ; P |= B_FLAG
         PUSH(_P)                ; stack[S--] <- P
         sbr _P,I_FLAG           ; P |= I_FLAG (disable interrupts)
-        ldi addr_lo,0xfe        ;
-        ldi addr_hi,0xff        ;
-        rcall mem_read_16       ; PC <- mem_read(0xfffe)
+        ldi ZL,0xfe
+        ldi ZH,ROM_PAGE_FF
+        lpm _PCL,Z+             ; PCL <- rom[0xfffe]
+        lpm _PCH,Z              ; PCH <- rom[0xffff]
         TICK(7)
 x20_JSR:
         rcall addr_abs          ;
