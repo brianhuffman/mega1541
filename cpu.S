@@ -648,25 +648,22 @@ opcode_table:
 /***************************** READ INSTRUCTIONS ******************************/
 
 #define READ_ZPG(label)           \
-        mov XL,data             $ \
-        ldi XH,ZERO_PAGE        $ \
-        ld data,X               $ \
+        ldi addr_hi,ZERO_PAGE   $ \
+        ld data,Y               $ \
         ldi cycles,3            $ \
         rjmp label
 
 #define READ_ZPX(label)           \
-        add data,_X             $ \
-        mov XL,data             $ \
-        ldi XH,ZERO_PAGE        $ \
-        ld data,X               $ \
+        add addr_lo,_X          $ \
+        ldi addr_hi,ZERO_PAGE   $ \
+        ld data,Y               $ \
         ldi cycles,4            $ \
         rjmp label
 
 #define READ_ZPY(label)           \
-        add data,_Y             $ \
-        mov XL,data             $ \
-        ldi XH,ZERO_PAGE        $ \
-        ld data,X               $ \
+        add addr_lo,_Y          $ \
+        ldi addr_hi,ZERO_PAGE   $ \
+        ld data,Y               $ \
         ldi cycles,4            $ \
         rjmp label
 
