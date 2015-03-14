@@ -24,6 +24,8 @@ value = 3
 opcode = 10
 opcode_pointer = 11
 cycles = 21
+fptr_lo = 22
+fptr_hi = 23
 data = 24
 addr_lo = 24
 addr_hi = 25
@@ -660,28 +662,28 @@ opcode_table:
         rjmp label
 
 #define READ_ABS(label)           \
-        ldi XL,lo8(gs(label))   $ \
-        ldi XH,hi8(gs(label))   $ \
+        ldi fptr_lo,lo8(gs(label)) $ \
+        ldi fptr_hi,hi8(gs(label)) $ \
         rjmp read_abs
 
 #define READ_ABX(label)           \
-        ldi XL,lo8(gs(label))   $ \
-        ldi XH,hi8(gs(label))   $ \
+        ldi fptr_lo,lo8(gs(label)) $ \
+        ldi fptr_hi,hi8(gs(label)) $ \
         rjmp read_abx
 
 #define READ_ABY(label)           \
-        ldi XL,lo8(gs(label))   $ \
-        ldi XH,hi8(gs(label))   $ \
+        ldi fptr_lo,lo8(gs(label)) $ \
+        ldi fptr_hi,hi8(gs(label)) $ \
         rjmp read_aby
 
 #define READ_INX(label)           \
-        ldi XL,lo8(gs(label))   $ \
-        ldi XH,hi8(gs(label))   $ \
+        ldi fptr_lo,lo8(gs(label)) $ \
+        ldi fptr_hi,hi8(gs(label)) $ \
         rjmp read_inx
 
 #define READ_INY(label)           \
-        ldi XL,lo8(gs(label))   $ \
-        ldi XH,hi8(gs(label))   $ \
+        ldi fptr_lo,lo8(gs(label)) $ \
+        ldi fptr_hi,hi8(gs(label)) $ \
         rjmp read_iny
 
 
@@ -982,7 +984,7 @@ xfc_NOP_abx_undocumented:
 
 /******************* ADDRESSING MODES FOR READ INSTRUCTIONS *******************/
 /*
-input:  return address in XH:XL
+input:  return address in fptr_hi:fptr_lo
 output: data value in data, tick count in cycles
 */
 
@@ -1003,13 +1005,13 @@ read_abs:
         READ_ADDR_HI            ; addr_hi <- read(PC++)
 read_abs_no_carry:
         ldi cycles,4            ; cycles <- 4
-read_mem:                       ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+read_mem:                       ; data <- read(addr_hi:addr_lo), ijmp (ret)
         cpi addr_hi,RAM_PAGES   ; branch if addr is above RAM
         brsh read_mem_L6        ;
         movw ZL,addr_lo         ;
         subi ZH,hi8(-(ram))     ;
         ld data,Z               ; load from ram[addr]
-        movw ZL,XL
+        movw ZL,fptr_lo
         ijmp
 read_mem_L6:
         cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
@@ -1017,11 +1019,11 @@ read_mem_L6:
         movw ZL,addr_lo         ;
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm data,Z              ; load from rom[addr - 0xc0000]
-        movw ZL,XL
+        movw ZL,fptr_lo
         ijmp
 read_mem_L9:
         ldi data,0xff           ; other addresses return 0xff
-        movw ZL,XL
+        movw ZL,fptr_lo
         ijmp
 
 read_abx:
@@ -1030,29 +1032,29 @@ read_abx:
         brcc read_abs_no_carry  ; branch unless addr_lo+X carries
         inc addr_hi             ; addr_hi++
         ldi cycles,5            ; cycles <- 5
-        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
 read_aby:
         READ_ADDR_HI            ; addr_hi <- read(PC++)
         add addr_lo,_Y          ; addr_lo += Y
         brcc read_abs_no_carry  ; branch unless addr_lo+Y carries
         inc addr_hi             ; addr_hi++
         ldi cycles,5            ; cycles <- 5
-        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
 read_inx:
         add data,_X             ; data += X
         LDW_ZERO_PAGE(addr_lo,data)   ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         ldi cycles,6            ; cycles <- 6
-        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
 read_iny:
         LDW_ZERO_PAGE(addr_lo,data)   ; addr_hi:addr_lo <- ram[data+1]:ram[data]
         add addr_lo,_Y          ; addr_lo += Y
         brcs read_iny_carry     ; branch if addr_lo+Y carries
         ldi cycles,5            ; cycles <- 5
-        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
 read_iny_carry:
         inc addr_hi             ; addr_hi++
         ldi cycles,6            ; cycles <- 6
-        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
 
 /*********************** READ-MODIFY-WRITE INSTRUCTIONS ***********************/
 
@@ -1340,7 +1342,7 @@ modify_zpx:
 modify_abs:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
         ldi cycles,6            ; cycles <- 6
-modify_mem:                     ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
+modify_mem:                     ; data <- read(addr_hi:addr_lo), ijmp (Z)
         cpi addr_hi,RAM_PAGES   ; branch if addr is above RAM
         brsh modify_mem_hi      ;
         movw XL,addr_lo         ;
@@ -1352,11 +1354,11 @@ modify_mem:                     ; data <- read(addr_hi:addr_lo), ijmp (XH:XL)
 modify_mem_hi:
         cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
         brlo modify_mem_io      ;
-        movw XL,ZL              ; save call address in X
+        movw fptr_lo,ZL         ; save call address in fptr
         movw ZL,addr_lo         ;
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm data,Z              ; data <- rom[addr - 0xc0000]
-        movw ZL,XL              ; restore call address from X
+        movw ZL,fptr_lo         ; restore call address from fptr
         icall                   ; data <- f(data)
         rjmp tick
 modify_mem_io:
@@ -1369,13 +1371,13 @@ modify_abx:
         add addr_lo,_X          ; addr_hi:addr_lo += X
         adc addr_hi,__zero_reg__;
         ldi cycles,7            ; cycles <- 7
-        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (Z)
 modify_aby:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
         add addr_lo,_Y          ; addr_hi:addr_lo += Y
         adc addr_hi,__zero_reg__;
         ldi cycles,7            ; cycles <- 7
-        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (Z)
 modify_inx:
         add data,_X             ; data += X
         mov XL,data             ;
@@ -1384,7 +1386,7 @@ modify_inx:
         inc XL                  ;
         ld addr_hi,X            ; addr_hi <- ram[data+1]
         ldi cycles,8            ; cycles <- 8
-        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (Z)
 modify_iny:
         mov XL,data             ;
         ldi XH,ZERO_PAGE        ;
@@ -1394,7 +1396,7 @@ modify_iny:
         add addr_lo,_Y          ; addr_hi:addr_lo += Y
         adc addr_hi,__zero_reg__;
         ldi cycles,8            ; cycles <- 5
-        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (XH:XL)
+        rjmp modify_mem         ; data <- modify(addr_hi:addr_lo), ijmp (Z)
 
 /***************************** WRITE INSTRUCTIONS *****************************/
 
