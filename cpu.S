@@ -282,18 +282,32 @@ cpu_nmi:
 .global        cpu_main
         .type        cpu_main, @function
 cpu_main:
-        push _PCL
-        push _PCH
-        push _A
-        push _X
-        push _Y
-        push _S
-        push _P
-        push _NZC
-        push time0
-        push time1
-        push time2
-        push time3
+        push r2
+        push r3
+        push r4
+        push r5
+        push r6
+        push r7
+        push r8
+        push r9
+        push r10
+        push r11
+        push r12
+        push r13
+        push r14
+        push r15
+        push r16
+        push r17
+        push r28
+        push r29
+        lds time0,time_left
+        lds time1,time_left+1
+        lds time2,time_left+2
+        lds time3,time_left+3
+        add time0,r22           ; time_left += cycles
+        adc time1,r23           ;
+        adc time2,r24           ;
+        adc time3,r25           ;
         lds _PCL,reg_pc
         lds _PCH,reg_pc+1
         lds _A,reg_a
@@ -303,10 +317,6 @@ cpu_main:
         lds _P,reg_p
         in _NZC,__SREG__        ; copy upper bits of _NZC from AVR status
         call unpack_flags       ; load N, Z, and C from P
-        lds time0,time_left
-        lds time1,time_left+1
-        lds time2,time_left+2
-        lds time3,time_left+3
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 14 */
@@ -316,10 +326,6 @@ cpu_main:
         mov const_one,r30
         ldi r30,hi8(gs(opcode_table))
         mov opcode_pointer,r30
-        add time0,r22           ; time_left += cycles
-        adc time1,r23           ;
-        adc time2,r24           ;
-        adc time3,r25           ;
         brpl load_opcode        ; continue if time >= 0
         rjmp .L366              ; save state and exit
 tick_carry:
@@ -1799,18 +1805,24 @@ xf2:
         sts time_left+1,time1
         sts time_left+2,time2
         sts time_left+3,time3
-        pop time3
-        pop time2
-        pop time1
-        pop time0
-        pop _NZC
-        pop _P
-        pop _S
-        pop _Y
-        pop _X
-        pop _A
-        pop _PCH
-        pop _PCL
+        pop r29
+        pop r28
+        pop r17
+        pop r16
+        pop r15
+        pop r14
+        pop r13
+        pop r12
+        pop r11
+        pop r10
+        pop r9
+        pop r8
+        pop r7
+        pop r6
+        pop r5
+        pop r4
+        pop r3
+        pop r2
         ret
         .size        cpu_main, .-cpu_main
         .section        .text.cpu_get_regs,"ax",@progbits
