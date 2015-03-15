@@ -1012,21 +1012,22 @@ read_abs:
 read_abs_no_carry:
         ldi cycles,4            ; cycles <- 4
 read_mem:                       ; data <- read(addr_hi:addr_lo), ijmp (ret)
-        movw ZL,addr_lo         ;
-        cpi ZH,RAM_PAGES        ; branch if addr is above RAM
-        brsh read_mem_L6        ;
-        subi ZH,hi8(-(ram))     ;
-        ld data,Z               ; load from ram[addr]
+        cpi addr_hi,0xc0        ; branch if addr is in ROM
+        brsh read_mem_rom       ;
+read_mem_ram:
+        cpi addr_hi,RAM_PAGES   ; branch if addr is above RAM
+        brsh read_mem_io        ;
+        subi addr_hi,hi8(-(ram));
+        ld data,Y               ; load from ram[addr]
         movw ZL,fptr_lo
         ijmp
-read_mem_L6:
-        cpi ZH,0xc0             ; branch if addr_hi < 0xc0
-        brlo read_mem_L9        ;
+read_mem_rom:
+        movw ZL,addr_lo         ;
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm data,Z              ; load from rom[addr - 0xc0000]
         movw ZL,fptr_lo
         ijmp
-read_mem_L9:
+read_mem_io:
         ldi data,0xff           ; other addresses return 0xff
         movw ZL,fptr_lo
         ijmp
