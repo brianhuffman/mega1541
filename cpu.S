@@ -1330,19 +1330,17 @@ input:  function pointer in ZH:ZL, to be used with icall
         the function should use 'value' as input and output
 */
 modify_zpg:
-        mov XL,data             ;
-        ldi XH,ZERO_PAGE        ;
-        ld value,X              ; value <- zero_page
+        ldi addr_hi,ZERO_PAGE   ;
+        ld value,Y              ; value <- ram[addr]
         icall                   ; value <- f(value)
-        st X,value              ; zero_page <- value
+        st Y,value              ; zero_page <- value
         TICK(5)
 modify_zpx:
-        add data,_X             ; data += X
-        mov XL,data             ;
-        ldi XH,ZERO_PAGE        ;
-        ld value,X              ; value <- ram[addr]
+        add addr_lo,_X          ; addr_lo += X
+        ldi addr_hi,ZERO_PAGE   ;
+        ld value,Y              ; value <- ram[addr]
         icall                   ; value <- f(value)
-        st X,value              ; ram[addr] <- value
+        st Y,value              ; ram[addr] <- value
         TICK(6)
 modify_abs:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
@@ -1350,11 +1348,10 @@ modify_abs:
 modify_mem:                     ; data <- read(addr_hi:addr_lo), ijmp (Z)
         cpi addr_hi,RAM_PAGES   ; branch if addr is above RAM
         brsh modify_mem_hi      ;
-        movw XL,addr_lo         ;
-        subi XH,hi8(-(ram))     ;
-        ld value,X              ; value <- ram[addr_hi:addr_lo]
+        subi addr_hi,hi8(-(ram));
+        ld value,Y              ; value <- ram[addr_hi:addr_lo]
         icall                   ; value <- f(value)
-        st X,value              ; ram[addr_hi:addr_lo] <- value
+        st Y,value              ; ram[addr_hi:addr_lo] <- value
         rjmp tick
 modify_mem_hi:
         cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
