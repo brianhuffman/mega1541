@@ -249,109 +249,6 @@ cpu_nmi:
         ret
         .size        cpu_nmi, .-cpu_nmi
         .section        .text.cpu_main,"ax",@progbits
-.global        cpu_main
-        .type        cpu_main, @function
-cpu_main:
-        push r2
-        push r3
-        push r4
-        push r5
-        push r6
-        push r7
-        push r8
-        push r9
-        push r10
-        push r11
-        push r12
-        push r13
-        push r14
-        push r15
-        push r16
-        push r17
-        push r28
-        push r29
-        lds time0,time_left
-        lds time1,time_left+1
-        lds time2,time_left+2
-        lds time3,time_left+3
-        add time0,r22           ; time_left += cycles
-        adc time1,r23           ;
-        adc time2,r24           ;
-        adc time3,r25           ;
-        lds _PCL,reg_pc
-        lds _PCH,reg_pc+1
-        lds _A,reg_a
-        lds _X,reg_x
-        lds _Y,reg_y
-        lds _S,reg_s
-        lds _P,reg_p
-        in _NZC,__SREG__        ; copy upper bits of _NZC from AVR status
-        call unpack_flags       ; load N, Z, and C from P
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 14 */
-.L__stack_usage = 14
-        ;; initialize constant registers
-        ldi r30,1
-        mov const_one,r30
-        ldi r30,hi8(gs(opcode_table))
-        mov opcode_pointer,r30
-        brpl load_opcode        ; continue if time >= 0
-        rjmp .L366              ; save state and exit
-tick_carry:
-        sbc time1,__zero_reg__  ;
-        sbc time2,__zero_reg__  ;
-        sbc time3,__zero_reg__  ;
-        brpl load_opcode        ; continue if time >= 0
-        rjmp .L366              ; save state and exit
-tick:
-        sub time0,cycles        ; time_left -= cycles
-ticked:
-        brcs tick_carry         ; abort early if no carry
-load_opcode:
-        movw ZL,_PCL            ;
-        adiw _PCL,2             ; PC += 2
-        brpl load_opcode_ram    ; branch if PC < 0x8000
-load_opcode_rom:
-        subi ZH,hi8(-(dos1541-0xc000))  ;
-        lpm opcode,Z+           ; opcode <- rom[PC - 0xc0000]
-        lpm data,Z+             ; data <- rom[PC+1 - 0xc0000]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
-        ijmp                    ; jmp (opcode_table + opcode)
-load_opcode_ram:
-        subi ZH,hi8(-(ram))     ;
-        ld opcode,Z+            ; opcode <- ram[PC]
-        ld data,Z               ; data <- ram[PC+1]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
-        ijmp                    ; jmp (opcode_table + opcode)
-
-tick_carry1:
-        sbc time1,__zero_reg__  ;
-        sbc time2,__zero_reg__  ;
-        sbc time3,__zero_reg__  ;
-        brpl load_opcode1       ; continue if time >= 0
-        sbiw _PCL,1             ; restore PC to proper location
-        rjmp .L366              ; save state and exit
-ticked1:
-        ;; At this point, PC points to the the byte AFTER the upcoming opcode
-        ;; The upcoming opcode was prefetched last time and stored in `data`
-        brcs tick_carry1        ; abort early if no carry
-load_opcode1:
-        movw ZL,_PCL            ;
-        mov opcode,data         ; opcode <- prefetched data from before
-        adiw _PCL,1             ; PC ++
-        brpl load_opcode_ram1   ; branch if PC < 0x8000
-load_opcode_rom1:
-        subi ZH,hi8(-(dos1541-0xc000))  ;
-        lpm data,Z              ; data <- rom[PC+1 - 0xc0000]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
-        ijmp                    ; jmp (opcode_table + opcode)
-load_opcode_ram1:
-        subi ZH,hi8(-(ram))     ;
-        ld data,Z               ; data <- ram[PC+1]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
-        ijmp                    ; jmp (opcode_table + opcode)
-
 /* align to 256-word (512-byte) boundary */
 .p2align 9
 opcode_table:
@@ -611,6 +508,109 @@ opcode_table:
         rjmp xfd_SBC_abx
         rjmp xfe_INC_abx
         rjmp xff_ISB_abx_undocumented
+
+.global        cpu_main
+        .type        cpu_main, @function
+cpu_main:
+        push r2
+        push r3
+        push r4
+        push r5
+        push r6
+        push r7
+        push r8
+        push r9
+        push r10
+        push r11
+        push r12
+        push r13
+        push r14
+        push r15
+        push r16
+        push r17
+        push r28
+        push r29
+        lds time0,time_left
+        lds time1,time_left+1
+        lds time2,time_left+2
+        lds time3,time_left+3
+        add time0,r22           ; time_left += cycles
+        adc time1,r23           ;
+        adc time2,r24           ;
+        adc time3,r25           ;
+        lds _PCL,reg_pc
+        lds _PCH,reg_pc+1
+        lds _A,reg_a
+        lds _X,reg_x
+        lds _Y,reg_y
+        lds _S,reg_s
+        lds _P,reg_p
+        in _NZC,__SREG__        ; copy upper bits of _NZC from AVR status
+        call unpack_flags       ; load N, Z, and C from P
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 14 */
+.L__stack_usage = 14
+        ;; initialize constant registers
+        ldi r30,1
+        mov const_one,r30
+        ldi r30,hi8(gs(opcode_table))
+        mov opcode_pointer,r30
+        brpl load_opcode        ; continue if time >= 0
+        rjmp .L366              ; save state and exit
+tick_carry:
+        sbc time1,__zero_reg__  ;
+        sbc time2,__zero_reg__  ;
+        sbc time3,__zero_reg__  ;
+        brpl load_opcode        ; continue if time >= 0
+        rjmp .L366              ; save state and exit
+tick:
+        sub time0,cycles        ; time_left -= cycles
+ticked:
+        brcs tick_carry         ; abort early if no carry
+load_opcode:
+        movw ZL,_PCL            ;
+        adiw _PCL,2             ; PC += 2
+        brpl load_opcode_ram    ; branch if PC < 0x8000
+load_opcode_rom:
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm opcode,Z+           ; opcode <- rom[PC - 0xc0000]
+        lpm data,Z+             ; data <- rom[PC+1 - 0xc0000]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (opcode_table + opcode)
+load_opcode_ram:
+        subi ZH,hi8(-(ram))     ;
+        ld opcode,Z+            ; opcode <- ram[PC]
+        ld data,Z               ; data <- ram[PC+1]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (opcode_table + opcode)
+
+tick_carry1:
+        sbc time1,__zero_reg__  ;
+        sbc time2,__zero_reg__  ;
+        sbc time3,__zero_reg__  ;
+        brpl load_opcode1       ; continue if time >= 0
+        sbiw _PCL,1             ; restore PC to proper location
+        rjmp .L366              ; save state and exit
+ticked1:
+        ;; At this point, PC points to the the byte AFTER the upcoming opcode
+        ;; The upcoming opcode was prefetched last time and stored in `data`
+        brcs tick_carry1        ; abort early if no carry
+load_opcode1:
+        movw ZL,_PCL            ;
+        mov opcode,data         ; opcode <- prefetched data from before
+        adiw _PCL,1             ; PC ++
+        brpl load_opcode_ram1   ; branch if PC < 0x8000
+load_opcode_rom1:
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm data,Z              ; data <- rom[PC+1 - 0xc0000]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (opcode_table + opcode)
+load_opcode_ram1:
+        subi ZH,hi8(-(ram))     ;
+        ld data,Z               ; data <- ram[PC+1]
+        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        ijmp                    ; jmp (opcode_table + opcode)
 
 /***************************** READ INSTRUCTIONS ******************************/
 
