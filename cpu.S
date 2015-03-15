@@ -1118,7 +1118,7 @@ x6a_ROR_acc:
         TICK1(2)
 
 ASL:
-        lsl data                ; A <- A << 1, carry <- A bit 7
+        lsl value               ; A <- A << 1, carry <- A bit 7
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x06_ASL_zpg:
@@ -1131,7 +1131,7 @@ x1e_ASL_abx:
         MODIFY_ABX(ASL)
 ROL:
         out __SREG__,_NZC       ; carry <- C
-        rol data                ; carry <- A7, A <- [A6, A5 .. A0, carry]
+        rol value               ; carry <- A7, A <- [A6, A5 .. A0, carry]
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x26_ROL_zpg:
@@ -1143,7 +1143,7 @@ x36_ROL_zpx:
 x3e_ROL_abx:
         MODIFY_ABX(ROL)
 LSR:
-        lsr data                ; A <- [0, A7, .. A2, A1], carry <- A0
+        lsr value               ; A <- [0, A7, .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x46_LSR_zpg:
@@ -1156,7 +1156,7 @@ x5e_LSR_abx:
         MODIFY_ABX(LSR)
 ROR:
         out __SREG__,_NZC       ; carry <- C
-        ror data                ; A <- [carry, A7 .. A2, A1], carry <- A0
+        ror value               ; A <- [carry, A7 .. A2, A1], carry <- A0
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x66_ROR_zpg:
@@ -1169,7 +1169,7 @@ x7e_ROR_abx:
         MODIFY_ABX(ROR)
 DEC:
         out __SREG__,_NZC       ; carry <- C
-        dec data                ; data--
+        dec value               ; value--
         in _NZC,__SREG__        ; save N,Z,C
         ret
 xc6_DEC_zpg:
@@ -1182,7 +1182,7 @@ xde_DEC_abx:
         MODIFY_ABX(DEC)
 INC:
         out __SREG__,_NZC       ; carry <- C
-        inc data                ; data++
+        inc value               ; value++
         in _NZC,__SREG__        ; save N,Z,C
         ret
 xe6_INC_zpg:
@@ -1196,8 +1196,8 @@ xfe_INC_abx:
 
 SLO:
         ;; ASL + ORA
-        lsl data                ; carry <- data.7 <- ... <- data.0 <- 0
-        or _A,data              ; A |= data
+        lsl value               ; carry <- value.7 <- ... <- value.0 <- 0
+        or _A,value             ; A |= value
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x03_SLO_inx_undocumented:
@@ -1217,8 +1217,8 @@ x1f_SLO_abx_undocumented:
 RLA:
         ;; ROL + AND
         out __SREG__,_NZC       ; carry <- C
-        rol data                ; carry <- data.7 <- ... <- data.0 <- carry
-        and _A,data             ; A &= data
+        rol value               ; carry <- value.7 <- ... <- value.0 <- carry
+        and _A,value            ; A &= value
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x23_RLA_inx_undocumented:
@@ -1237,8 +1237,8 @@ x3f_RLA_abx_undocumented:
         MODIFY_ABX(RLA)
 SRE:
         ;; LSR + EOR
-        lsr data                ; carry <- data.0 <- ... <- data.7 <- 0
-        eor _A,data             ; A ^= data
+        lsr value               ; carry <- value.0 <- ... <- value.7 <- 0
+        eor _A,value            ; A ^= value
         in _NZC,__SREG__        ; save N,Z,C
         ret
 x43_SRE_inx_undocumented:
@@ -1258,8 +1258,8 @@ x5f_SRE_abx_undocumented:
 RRA:
         ;; ROR + ADC
         out __SREG__,_NZC       ; carry <- C
-        ror data                ; carry <- data.0 <- ... <- data.7 <- carry
-        adc _A,data             ; (carry, A) <- A + data + carry
+        ror value               ; carry <- value.0 <- ... <- value.7 <- carry
+        adc _A,value            ; (carry, A) <- A + value + carry
         in _NZC,__SREG__        ; save N,Z,C
         bst _NZC,3              ; P.6 <- overflow
         bld _P,6
@@ -1280,8 +1280,8 @@ x7f_RRA_abx_undocumented:
         MODIFY_ABX(RRA)
 DCP:
         ;; DEC + CMP
-        dec data                ; data--
-        cp _A,data              ; A - data
+        dec value               ; value--
+        cp _A,value             ; A - value
         in _NZC,__SREG__        ; save N,Z,C
         eor _NZC,const_one      ; invert C (AVR and 6502 have opposite convention for compare)
         ret
@@ -1301,14 +1301,14 @@ xdf_DCP_abx_undocumented:
         MODIFY_ABX(DCP)
 ISB:
         ;; INC + SBC
-        inc data                ; data++
-        com data                ; data <- ~data
+        inc value               ; value++
+        com value               ; value <- ~value
         out __SREG__,_NZC       ; carry <- C
-        adc _A,data             ; (carry, A) <- A + data + carry
+        adc _A,value            ; (carry, A) <- A + value + carry
         in _NZC,__SREG__        ; save N,Z,C
         bst _NZC,3              ; P.6 <- overflow
         bld _P,6
-        com data                ; data <- ~data
+        com value               ; value <- ~value
         ret
 xe3_ISB_inx_undocumented:
         MODIFY_INX(ISB)
@@ -1327,22 +1327,22 @@ xff_ISB_abx_undocumented:
 
 /*
 input:  function pointer in ZH:ZL, to be used with icall
-        the function should use data as input and output
+        the function should use 'value' as input and output
 */
 modify_zpg:
         mov XL,data             ;
         ldi XH,ZERO_PAGE        ;
-        ld data,X               ; data <- zero_page
-        icall                   ; data <- f(data)
-        st X,data               ; zero_page <- data
+        ld value,X              ; value <- zero_page
+        icall                   ; value <- f(value)
+        st X,value              ; zero_page <- value
         TICK(5)
 modify_zpx:
         add data,_X             ; data += X
         mov XL,data             ;
         ldi XH,ZERO_PAGE        ;
-        ld data,X               ; data <- ram[addr]
-        icall                   ; data <- f(data)
-        st X,data               ; ram[addr] <- data
+        ld value,X              ; value <- ram[addr]
+        icall                   ; value <- f(value)
+        st X,value              ; ram[addr] <- value
         TICK(6)
 modify_abs:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
@@ -1352,9 +1352,9 @@ modify_mem:                     ; data <- read(addr_hi:addr_lo), ijmp (Z)
         brsh modify_mem_hi      ;
         movw XL,addr_lo         ;
         subi XH,hi8(-(ram))     ;
-        ld data,X               ; data <- ram[addr_hi:addr_lo]
-        icall                   ; data <- f(data)
-        st X,data               ; ram[addr_hi:addr_lo] <- data
+        ld value,X              ; value <- ram[addr_hi:addr_lo]
+        icall                   ; value <- f(value)
+        st X,value              ; ram[addr_hi:addr_lo] <- value
         rjmp tick
 modify_mem_hi:
         cpi addr_hi,0xc0        ; branch if addr_hi < 0xc0
@@ -1362,14 +1362,15 @@ modify_mem_hi:
         movw fptr_lo,ZL         ; save call address in fptr
         movw ZL,addr_lo         ;
         subi ZH,hi8(-(dos1541-0xc000))  ;
-        lpm data,Z              ; data <- rom[addr - 0xc0000]
+        lpm value,Z             ; value <- rom[addr - 0xc0000]
         movw ZL,fptr_lo         ; restore call address from fptr
-        icall                   ; data <- f(data)
+        icall                   ; value <- f(value)
         rjmp tick
 modify_mem_io:
         /* TODO: read/write to IO memory */
-        ldi data,0xff           ; other addresses return 0xff
-        icall                   ; data <- f(data)
+        clr value               ; other addresses return 0xff
+        com value
+        icall                   ; value <- f(value)
         rjmp tick
 modify_abx:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
