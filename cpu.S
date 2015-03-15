@@ -1683,24 +1683,17 @@ x4c_JMP_abs:
         TICK(3)
 x6c_JMP_ind:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-        movw ZL,addr_lo         ;
-        cpi ZH,RAM_PAGES        ;
-        brsh mem_16_L6          ; branch if addr_hi is above RAM
-        subi ZH,hi8(-(ram))     ;
-        ld _PCL,Z+              ; addr_lo <- ram[addr]
-        ld _PCH,Z               ; addr_hi <- ram[addr+1]
-        TICK(5)
-mem_16_L6:
-        cpi ZH,0xc0             ;
-        brlo mem_16_L9          ; branch if addr_hi < 0xc0
-mem_16_rom:
+        cpi addr_hi,0xc0        ; branch if addr is below ROM
+        brlo mem_16_ram         ;
+        movw ZL,addr_lo
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm _PCL,Z+             ; addr_lo <- rom[addr - 0xc0000]
         lpm _PCH,Z              ; addr_hi <- rom[addr+1 - 0xc0000]
         TICK(5)
-mem_16_L9:
-        ldi _PCL,0xff           ; other addresses return 0xff
-        ldi _PCH,0xff           ; other addresses return 0xff
+mem_16_ram:
+        subi addr_hi,hi8(-(ram))
+        ld _PCL,Y+              ; addr_lo <- ram[addr]
+        ld _PCH,Y               ; addr_hi <- ram[addr+1]
         TICK(5)
 x08_PHP:
         rcall pack_flags        ;
