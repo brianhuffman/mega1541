@@ -90,39 +90,6 @@ N_FLAG = 0x80
         ldi ZH,ZERO_PAGE        $ \
         st Z,(reg)
 
-        .section        .text.mem_read_16,"ax",@progbits
-.global        mem_read_16
-        .type        mem_read_16, @function
-mem_read_16:
-/* input: addr_hi:addr_lo */
-/* output: _PCH:_PCL */
-/* touches: ZH, ZL */
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-/* cycles (ram): 10+ret = 14 */
-/* cycles (rom): 15+ret = 19 */
-.L__stack_usage = 0
-        movw ZL,addr_lo         ;
-        cpi ZH,RAM_PAGES        ;
-        brsh mem_16_L6          ; branch if addr_hi is above RAM
-        subi ZH,hi8(-(ram))     ;
-        ld _PCL,Z+              ; addr_lo <- ram[addr]
-        ld _PCH,Z               ; addr_hi <- ram[addr+1]
-        ret
-mem_16_L6:
-        cpi ZH,0xc0             ;
-        brlo mem_16_L9          ; branch if addr_hi < 0xc0
-mem_16_rom:
-        subi ZH,hi8(-(dos1541-0xc000))  ;
-        lpm _PCL,Z+             ; addr_lo <- rom[addr - 0xc0000]
-        lpm _PCH,Z              ; addr_hi <- rom[addr+1 - 0xc0000]
-        ret
-mem_16_L9:
-        ldi _PCL,0xff           ; other addresses return 0xff
-        ldi _PCH,0xff           ; other addresses return 0xff
-        ret
-        .size        mem_read_16, .-mem_read_16
         .section        .text.clock_advance,"ax",@progbits
         .type        clock_advance, @function
 clock_advance:
@@ -1716,7 +1683,24 @@ x4c_JMP_abs:
         TICK(3)
 x6c_JMP_ind:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-        rcall mem_read_16       ; PC <- mem_read(addr_hi:addr_lo)
+        movw ZL,addr_lo         ;
+        cpi ZH,RAM_PAGES        ;
+        brsh mem_16_L6          ; branch if addr_hi is above RAM
+        subi ZH,hi8(-(ram))     ;
+        ld _PCL,Z+              ; addr_lo <- ram[addr]
+        ld _PCH,Z               ; addr_hi <- ram[addr+1]
+        TICK(5)
+mem_16_L6:
+        cpi ZH,0xc0             ;
+        brlo mem_16_L9          ; branch if addr_hi < 0xc0
+mem_16_rom:
+        subi ZH,hi8(-(dos1541-0xc000))  ;
+        lpm _PCL,Z+             ; addr_lo <- rom[addr - 0xc0000]
+        lpm _PCH,Z              ; addr_hi <- rom[addr+1 - 0xc0000]
+        TICK(5)
+mem_16_L9:
+        ldi _PCL,0xff           ; other addresses return 0xff
+        ldi _PCH,0xff           ; other addresses return 0xff
         TICK(5)
 x08_PHP:
         rcall pack_flags        ;
