@@ -22,7 +22,7 @@ time3 = 15
 /* Loop-local register variables */
 value = 3
 opcode = 10
-opcode_pointer = 11
+opcode_hi = 11
 cycles = 21
 fptr_lo = 22
 fptr_hi = 23
@@ -555,7 +555,7 @@ cpu_main:
         ldi r30,1
         mov const_one,r30
         ldi r30,hi8(gs(opcode_table))
-        mov opcode_pointer,r30
+        mov opcode_hi,r30
         brpl load_opcode        ; continue if time >= 0
         rjmp .L366              ; save state and exit
 tick_carry:
@@ -576,13 +576,13 @@ load_opcode_rom:
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm opcode,Z+           ; opcode <- rom[PC - 0xc0000]
         lpm data,Z+             ; data <- rom[PC+1 - 0xc0000]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        movw ZL,opcode          ; ZH:ZL <- opcode_hi:opcode
         ijmp                    ; jmp (opcode_table + opcode)
 load_opcode_ram:
         subi ZH,hi8(-(ram))     ;
         ld opcode,Z+            ; opcode <- ram[PC]
         ld data,Z               ; data <- ram[PC+1]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        movw ZL,opcode          ; ZH:ZL <- opcode_hi:opcode
         ijmp                    ; jmp (opcode_table + opcode)
 
 tick_carry1:
@@ -604,12 +604,12 @@ load_opcode1:
 load_opcode_rom1:
         subi ZH,hi8(-(dos1541-0xc000))  ;
         lpm data,Z              ; data <- rom[PC+1 - 0xc0000]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        movw ZL,opcode          ; ZH:ZL <- opcode_hi:opcode
         ijmp                    ; jmp (opcode_table + opcode)
 load_opcode_ram1:
         subi ZH,hi8(-(ram))     ;
         ld data,Z               ; data <- ram[PC+1]
-        movw ZL,opcode          ; ZH:ZL <- opcode_pointer:opcode
+        movw ZL,opcode          ; ZH:ZL <- opcode_hi:opcode
         ijmp                    ; jmp (opcode_table + opcode)
 
 /***************************** READ INSTRUCTIONS ******************************/
