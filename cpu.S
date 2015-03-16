@@ -84,12 +84,6 @@ N_FLAG = 0x80
         inc ZL                  $ \
         ld (reg)+1,Z
 
-/* ram[addr] <- reg */
-#define ST_ZERO_PAGE(addr,reg)    \
-        mov ZL,(addr)           $ \
-        ldi ZH,ZERO_PAGE        $ \
-        st Z,(reg)
-
         .section        .text.clock_advance,"ax",@progbits
         .type        clock_advance, @function
 clock_advance:
@@ -1378,13 +1372,16 @@ x81_STA_inx:
         mov value,_A            ; value <- A
         rjmp write_mem          ; write(addr_hi:addr_lo,data), rjmp tick
 x84_STY_zpg:
-        ST_ZERO_PAGE(data,_Y)   ; ram[data] <- Y
+        ldi addr_hi,ZERO_PAGE
+        st Y,_Y                 ; ram[addr] <- Y
         TICK(3)
 x85_STA_zpg:
-        ST_ZERO_PAGE(data,_A)   ; ram[data] <- A
+        ldi addr_hi,ZERO_PAGE
+        st Y,_A                 ; ram[addr] <- A
         TICK(3)
 x86_STX_zpg:
-        ST_ZERO_PAGE(data,_X)   ; ram[data] <- X
+        ldi addr_hi,ZERO_PAGE
+        st Y,_X                 ; ram[addr] <- X
         TICK(3)
 x8c_STY_abs:
         mov value,_Y
@@ -1403,16 +1400,19 @@ x91_STA_iny:
         mov value,_A            ; value <- A
         rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
 x94_STY_zpx:
-        add data,_X             ; data += X
-        ST_ZERO_PAGE(data,_Y)   ; ram[data] <- Y
+        add addr_lo,_X          ; addr_lo += X
+        ldi addr_hi,ZERO_PAGE
+        st Y,_Y                 ; ram[addr] <- Y
         TICK(4)
 x95_STA_zpx:
-        add data,_X             ; data += X
-        ST_ZERO_PAGE(data,_A)   ; ram[data] <- A
+        add addr_lo,_X          ; addr_lo += X
+        ldi addr_hi,ZERO_PAGE
+        st Y,_A                 ; ram[addr] <- A
         TICK(4)
 x96_STX_zpy:
-        add data,_Y             ; data += Y
-        ST_ZERO_PAGE(data,_X)   ; ram[data] <- X
+        add addr_lo,_Y          ; addr_lo += Y
+        ldi addr_hi,ZERO_PAGE
+        st Y,_X                 ; ram[addr] <- X
         TICK(4)
 x99_STA_aby:
         mov value,_A
@@ -1431,17 +1431,19 @@ x83_SAX_inx_undocumented:
 x87_SAX_zpg_undocumented:
         mov value,_A
         and value,_X
-        ST_ZERO_PAGE(data,value); ram[data] <- A & X
+        ldi addr_hi,ZERO_PAGE
+        st Y,value              ; ram[addr] <- A & X
         TICK(3)
 x8f_SAX_abs_undocumented:
         mov value,_A
         and value,_X
         rjmp write_abs
 x97_SAX_zpy_undocumented:
-        add data,_Y             ; data += Y
         mov value,_A            ; value <- A
         and value,_X            ; value <- A & X
-        ST_ZERO_PAGE(data,value); ram[data] <- A & X
+        add addr_lo,_Y          ; addr_lo += Y
+        ldi addr_hi,ZERO_PAGE
+        st Y,value              ; ram[addr] <- A & X
         TICK(4)
 x93_SHA_iny_undocumented:
         LDW_ZERO_PAGE(addr_lo,data) ; addr_hi:addr_lo <- ram[data+1]:ram[data]
