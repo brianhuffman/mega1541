@@ -1442,11 +1442,19 @@ x96_STX_zpy:
         st Y,_X                 ; ram[addr] <- X
         TICK(4)
 x99_STA_aby:
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_Y          ; addr_hi:addr_lo += Y
+        adc addr_hi,__zero_reg__;
+        ldi cycles,5            ; cycles <- 5
         mov value,_A
-        rjmp write_aby
+        rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
 x9d_STA_abx:
+        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
+        add addr_lo,_X          ; addr_hi:addr_lo += X
+        adc addr_hi,__zero_reg__;
+        ldi cycles,5            ; cycles <- 5
         mov value,_A
-        rjmp write_abx
+        rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
 
 x83_SAX_inx_undocumented:
         add data,_X             ; data += X
@@ -1539,18 +1547,6 @@ write_mem_hi:
         ijmp
 2:
         rjmp tick               ; other addresses have no effect
-write_abx:
-        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-        add addr_lo,_X          ; addr_hi:addr_lo += X
-        adc addr_hi,__zero_reg__;
-        ldi cycles,5            ; cycles <- 5
-        rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
-write_aby:
-        rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
-        add addr_lo,_Y          ; addr_hi:addr_lo += Y
-        adc addr_hi,__zero_reg__;
-        ldi cycles,5            ; cycles <- 5
-        rjmp write_mem          ; write(addr_hi:addr_lo,value), rjmp tick
 
 /**************************** BRANCH INSTRUCTIONS *****************************/
 
