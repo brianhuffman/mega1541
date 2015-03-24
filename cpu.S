@@ -1520,6 +1520,7 @@ write_mem:                      ; write(addr_hi:addr_lo,value), rjmp tick
         movw ZL,addr_lo         ;
         subi ZH,hi8(-(ram))     ;
         st Z,value              ; ram[addr_hi:addr_lo] <- data
+        rjmp tick
 write_mem_hi:
         cpi addr_hi,0x18
         brne 1f
