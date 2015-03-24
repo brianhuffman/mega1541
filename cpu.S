@@ -64,6 +64,17 @@ N_FLAG = 0x80
 #define ROM_PAGE_FF hi8(dos1541-0xc000+0xff00)
 #define RAM_PAGES 4 /* should be 8 if we have more than 2k of SRAM available */
 
+.macro LED_INIT
+        ;; Bit 5 for Nano, bit 7 for Mega
+        sbi 4,5                 ; Set DDRB5 to 'output'
+.endm
+.macro LED_ON                   ; Turn on LED
+        sbi 5,5                 ; Set PORTB5 (pin 13, LED)
+.endm
+.macro LED_OFF                  ; Turn off LED
+        cbi 5,5                 ; Clear PORTB5 (pin 13, LED)
+.endm
+
 #define PUSH(reg)                 \
         mov ZL, _S              $ \
         ldi ZH, STACK_PAGE      $ \
@@ -1501,13 +1512,13 @@ write_mem_hi:
 write_mem_via2:
         cpi addr_lo,0x0
         brne write_mem_done
-        sbi 4,5                 ; Set DDRB5 to 'output'
+        LED_INIT
         bst value,3             ; bit 3 = LED output
         brts led_on
-        cbi 5,5                 ; Clear PORTB5 (pin 13, LED)
+        LED_OFF
         rjmp tick
 led_on:
-        sbi 5,5                 ; Set PORTB5 (pin 13, LED)
+        LED_ON
         rjmp tick
 write_mem_done:
         rjmp tick
