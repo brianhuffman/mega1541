@@ -1000,6 +1000,22 @@ read_mem_rom:
         movw ZL,fptr_lo
         ijmp
 read_mem_io:
+        cpi addr_hi,0x18
+        brne 1f
+        ldi ZL,lo8(gs(read_via1_table))
+        ldi ZH,hi8(gs(read_via1_table))
+        andi addr_lo,0x0f
+        or ZL,addr_lo
+        ijmp
+1:
+        cpi addr_hi,0x1c
+        brne 2f
+        ldi ZL,lo8(gs(read_via2_table))
+        ldi ZH,hi8(gs(read_via2_table))
+        andi addr_lo,0x0f
+        or ZL,addr_lo
+        ijmp
+2:
         ldi data,0xff           ; other addresses return 0xff
         movw ZL,fptr_lo
         ijmp
@@ -1505,23 +1521,23 @@ write_mem:                      ; write(addr_hi:addr_lo,value), rjmp tick
         subi ZH,hi8(-(ram))     ;
         st Z,value              ; ram[addr_hi:addr_lo] <- data
 write_mem_hi:
+        cpi addr_hi,0x18
+        brne 1f
+        ldi ZL,lo8(gs(write_via1_table))
+        ldi ZH,hi8(gs(write_via1_table))
+        andi addr_lo,0x0f
+        or ZL,addr_lo
+        ijmp
+1:
         cpi addr_hi,0x1c
-        breq write_mem_via2
-        rjmp tick
-        ;; TODO: write io memory
-write_mem_via2:
-        cpi addr_lo,0x0
-        brne write_mem_done
-        LED_INIT
-        bst value,3             ; bit 3 = LED output
-        brts led_on
-        LED_OFF
-        rjmp tick
-led_on:
-        LED_ON
-        rjmp tick
-write_mem_done:
-        rjmp tick
+        brne 2f
+        ldi ZL,lo8(gs(write_via2_table))
+        ldi ZH,hi8(gs(write_via2_table))
+        andi addr_lo,0x0f
+        or ZL,addr_lo
+        ijmp
+2:
+        rjmp tick               ; other addresses have no effect
 write_abx:
         rcall addr_abs          ; addr_hi:addr_lo <- mem_read(++PC), PC += 2
         add addr_lo,_X          ; addr_hi:addr_lo += X
@@ -1779,6 +1795,178 @@ xf2:
         TICK(128)               ; loop in place, very slowly
 
 /******************************************************************************/
+/**************************** IO MEMORY READ/WRITE ****************************/
+/* align to 16-word (32-byte) boundary */
+.p2align 5
+read_via1_table:
+        rjmp read_via1_0
+        rjmp read_via1_1
+        rjmp read_via1_2
+        rjmp read_via1_3
+        rjmp read_via1_4
+        rjmp read_via1_5
+        rjmp read_via1_6
+        rjmp read_via1_7
+        rjmp read_via1_8
+        rjmp read_via1_9
+        rjmp read_via1_a
+        rjmp read_via1_b
+        rjmp read_via1_c
+        rjmp read_via1_d
+        rjmp read_via1_e
+        rjmp read_via1_f
+read_via2_table:
+        rjmp read_via2_0
+        rjmp read_via2_1
+        rjmp read_via2_2
+        rjmp read_via2_3
+        rjmp read_via2_4
+        rjmp read_via2_5
+        rjmp read_via2_6
+        rjmp read_via2_7
+        rjmp read_via2_8
+        rjmp read_via2_9
+        rjmp read_via2_a
+        rjmp read_via2_b
+        rjmp read_via2_c
+        rjmp read_via2_d
+        rjmp read_via2_e
+        rjmp read_via2_f
+write_via1_table:
+        rjmp write_via1_0
+        rjmp write_via1_1
+        rjmp write_via1_2
+        rjmp write_via1_3
+        rjmp write_via1_4
+        rjmp write_via1_5
+        rjmp write_via1_6
+        rjmp write_via1_7
+        rjmp write_via1_8
+        rjmp write_via1_9
+        rjmp write_via1_a
+        rjmp write_via1_b
+        rjmp write_via1_c
+        rjmp write_via1_d
+        rjmp write_via1_e
+        rjmp write_via1_f
+write_via2_table:
+        rjmp write_via2_0
+        rjmp write_via2_1
+        rjmp write_via2_2
+        rjmp write_via2_3
+        rjmp write_via2_4
+        rjmp write_via2_5
+        rjmp write_via2_6
+        rjmp write_via2_7
+        rjmp write_via2_8
+        rjmp write_via2_9
+        rjmp write_via2_a
+        rjmp write_via2_b
+        rjmp write_via2_c
+        rjmp write_via2_d
+        rjmp write_via2_e
+        rjmp write_via2_f
+
+read_via1_0:
+read_via1_1:
+read_via1_2:
+read_via1_3:
+read_via1_4:
+read_via1_5:
+read_via1_6:
+read_via1_7:
+read_via1_8:
+read_via1_9:
+read_via1_a:
+read_via1_b:
+read_via1_c:
+read_via1_d:
+read_via1_e:
+read_via1_f:
+read_via2_0:
+read_via2_1:
+read_via2_2:
+read_via2_3:
+read_via2_4:
+read_via2_5:
+read_via2_6:
+read_via2_7:
+read_via2_8:
+read_via2_9:
+read_via2_a:
+read_via2_b:
+read_via2_c:
+read_via2_d:
+read_via2_e:
+read_via2_f:
+        /*
+        clr time0
+        clr time1
+        clr time2
+        clr time3
+        */
+        ldi data,0xff           ; other addresses return 0xff
+        movw ZL,fptr_lo
+        ijmp
+
+write_via1_0:
+write_via1_1:
+write_via1_2:
+write_via1_3:
+write_via1_4:
+write_via1_5:
+write_via1_6:
+write_via1_7:
+write_via1_8:
+write_via1_9:
+write_via1_a:
+write_via1_b:
+write_via1_c:
+write_via1_d:
+write_via1_e:
+write_via1_f:
+write_via2_1:
+write_via2_2:
+write_via2_3:
+write_via2_4:
+write_via2_5:
+write_via2_6:
+write_via2_7:
+write_via2_8:
+write_via2_9:
+write_via2_a:
+write_via2_b:
+write_via2_c:
+write_via2_d:
+write_via2_e:
+write_via2_f:
+        /*
+        clr time0
+        clr time1
+        clr time2
+        clr time3
+        */
+        rjmp tick
+
+write_via2_0:                   ; DSKCNT (Data Port B)
+        LED_INIT                ; Set LED pin to 'output'
+        bst value,3             ; bit 3 = LED output
+        brts led_on
+        LED_OFF                 ; Turn off LED
+        rjmp tick
+led_on:
+        LED_ON                  ; Turn on LED
+        rjmp tick
+write_mem_done:
+        /*
+        clr time0
+        clr time1
+        clr time2
+        clr time3
+        */
+        rjmp tick
+
+/******************************************************************************/
 
 .L366:
 /* epilogue start */
@@ -1814,6 +2002,7 @@ xf2:
         pop r2
         ret
         .size        cpu_main, .-cpu_main
+/******************************************************************************/
         .section        .text.cpu_get_regs,"ax",@progbits
 .global        cpu_get_state
         .type        cpu_get_state, @function
