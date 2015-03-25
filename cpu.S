@@ -2000,7 +2000,7 @@ write_mem_done:
         ret
         .size        cpu_main, .-cpu_main
 /******************************************************************************/
-        .section        .text.cpu_get_regs,"ax",@progbits
+        .section        .text.cpu_get_state,"ax",@progbits
 .global        cpu_get_state
         .type        cpu_get_state, @function
 cpu_get_state:
@@ -2025,6 +2025,73 @@ cpu_get_state:
         st Z+,r24
         ret
         .size        cpu_get_state, .-cpu_get_state
+        .section        .text.cpu_sprintf_state,"ax",@progbits
+.global        cpu_sprintf_state
+        .type        cpu_sprintf_state, @function
+cpu_sprintf_state:
+        movw ZL,r24      ; Z index <- pointer argument
+        ldi XL,'P $ st Z+,XL
+        ldi XL,'C $ st Z+,XL
+        ldi XL,'= $ st Z+,XL
+        ldi XL,'$ $ st Z+,XL
+        lds XL,reg_pc+1 $ call sprintf_hex
+        lds XL,reg_pc $ call sprintf_hex
+        ldi XL,', $ st Z+,XL
+        ldi XL,32 $ st Z+,XL
+        ldi XL,'A $ st Z+,XL
+        ldi XL,'= $ st Z+,XL
+        ldi XL,'$ $ st Z+,XL
+        lds XL,reg_a $ call sprintf_hex
+        ldi XL,', $ st Z+,XL
+        ldi XL,32 $ st Z+,XL
+        ldi XL,'X $ st Z+,XL
+        ldi XL,'= $ st Z+,XL
+        ldi XL,'$ $ st Z+,XL
+        lds XL,reg_x $ call sprintf_hex
+        ldi XL,', $ st Z+,XL
+        ldi XL,32 $ st Z+,XL
+        ldi XL,'Y $ st Z+,XL
+        ldi XL,'= $ st Z+,XL
+        ldi XL,'$ $ st Z+,XL
+        lds XL,reg_y $ call sprintf_hex
+        ldi XL,', $ st Z+,XL
+        ldi XL,32 $ st Z+,XL
+        ldi XL,'S $ st Z+,XL
+        ldi XL,'= $ st Z+,XL
+        ldi XL,'$ $ st Z+,XL
+        lds XL,reg_s $ call sprintf_hex
+        ldi XL,', $ st Z+,XL
+        ldi XL,32 $ st Z+,XL
+        ldi XL,'P $ st Z+,XL
+        ldi XL,'= $ st Z+,XL
+        lds XH,reg_p
+        ldi XL,'- $ sbrc XH,7 $ ldi XL,'N $ st Z+,XL
+        ldi XL,'- $ sbrc XH,6 $ ldi XL,'V $ st Z+,XL
+        ldi XL,'- $ st Z+,XL
+        ldi XL,'- $ st Z+,XL
+        ldi XL,'- $ sbrc XH,3 $ ldi XL,'D $ st Z+,XL
+        ldi XL,'- $ sbrc XH,2 $ ldi XL,'I $ st Z+,XL
+        ldi XL,'- $ sbrc XH,1 $ ldi XL,'Z $ st Z+,XL
+        ldi XL,'- $ sbrc XH,0 $ ldi XL,'C $ st Z+,XL
+        ldi XL,0 $ st Z+,XL
+        ret
+sprintf_hex:
+        mov XH,XL
+        swap XH
+        andi XH,0x0f
+        cpi XH,10
+        brlo .+2
+        subi XH,-7
+        subi XH,-48
+        st Z+,XH
+        andi XL,0x0f
+        cpi XL,10
+        brlo .+2
+        subi XL,-7
+        subi XL,-48
+        st Z+,XL
+        ret
+        .size        cpu_sprintf_state, .-cpu_sprintf_state
         .section        .bss.time_left,"aw",@nobits
         .type        time_left, @object
         .size        time_left, 4

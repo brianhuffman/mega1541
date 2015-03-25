@@ -28,4 +28,7 @@ unsigned long cpu_get_regs (void);
 
 void cpu_get_state (struct cpu_state*);
 
+/* Requires a buffer of at least 51 bytes */
+void cpu_sprintf_state (char *buffer);
+
 #endif
