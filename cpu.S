@@ -647,12 +647,14 @@ load_opcode_ram1:
 #define READ_ABX(label)           \
         ldi fptr_lo,lo8(gs(label)) $ \
         ldi fptr_hi,hi8(gs(label)) $ \
-        rjmp read_abx
+        add addr_lo,_X             $ \
+        rjmp read_abs_indexed
 
 #define READ_ABY(label)           \
         ldi fptr_lo,lo8(gs(label)) $ \
         ldi fptr_hi,hi8(gs(label)) $ \
-        rjmp read_aby
+        add addr_lo,_Y             $ \
+        rjmp read_abs_indexed
 
 #define READ_INX(label)           \
         ldi fptr_lo,lo8(gs(label)) $ \
@@ -979,9 +981,15 @@ output: data value in data, tick count in cycles
 2:
 .endm
 
+read_abs_carry:
+        READ_ADDR_HI            ; addr_hi <- read(PC++)
+        inc addr_hi             ; addr_hi++
+        ldi cycles,5            ; cycles <- 5
+        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
+read_abs_indexed:
+        brcs read_abs_carry
 read_abs:
         READ_ADDR_HI            ; addr_hi <- read(PC++)
-read_abs_no_carry:
         ldi cycles,4            ; cycles <- 4
 read_mem:                       ; data <- read(addr_hi:addr_lo), ijmp (ret)
         cpi addr_hi,0xc0        ; branch if addr is in ROM
@@ -1020,20 +1028,6 @@ read_mem_io:
         movw ZL,fptr_lo
         ijmp
 
-read_abx:
-        READ_ADDR_HI            ; addr_hi <- read(PC++)
-        add addr_lo,_X          ; addr_lo += X
-        brcc read_abs_no_carry  ; branch unless addr_lo+X carries
-        inc addr_hi             ; addr_hi++
-        ldi cycles,5            ; cycles <- 5
-        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
-read_aby:
-        READ_ADDR_HI            ; addr_hi <- read(PC++)
-        add addr_lo,_Y          ; addr_lo += Y
-        brcc read_abs_no_carry  ; branch unless addr_lo+Y carries
-        inc addr_hi             ; addr_hi++
-        ldi cycles,5            ; cycles <- 5
-        rjmp read_mem           ; data <- read(addr_hi:addr_lo), ijmp (fptr)
 read_inx:
         add data,_X             ; data += X
         LDW_ZERO_PAGE(addr_lo,data)   ; addr_hi:addr_lo <- ram[data+1]:ram[data]
