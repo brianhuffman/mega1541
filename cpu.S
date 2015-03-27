@@ -1010,6 +1010,7 @@ read_mem_rom:
 read_mem_io:
         cpi addr_hi,0x18
         brne 1f
+        call debug_reading
         ldi ZL,lo8(gs(read_via1_table))
         ldi ZH,hi8(gs(read_via1_table))
         andi addr_lo,0x0f
@@ -1018,6 +1019,7 @@ read_mem_io:
 1:
         cpi addr_hi,0x1c
         brne 2f
+        call debug_reading
         ldi ZL,lo8(gs(read_via2_table))
         ldi ZH,hi8(gs(read_via2_table))
         andi addr_lo,0x0f
@@ -1526,6 +1528,7 @@ write_mem:                      ; write(addr_hi:addr_lo,value), rjmp tick
 write_mem_hi:
         cpi addr_hi,0x18
         brne 1f
+        call debug_writing
         ldi ZL,lo8(gs(write_via1_table))
         ldi ZH,hi8(gs(write_via1_table))
         andi addr_lo,0x0f
@@ -1534,6 +1537,7 @@ write_mem_hi:
 1:
         cpi addr_hi,0x1c
         brne 2f
+        call debug_writing
         ldi ZL,lo8(gs(write_via2_table))
         ldi ZH,hi8(gs(write_via2_table))
         andi addr_lo,0x0f
@@ -2033,6 +2037,39 @@ debug_print_state:
         lds _PCH,reg_pc+1
         lds _A,reg_a
         ret
+;;; "Reading: $(addr_hi)(addr_lo)\n"
+debug_reading:
+        ldi XL,lo8(string_reading)
+        ldi XH,hi8(string_reading)
+        call debug_print_string
+        mov XL,addr_hi
+        call debug_print_hex
+        mov XL,addr_lo
+        call debug_print_hex
+        ldi XL,lo8(string_newline)
+        ldi XH,hi8(string_newline)
+        call debug_print_string
+        call debug_print_state
+        ret
+;;; "Writing: $(addr_hi)(addr_lo) = $(value)\n"
+debug_writing:
+        ldi XL,lo8(string_writing)
+        ldi XH,hi8(string_writing)
+        call debug_print_string
+        mov XL,addr_hi
+        call debug_print_hex
+        mov XL,addr_lo
+        call debug_print_hex
+        ldi XL,lo8(string_equals)
+        ldi XH,hi8(string_equals)
+        call debug_print_string
+        mov XL,value
+        call debug_print_hex
+        ldi XL,lo8(string_newline)
+        ldi XH,hi8(string_newline)
+        call debug_print_string
+        call debug_print_state
+        ret
 
 /******************************************************************************/
 
@@ -2203,6 +2240,18 @@ reg_pc:
         .size        hex_buf, 3
 hex_buf:
         .zero        3
+        .section        .rodata.string_constants,"a",@progbits
+        .type        string_constants, @object
+string_constants:
+string_writing:
+        .string "Writing: $"
+string_reading:
+        .string "Reading: $"
+string_equals:
+        .string " = $"
+string_newline:
+        .string "\r\n"
+        .size        string_constants, .-string_constants
         .section        .bss.state_string,"aw",@nobits
         .type        state_string, @object
 state_string:
@@ -2210,3 +2259,4 @@ state_string:
         .size        state_string, .-state_string
         .ident        "GCC: (GNU) 4.8.1"
 .global __do_clear_bss
+.global __do_copy_data
