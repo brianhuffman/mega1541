@@ -1957,6 +1957,83 @@ write_mem_done:
         */
         rjmp tick
 
+/******************************** DEBUG OUTPUT ********************************/
+;;; Argument in XL
+debug_print_hex:
+        ldi ZL,lo8(hex_buf)
+        ldi ZH,hi8(hex_buf)
+        call sprintf_hex
+        push r18
+        push r19
+        push r20
+        push r21
+        push r22
+        push r23
+        push r24
+        push r25
+        ldi r24,lo8(hex_buf)
+        ldi r25,hi8(hex_buf)
+        call debug_print
+        pop r25
+        pop r24
+        pop r23
+        pop r22
+        pop r21
+        pop r20
+        pop r19
+        pop r18
+        ret
+;;; String pointer in XH:XL
+debug_print_string:
+        push r18
+        push r19
+        push r20
+        push r21
+        push r22
+        push r23
+        push r24
+        push r25
+        movw r24,r26
+        call debug_print
+        pop r25
+        pop r24
+        pop r23
+        pop r22
+        pop r21
+        pop r20
+        pop r19
+        pop r18
+        ret
+debug_print_state:
+        call pack_flags         ; save N, Z, and C into P
+        sts reg_pc,_PCL
+        sts reg_pc+1,_PCH
+        sts reg_a,_A
+        sts reg_x,_X
+        sts reg_y,_Y
+        sts reg_s,_S
+        sts reg_p,_P
+        sts time_left,time0
+        sts time_left+1,time1
+        sts time_left+2,time2
+        sts time_left+3,time3
+        push cycles
+        push fptr_lo
+        push fptr_hi
+        ldi r24,lo8(state_string)
+        ldi r25,hi8(state_string)
+        call cpu_sprintf_state
+        call debug_println
+        pop fptr_hi
+        pop fptr_lo
+        pop cycles
+        lds time0,time_left
+        lds time1,time_left+1
+        lds _PCL,reg_pc
+        lds _PCH,reg_pc+1
+        lds _A,reg_a
+        ret
+
 /******************************************************************************/
 
 .L366:
@@ -2121,5 +2198,15 @@ reg_a:
         .size        reg_pc, 2
 reg_pc:
         .zero        2
+        .section        .bss.hex_buf,"aw",@nobits
+        .type        hex_buf, @object
+        .size        hex_buf, 3
+hex_buf:
+        .zero        3
+        .section        .bss.state_string,"aw",@nobits
+        .type        state_string, @object
+state_string:
+        .string "PC=$0000, A=$00, X=$00, Y=$00, S=$00, P=--------"
+        .size        state_string, .-state_string
         .ident        "GCC: (GNU) 4.8.1"
 .global __do_clear_bss

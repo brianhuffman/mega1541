@@ -18,6 +18,14 @@ void setup() {
   cpu_reset();
 }
 
+extern "C" void debug_println (char *buffer) {
+  Serial.println(buffer);
+}
+
+extern "C" void debug_print (char *buffer) {
+  Serial.print(buffer);
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
   char buffer[64];
