@@ -62,17 +62,17 @@ N_FLAG = 0x80
 #define ZERO_PAGE hi8(ram)
 #define STACK_PAGE hi8(ram+256)
 #define ROM_PAGE_FF hi8(dos1541-0xc000+0xff00)
-#define RAM_PAGES 4 /* should be 8 if we have more than 2k of SRAM available */
+#define RAM_PAGES 8 /* should be 8 if we have more than 2k of SRAM available */
 
 .macro LED_INIT
         ;; Bit 5 for Nano, bit 7 for Mega
-        sbi 4,5                 ; Set DDRB5 to 'output'
+        sbi 4,7                 ; Set DDRB5 to 'output'
 .endm
 .macro LED_ON                   ; Turn on LED
-        sbi 5,5                 ; Set PORTB5 (pin 13, LED)
+        sbi 5,7                 ; Set PORTB5 (pin 13, LED)
 .endm
 .macro LED_OFF                  ; Turn off LED
-        cbi 5,5                 ; Clear PORTB5 (pin 13, LED)
+        cbi 5,7                 ; Clear PORTB5 (pin 13, LED)
 .endm
 
 #define PUSH(reg)                 \
