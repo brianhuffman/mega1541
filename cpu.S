@@ -1935,12 +1935,6 @@ write_via2_c:
 write_via2_d:
 write_via2_e:
 write_via2_f:
-        /*
-        clr time0
-        clr time1
-        clr time2
-        clr time3
-        */
         rjmp tick
 
 write_via2_0:                   ; DSKCNT (Data Port B)
@@ -1951,14 +1945,6 @@ write_via2_0:                   ; DSKCNT (Data Port B)
         rjmp tick
 led_on:
         LED_ON                  ; Turn on LED
-        rjmp tick
-write_mem_done:
-        /*
-        clr time0
-        clr time1
-        clr time2
-        clr time3
-        */
         rjmp tick
 
 /******************************** DEBUG OUTPUT ********************************/
